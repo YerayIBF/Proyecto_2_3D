@@ -1,0 +1,15 @@
+Proyecto3D_Andreu_Raul_Yeray/Library/
+Proyecto3D_Andreu_Raul_Yeray/Temp/
+Proyecto3D_Andreu_Raul_Yeray/Obj/
+Proyecto3D_Andreu_Raul_Yeray/Logs/
+Proyecto3D_Andreu_Raul_Yeray/Build/
+Proyecto3D_Andreu_Raul_Yeray/Builds/
+
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
