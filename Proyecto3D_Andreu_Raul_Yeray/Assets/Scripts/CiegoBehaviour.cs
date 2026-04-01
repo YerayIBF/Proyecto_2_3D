@@ -44,7 +44,7 @@ public class CiegoBehaviour : MonoBehaviour
                 if (investigando)
                 {
                     //comprobar cooldown investigar, si ha terminado patrulla
-                    Investigar();
+                    PerseguirSonido();
                 }
                 else
                 {
@@ -57,13 +57,37 @@ public class CiegoBehaviour : MonoBehaviour
             if (investigando)
             {
                 //comprobar cooldown investigar, si ha terminado patrulla
-                Investigar();
+                PerseguirSonido();
             }
             else
             {
                 Patrullar();
             }
         }
+    }
+
+    public void DetectarSonido(Vector3 posicionSonido)
+    {
+        sonidos.Add(posicionSonido);
+        sonidoDetectado = true;
+    }
+
+    public void PerseguirSonido()
+    {
+        Vector3 sonidoCercano = sonidos.Find(sonido => Vector3.Distance(transform.position, sonido) <= areaVision);
+        if (sonidoCercano != Vector3.zero)        {
+            agent.SetDestination(sonidoCercano);
+            investigando = true;
+        }
+
+        //Si ha llegado al destino, eliminar el sonido de la lista
+            if (Vector3.Distance(transform.position, sonidoCercano) < 1f)
+            {
+                sonidos.Remove(sonidoCercano);
+                sonidoDetectado = false;
+                perseguir = false;
+                investigando = false;
+            }
     }
 
     private  bool SonidoCercano()
