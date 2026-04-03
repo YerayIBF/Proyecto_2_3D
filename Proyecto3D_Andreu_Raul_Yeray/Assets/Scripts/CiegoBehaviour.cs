@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class CiegoBehaviour : MonoBehaviour
 {
+
     public bool investigando = false;
     public bool patrullar = false;
     public bool sonidoDetectado = false;
@@ -13,8 +14,11 @@ public class CiegoBehaviour : MonoBehaviour
     private List<Vector3> sonidos = new List<Vector3>();
 
     public float areaVision = 10f;
+    public float areaAtaque = 2f;
 
     private NavMeshAgent agent;
+
+    public float investigarTimer = 10f;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -26,14 +30,11 @@ public class CiegoBehaviour : MonoBehaviour
     {
         if (aturdido)
         {
+            return;
             //aturdido 5 segundos
         }
-        else
-        {
-            return;
-        }
 
-        if (sonidos.Count > 0)
+        if (HaySonidos())
         {
             if (SonidoCercano())
             {
@@ -43,8 +44,15 @@ public class CiegoBehaviour : MonoBehaviour
             {
                 if (investigando)
                 {
-                    //comprobar cooldown investigar, si ha terminado patrulla
-                    PerseguirSonido();
+                    investigarTimer += Time.deltaTime;
+                    if (investigarTimer <= 0f)
+                    {
+                        Patrullar();
+                    }
+                    else
+                    {
+                        PerseguirSonido();
+                    }
                 }
                 else
                 {
@@ -56,14 +64,25 @@ public class CiegoBehaviour : MonoBehaviour
         {
             if (investigando)
             {
-                //comprobar cooldown investigar, si ha terminado patrulla
-                PerseguirSonido();
+                investigarTimer += Time.deltaTime;
+                if (investigarTimer <= 0f){    
+                    Patrullar();
+                }
+                else
+                {
+                    PerseguirSonido();
+                }
             }
             else
             {
                 Patrullar();
             }
         }
+    }
+
+    private bool HaySonidos()
+    {
+        return sonidos.Count > 0;
     }
 
     public void DetectarSonido(Vector3 posicionSonido)
@@ -92,6 +111,14 @@ public class CiegoBehaviour : MonoBehaviour
 
     private  bool SonidoCercano()
     {
+        //Si esta en area de ataque, atacar en area hacia el sonido
+        foreach (Vector3 sonido in sonidos)
+        {
+            if (Vector3.Distance(transform.position, sonido) <= areaAtaque)
+            {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -100,15 +127,17 @@ public class CiegoBehaviour : MonoBehaviour
         return false;
     }
 
-    private bool Atacar()
+    public void Atacar()
     {
-        return false;
-    }
-
-    private bool DetectarSonido()
-    {
-        return false;
-    }
+        Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
+        foreach (Collider col in rango){
+            if (col.CompareTag("Player"))
+            {
+                //Atacar al jugador
+                Debug.Log("Atacando al jugador");
+            }
+        }
+    }  
 
     public void Patrullar()
     {
