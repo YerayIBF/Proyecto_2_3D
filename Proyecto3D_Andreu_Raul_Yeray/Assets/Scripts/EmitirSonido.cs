@@ -36,7 +36,7 @@ public class EmitirSonido : MonoBehaviour
             CiegoBehaviour ciego = collider.GetComponent<CiegoBehaviour>();
             if (ciego != null)
             {
-                ciego.sonidoDetectado = true;
+                ciego.DetectarSonido(posicion);
             }
         }
     }
