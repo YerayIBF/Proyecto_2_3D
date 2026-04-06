@@ -13,7 +13,7 @@ public class CiegoBehaviour : MonoBehaviour
 
     public List<Vector3> sonidos = new List<Vector3>();
 
-    public float areaVision = 10f;
+    public float areaEscucha = 10f;
     public float areaAtaque = 2f;
 
     private Animator animator;
@@ -21,6 +21,11 @@ public class CiegoBehaviour : MonoBehaviour
 
     public float investigarTimer = 10f;
     public float aturdidoTimer = 5f;
+
+    public Transform[] patrolPoints;
+    private int puntoActual;
+    public float waitTime = 2f;
+    private float waitTimer;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -55,7 +60,7 @@ public class CiegoBehaviour : MonoBehaviour
                 }
                 else
                 {
-                    if (investigando)
+                    if (!SonidoCercano() && investigando)
                     {
                         investigarTimer -= Time.deltaTime;
                         if (investigarTimer <= 0f)
@@ -107,41 +112,38 @@ public class CiegoBehaviour : MonoBehaviour
     {
         sonidos.Add(posicionSonido);
         sonidoDetectado = true;
+        investigando = true;
+        investigarTimer = 10f;
     }
 
     public void PerseguirSonido()
     {
-        investigando = true;
-        /*Vector3 sonidoCercano = sonidos.Find(sonido => Vector3.Distance(transform.position, sonido) <= areaVision);
-        if (sonidoCercano != Vector3.zero)        {
-            agent.SetDestination(sonidoCercano);
-            investigando = true;
-            //animator.SetInteger("state", 2);
-        }*/
         Vector3 sonidoCercano = sonidos[0];
         float minDistancia = float.MaxValue;
 
         foreach (Vector3 sonido in sonidos)
         {
             float distancia = Vector3.Distance(transform.position, sonido);
-            if (distancia < minDistancia)
+            if (distancia < minDistancia && distancia <= areaEscucha)
             {
                 minDistancia = distancia;
                 sonidoCercano = sonido;
             }
         }
+
+        if (sonidoCercano == Vector3.zero)
+        {
+            investigando = false;
+            return;
+        }
+
         agent.SetDestination(sonidoCercano);
 
-        //Si ha llegado al destino, eliminar el sonido de la lista
-            if (Vector3.Distance(transform.position, sonidoCercano) < 1f)
-            {
-                sonidos.Remove(sonidoCercano);
-                sonidoDetectado = false;
-                perseguir = false;
-                investigando = false;
-                investigarTimer = 10f;
-                //animator.SetInteger("state", 0);
-            }
+
+        if (minDistancia <= areaAtaque)
+        {
+            Atacar();
+        }
     }
 
     private  bool SonidoCercano()
@@ -174,12 +176,52 @@ public class CiegoBehaviour : MonoBehaviour
                 Debug.Log("Atacando al jugador");
             }
         }
+
+        //Eliminar sonido mas cercano para evitar entrar en bucle
+        if (sonidos.Count > 0)
+        {
+            Vector3 sonidoCercano = sonidos[0];
+            float minDistancia = float.MaxValue;
+
+
+            foreach (Vector3 sonido in sonidos)
+            {
+                float distancia = Vector3.Distance(transform.position, sonido);
+                if (distancia < minDistancia)
+                {
+                    minDistancia = distancia;
+                    sonidoCercano = sonido;
+                }
+            }
+
+            sonidos.Remove(sonidoCercano);
+            sonidoDetectado = sonidos.Count > 0;
+        }
     }  
 
     public void Patrullar()
     {
         //animator.SetInteger("state", 1);
+        if (!agent.pathPending && agent.remainingDistance < 0.5f)
+        {
+            waitTimer += Time.deltaTime;
+            if (waitTimer >= waitTime)
+            {
+                if (patrolPoints.Length == 0)
+                return;
 
+                int nextPoint;
+                do
+                {
+                    nextPoint = Random.Range(0, patrolPoints.Length);
+                } while (nextPoint == puntoActual && patrolPoints.Length > 1);
+
+                puntoActual = nextPoint;
+                agent.SetDestination(patrolPoints[puntoActual].position);
+
+                waitTimer = 0;
+            }
+        }
     }
 
     public void Perseguir()
@@ -192,6 +234,6 @@ public class CiegoBehaviour : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, areaAtaque);
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, areaVision);
+        Gizmos.DrawWireSphere(transform.position, areaEscucha);
     }
 }
