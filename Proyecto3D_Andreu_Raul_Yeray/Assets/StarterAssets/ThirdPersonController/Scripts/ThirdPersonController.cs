@@ -83,6 +83,9 @@ namespace StarterAssets
         private float _cinemachineTargetPitch;
 
         // player
+        private float cristalSonidoCooldown = 0f;
+        private float soundCooldown = 0f;
+        public float soundCooldownTime = 0.5f; 
         private float _speed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
@@ -382,6 +385,13 @@ namespace StarterAssets
                 if (AudioFoley != null)
                     AudioFoley.Play();
             }
+
+            //Si esta corriendo con esprint, emite un sonido cada 0.5 segundos
+            if (Time.time >= soundCooldown && _input.sprint)
+            {
+                EmitirSonido.instance.EmitirRuido(transform.position, 15f);
+                soundCooldown = Time.time + soundCooldownTime;
+            }
         }
 
         private void OnLand(AnimationEvent animationEvent)
@@ -391,6 +401,18 @@ namespace StarterAssets
                 if (LandingAudio != null)
                     LandingAudio.Play();
 
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (hit.gameObject.CompareTag("Cristal") && Time.time >= cristalSonidoCooldown)
+            {
+            
+                EmitirSonido.instance.EmitirRuido(transform.position, 15f);
+                Debug.Log("He pisado el cristal");
+
+                cristalSonidoCooldown = Time.time + 10f;
             }
         }
     }

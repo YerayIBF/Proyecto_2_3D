@@ -10,10 +10,11 @@ public class CiegoBehaviour : MonoBehaviour
     public bool sonidoDetectado = false;
     public bool perseguir = false;
     public bool aturdido = false;
+    public bool atacando = false;
 
     public List<Vector3> sonidos = new List<Vector3>();
 
-    public float areaEscucha = 10f;
+    public float areaEscucha = 15f;
     public float areaAtaque = 2f;
 
     private Animator animator;
@@ -26,6 +27,7 @@ public class CiegoBehaviour : MonoBehaviour
     private int puntoActual;
     public float waitTime = 2f;
     private float waitTimer;
+    private float timerSonido;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -110,6 +112,11 @@ public class CiegoBehaviour : MonoBehaviour
 
     public void DetectarSonido(Vector3 posicionSonido)
     {
+        if (sonidos.Count >= 3)
+        {
+            sonidos.RemoveAt(0);
+        }
+
         sonidos.Add(posicionSonido);
         sonidoDetectado = true;
         investigando = true;
@@ -118,23 +125,25 @@ public class CiegoBehaviour : MonoBehaviour
 
     public void PerseguirSonido()
     {
+        patrullar = false;
+
+        if (sonidos.Count == 0)
+        {
+            investigando = false;
+            return;
+        }
+
         Vector3 sonidoCercano = sonidos[0];
         float minDistancia = float.MaxValue;
 
         foreach (Vector3 sonido in sonidos)
         {
             float distancia = Vector3.Distance(transform.position, sonido);
-            if (distancia < minDistancia && distancia <= areaEscucha)
+            if (distancia <= areaEscucha)
             {
                 minDistancia = distancia;
                 sonidoCercano = sonido;
             }
-        }
-
-        if (sonidoCercano == Vector3.zero)
-        {
-            investigando = false;
-            return;
         }
 
         agent.SetDestination(sonidoCercano);
@@ -166,8 +175,8 @@ public class CiegoBehaviour : MonoBehaviour
 
     public void Atacar()
     {
+        atacando = true;
         //animator.SetTrigger("atacar");
-        Debug.Log("Atacando al jugador");
         Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
         foreach (Collider col in rango){
             if (col.CompareTag("Player"))
@@ -194,13 +203,21 @@ public class CiegoBehaviour : MonoBehaviour
                 }
             }
 
-            sonidos.Remove(sonidoCercano);
-            sonidoDetectado = sonidos.Count > 0;
+            timerSonido += Time.deltaTime;
+            if (timerSonido >= 2f)
+            {
+                sonidos.Remove(sonidoCercano);
+                sonidoDetectado = sonidos.Count > 0;
+
+                timerSonido = 0;
+            }
         }
     }  
 
     public void Patrullar()
     {
+        atacando = false;
+        patrullar = true;
         //animator.SetInteger("state", 1);
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {

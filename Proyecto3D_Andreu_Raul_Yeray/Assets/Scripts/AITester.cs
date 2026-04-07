@@ -29,11 +29,4 @@ public class AITester : MonoBehaviour
             Debug.Log($"Sonido emitido en: {hit.point}");
         }
     }
-
-    // Dibuja el radio de detección en la escena
-    void OnDrawGizmos()
-    {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, soundRadius);
-    }
 }
