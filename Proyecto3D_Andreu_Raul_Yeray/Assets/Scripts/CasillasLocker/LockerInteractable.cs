@@ -36,6 +36,9 @@ public class LockerInteractable : MonoBehaviour
     public void CloseDoor() => SetDoor(open: false);
     // ─── Init ────────────────────────────────────────────────────────────────
 
+    [Header("Transparencia de puerta")]
+    public LockerDoorTransparency doorTransparency;
+
     private void Start()
     {
         GameObject playerGO = GameObject.FindGameObjectWithTag("Player");
@@ -45,6 +48,11 @@ public class LockerInteractable : MonoBehaviour
             _lockerSystem    = playerGO.GetComponentInParent<LockerSystem>()
                             ?? playerGO.GetComponent<LockerSystem>();
         }
+         if (doorTransparency == null)
+        {
+             doorTransparency = GetComponent<LockerDoorTransparency>();
+        }
+       
     }
 
     // ─── Update ──────────────────────────────────────────────────────────────
@@ -127,54 +135,64 @@ public class LockerInteractable : MonoBehaviour
     // ─── Secuencias ──────────────────────────────────────────────────────────
 
     private IEnumerator EnterSequence()
-    {
-        _isRunningSequence = true;
-        IsOccupied = true;
-        UIPromptManager.Instance?.Hide();
+{
+    _isRunningSequence = true;
+    IsOccupied = true;
+    UIPromptManager.Instance?.Hide();
 
-        SetDoor(open: true);
-        yield return new WaitForSeconds(0.35f);
+    SetDoor(open: true);
+    yield return new WaitForSeconds(0.35f);
 
-        _lockerSystem.EnterLocker(this, hidePoint);
+    _lockerSystem.EnterLocker(this, hidePoint);
 
-        yield return new WaitForSeconds(0.2f);
-        SetDoor(open: false);
+    yield return new WaitForSeconds(0.2f);
+    SetDoor(open: false);
 
-        _isRunningSequence = false;
-    }
+    // --- Activar transparencia ---
+    if (doorTransparency != null)
+        doorTransparency.SetTransparent();
+    // -----------------------------
+
+    _isRunningSequence = false;
+}
 
     private IEnumerator ExitSequence()
+{
+    _isRunningSequence = true;
+    _inputBlocked      = true;
+
+    // --- Restaurar opacidad antes de abrir la puerta ---
+    if (doorTransparency != null)
+        doorTransparency.SetOpaque();
+    // ---------------------------------------------------
+
+    SetDoor(open: true);
+    yield return new WaitForSeconds(exitDelay);
+
+    IsOccupied = false;
+
+    if (exitPoint != null)
     {
-        _isRunningSequence = true;
-        _inputBlocked      = true;
-
-        SetDoor(open: true);
-        yield return new WaitForSeconds(exitDelay);
-
-        IsOccupied = false;
-
-        if (exitPoint != null)
-        {
-            var cc = _lockerSystem.GetComponent<CharacterController>();
-            cc.enabled = false;
-            _lockerSystem.transform.SetPositionAndRotation(
-                exitPoint.position, exitPoint.rotation);
-            cc.enabled = true;
-        }
-
-        _lockerSystem.ExitLocker();
-        UIPromptManager.Instance?.Hide();
-
-        yield return new WaitForSeconds(0.5f);
-        SetDoor(open: false);
-
-        yield return new WaitForSeconds(exitCooldown);
-
-        _inputBlocked      = false;
-        _isRunningSequence = false;
-        _nearestLocker     = null;
-        UIPromptManager.Instance?.Hide();
+        var cc = _lockerSystem.GetComponent<CharacterController>();
+        cc.enabled = false;
+        _lockerSystem.transform.SetPositionAndRotation(
+            exitPoint.position, exitPoint.rotation);
+        cc.enabled = true;
     }
+
+    _lockerSystem.ExitLocker();
+    UIPromptManager.Instance?.Hide();
+
+    yield return new WaitForSeconds(0.5f);
+    SetDoor(open: false);
+
+    yield return new WaitForSeconds(exitCooldown);
+
+    _inputBlocked      = false;
+    _isRunningSequence = false;
+    _nearestLocker     = null;
+    UIPromptManager.Instance?.Hide();
+}
 
     // ─── Helper ──────────────────────────────────────────────────────────────
 

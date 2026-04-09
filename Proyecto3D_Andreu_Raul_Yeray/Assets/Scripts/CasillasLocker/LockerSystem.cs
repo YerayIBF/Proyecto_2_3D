@@ -4,10 +4,12 @@ using StarterAssets;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// v3 — Fixes:
-///   1. Oculta el SkinnedMeshRenderer del personaje al entrar (elimina las líneas)
-///   2. Restaura el mesh al salir
-///   3. Expone IsHiding para que LockerInteractable bloquee la puerta
+/// Sistema de gestión de casillas para esconderse en armarios. 
+/// Controla la transición entre cámara 3ª persona y 1ª persona, 
+/// oculta el mesh del personaje y bloquea el movimiento mientras está escondido. 
+/// Diseñado para integrarse con el sistema de interacción 
+/// LockerInteractable y ser fácilmente extendible 
+/// 
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class LockerSystem : MonoBehaviour

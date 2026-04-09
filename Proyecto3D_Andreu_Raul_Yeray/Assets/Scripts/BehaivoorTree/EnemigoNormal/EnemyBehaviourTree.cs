@@ -72,7 +72,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     private bool _attackOnCooldown = false;
 
     // Vio al jugador esconderse
-    private LockerInteractable _knownLockerWithPlayer = null;
+    public LockerInteractable _knownLockerWithPlayer = null;
     private bool _playerWasHiding = false;
 
     // ─── Init ─────────────────────────────────────────────────────────────────
@@ -472,4 +472,46 @@ public class EnemyBehaviourTree : MonoBehaviour
             Gizmos.DrawLine(transform.position, _targetLocker.transform.position);
         }
     }
+
+        // ─── Propiedades para Debug UI ──────────────────────────────────────────
+
+    public string CurrentStateName => _state.ToString();
+    public float DistanceToPlayer
+    {
+        get
+        {
+            if (player == null) return -1f;
+            return Vector3.Distance(transform.position, player.position);
+        }
+    }
+    public bool IsSeeingPlayer => CanSeePlayer();
+    public bool IsCurrentlyStunned => _isStunned;
+    public bool HasKnownLockerWithPlayer => _knownLockerWithPlayer != null;
+    public string CurrentTargetInfo
+    {
+        get
+        {
+            switch (_state)
+            {
+                case State.Wander:
+                    return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length 
+                        ? $"Punto {_patrolIndex}: {patrolPoints[_patrolIndex].position}" 
+                        : "Sin puntos";
+                case State.Chase:
+                    return "Jugador";
+                case State.Attack:
+                    return "Atacando";
+                case State.Stunned:
+                    return "Aturdido";
+                case State.Investigate:
+                    return _reachedInvestigation ? "Esperando en punto" : $"Investigando: {_investigateTarget}";
+                case State.CheckLocker:
+                    return _targetLocker != null ? _targetLocker.name : "Ninguna";
+                default:
+                    return "";
+            }
+        }
+    }
+    public float AgentRemainingDistance => _agent != null && _agent.hasPath ? _agent.remainingDistance : -1f;
+    public float AgentSpeed => _agent != null ? _agent.speed : 0f;
 }
