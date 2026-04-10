@@ -241,11 +241,6 @@ public class CiegoBehaviour : MonoBehaviour
         }
     }
 
-    public void Perseguir()
-    {
-        
-    }
-
     void OnDrawGizmos()
     {
         Gizmos.color = Color.red;

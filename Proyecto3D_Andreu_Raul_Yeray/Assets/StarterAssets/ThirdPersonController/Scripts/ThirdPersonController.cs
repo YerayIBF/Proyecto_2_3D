@@ -389,7 +389,7 @@ namespace StarterAssets
             //Si esta corriendo con esprint, emite un sonido cada 0.5 segundos
             if (Time.time >= soundCooldown && _input.sprint)
             {
-                EmitirSonido.instance.EmitirRuido(transform.position, 15f);
+                EmitirSonido.instance.EmitirRuido(transform.position, 10f);
                 soundCooldown = Time.time + soundCooldownTime;
             }
         }
