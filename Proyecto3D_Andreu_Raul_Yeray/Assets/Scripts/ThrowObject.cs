@@ -28,10 +28,19 @@ public class ThrowObject : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-         if (!lanzado || lanzadoTimer < delayDeteccion) return;
+        if (!lanzado || lanzadoTimer < delayDeteccion) return;
 
         EmitirSonido.instance.EmitirRuido(transform.position, 15f);
         Debug.Log("Objeto aterrizó, sonido emitido");
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        rb.linearDamping = 5f;
+        rb.angularDamping = 5f;
+
+        if (rb.linearVelocity.magnitude > 10f)
+        {
+            rb.linearVelocity *= 0.5f;
+        }
         lanzado = false; 
     }
 }
