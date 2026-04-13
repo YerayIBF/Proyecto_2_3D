@@ -49,7 +49,7 @@ public class CiegoBehaviour : MonoBehaviour
             else
             {
                 aturdido = true;
-                //animator.SetInteger("state", 3);
+                Aturdido();
             }
         }
         else
@@ -239,6 +239,12 @@ public class CiegoBehaviour : MonoBehaviour
                 waitTimer = 0;
             }
         }
+    }
+
+    public void Aturdido()
+    {
+        //animator.SetInteger("state", 3);
+        Debug.Log("Aturdido");
     }
 
     void OnDrawGizmos()
