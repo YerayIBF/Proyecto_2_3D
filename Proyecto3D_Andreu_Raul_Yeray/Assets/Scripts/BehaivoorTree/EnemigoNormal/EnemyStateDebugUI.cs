@@ -64,7 +64,7 @@ public class EnemyDebugUI : MonoBehaviour
         string stunnedText = stunned ? "<color=orange>SÍ</color>" : "<color=white>No</color>";
         string lockerText = knownLocker ? $"<color=cyan>{enemyBT._knownLockerWithPlayer?.name}</color>" : "<color=white>Ninguna</color>";
 
-        _text.text = $"<b>🤖 Estado Enemigo</b>\n" +
+        _text.text = $"<b> Estado Enemigo</b>\n" +
                      $"Estado: <color={stateColor}>{state}</color>\n" +
                      $"Distancia: {dist:F2} m\n" +
                      $"Ve al jugador: <color={seesColor}>{(seesPlayer ? "Sí" : "No")}</color>\n" +
