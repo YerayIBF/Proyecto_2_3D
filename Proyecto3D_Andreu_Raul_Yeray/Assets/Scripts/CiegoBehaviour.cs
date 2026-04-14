@@ -18,7 +18,8 @@ public class CiegoBehaviour : MonoBehaviour
     public float areaAtaque = 2f;
 
     private Animator animator;
-    private NavMeshAgent agent;
+    [HideInInspector]
+    public NavMeshAgent agent;
 
     public float investigarTimer = 10f;
     public float aturdidoTimer = 5f;
@@ -44,11 +45,11 @@ public class CiegoBehaviour : MonoBehaviour
             if (aturdidoTimer <= 0f)
             {
                 aturdido = false;
+                agent.isStopped = false;
                 Patrullar();
             }
             else
             {
-                aturdido = true;
                 Aturdido();
             }
         }
@@ -218,6 +219,11 @@ public class CiegoBehaviour : MonoBehaviour
     {
         atacando = false;
         patrullar = true;
+        if (agent.isStopped)
+        {
+            return;
+        }
+        
         //animator.SetInteger("state", 1);
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {
@@ -244,6 +250,8 @@ public class CiegoBehaviour : MonoBehaviour
     public void Aturdido()
     {
         //animator.SetInteger("state", 3);
+        patrullar = false;
+        sonidos.Clear();
         Debug.Log("Aturdido");
     }
 

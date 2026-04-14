@@ -35,12 +35,15 @@ public class Megafono : MonoBehaviour
         Debug.Log("megafono desactivado");
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("EnemyBlind"))
         {
             CiegoBehaviour enemigo = other.GetComponent<CiegoBehaviour>();
             enemigo.aturdido = true;
+            enemigo.aturdidoTimer = 5f;
+            enemigo.agent.isStopped = true;
+
             Debug.Log("He tocado al ciego con el megafono");
         }
     }

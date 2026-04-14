@@ -39,7 +39,7 @@ public class CogerObjeto : MonoBehaviour
             if (Input.GetMouseButton(1))
             {
                 throwForce += 10f * Time.deltaTime;
-                throwForce = Mathf.Clamp(throwForce, 5f, 20f);
+                throwForce = Mathf.Clamp(throwForce, 5f, 30f);
 
                 lineRenderer.enabled = true;
                 //activar el LineRenderer de trayectoria
@@ -66,7 +66,7 @@ public class CogerObjeto : MonoBehaviour
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        Vector3 direction = handPoint.transform.forward + Vector3.up * 0.3f;
+        Vector3 direction = (handPoint.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 force = direction * throwForce;
         rb.AddForce(force, ForceMode.VelocityChange);
 
@@ -96,7 +96,7 @@ public class CogerObjeto : MonoBehaviour
     void DibujarTrayectoria()
     {
         Vector3 startPoint = handPoint.transform.position;
-        Vector3 direction = handPoint.transform.forward + Vector3.up * 0.3f;
+        Vector3 direction = (handPoint.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 startVelocity = direction * throwForce;
 
         lineRenderer.positionCount = predictionSteps;

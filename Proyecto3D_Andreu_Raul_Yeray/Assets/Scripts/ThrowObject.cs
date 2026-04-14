@@ -34,8 +34,8 @@ public class ThrowObject : MonoBehaviour
         Debug.Log("Objeto aterrizó, sonido emitido");
 
         Rigidbody rb = GetComponent<Rigidbody>();
-        rb.linearDamping = 5f;
-        rb.angularDamping = 5f;
+        rb.linearDamping = 2f;
+        rb.angularDamping = 2f;
 
         if (rb.linearVelocity.magnitude > 10f)
         {
