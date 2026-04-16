@@ -29,11 +29,16 @@ public class CiegoBehaviour : MonoBehaviour
     public float waitTime = 2f;
     private float waitTimer;
     private float timerSonido;
+    private bool ataqueActivado = false;
+    [HideInInspector]
+    public bool stunActivado = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+
+        animator.SetInteger("state", 0);
     }
 
     // Update is called once per frame
@@ -148,6 +153,7 @@ public class CiegoBehaviour : MonoBehaviour
         }
 
         agent.SetDestination(sonidoCercano);
+        animator.SetInteger("state", 2);
 
 
         if (minDistancia <= areaAtaque)
@@ -177,7 +183,12 @@ public class CiegoBehaviour : MonoBehaviour
     public void Atacar()
     {
         atacando = true;
-        //animator.SetTrigger("atacar");
+        if (!ataqueActivado)
+        {
+            animator.SetTrigger("atacar");
+            ataqueActivado = true;
+        }
+
         Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
         foreach (Collider col in rango){
             if (col.CompareTag("Player"))
@@ -209,7 +220,7 @@ public class CiegoBehaviour : MonoBehaviour
             {
                 sonidos.Remove(sonidoCercano);
                 sonidoDetectado = sonidos.Count > 0;
-
+                ataqueActivado = false;
                 timerSonido = 0;
             }
         }
@@ -218,15 +229,17 @@ public class CiegoBehaviour : MonoBehaviour
     public void Patrullar()
     {
         atacando = false;
+        ataqueActivado = false;
         patrullar = true;
         if (agent.isStopped)
         {
             return;
         }
         
-        //animator.SetInteger("state", 1);
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {
+            animator.SetInteger("state", 0);
+            
             waitTimer += Time.deltaTime;
             if (waitTimer >= waitTime)
             {
@@ -241,6 +254,7 @@ public class CiegoBehaviour : MonoBehaviour
 
                 puntoActual = nextPoint;
                 agent.SetDestination(patrolPoints[puntoActual].position);
+                animator.SetInteger("state", 1);
 
                 waitTimer = 0;
             }
@@ -249,7 +263,12 @@ public class CiegoBehaviour : MonoBehaviour
 
     public void Aturdido()
     {
-        //animator.SetInteger("state", 3);
+        if (!stunActivado)
+        {
+            animator.SetTrigger("stun");
+            stunActivado = true;
+        }
+
         patrullar = false;
         sonidos.Clear();
         Debug.Log("Aturdido");

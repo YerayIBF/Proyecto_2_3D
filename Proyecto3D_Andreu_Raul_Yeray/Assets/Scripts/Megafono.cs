@@ -41,6 +41,7 @@ public class Megafono : MonoBehaviour
         {
             CiegoBehaviour enemigo = other.GetComponent<CiegoBehaviour>();
             enemigo.aturdido = true;
+            enemigo.stunActivado = false;
             enemigo.aturdidoTimer = 5f;
             enemigo.agent.isStopped = true;
 
