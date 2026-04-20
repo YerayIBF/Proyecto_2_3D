@@ -17,7 +17,7 @@ public class CiegoBehaviour : MonoBehaviour
     public float areaEscucha = 15f;
     public float areaAtaque = 2f;
 
-    private Animator animator;
+    public Animator animator;
     [HideInInspector]
     public NavMeshAgent agent;
 
@@ -36,7 +36,7 @@ public class CiegoBehaviour : MonoBehaviour
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
+        //animator = GetComponent<Animator>();
 
         animator.SetInteger("state", 0);
     }
@@ -51,6 +51,7 @@ public class CiegoBehaviour : MonoBehaviour
             {
                 aturdido = false;
                 agent.isStopped = false;
+                animator.SetBool("isStun", false);
                 Patrullar();
             }
             else
@@ -265,7 +266,8 @@ public class CiegoBehaviour : MonoBehaviour
     {
         if (!stunActivado)
         {
-            animator.SetTrigger("stun");
+            //animator.SetTrigger("stun");
+            animator.SetBool("isStun", true);
             stunActivado = true;
         }
 
