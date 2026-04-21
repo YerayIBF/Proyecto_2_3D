@@ -32,6 +32,9 @@ public class CiegoBehaviour : MonoBehaviour
     private bool ataqueActivado = false;
     [HideInInspector]
     public bool stunActivado = false;
+    private CiegoPatrol patrullajeScript;
+
+    public ParticleSystem stunEffect;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -39,6 +42,8 @@ public class CiegoBehaviour : MonoBehaviour
         //animator = GetComponent<Animator>();
 
         animator.SetInteger("state", 0);
+        patrullajeScript = GetComponent<CiegoPatrol>();
+        stunEffect.Stop();
     }
 
     // Update is called once per frame
@@ -50,12 +55,17 @@ public class CiegoBehaviour : MonoBehaviour
             if (aturdidoTimer <= 0f)
             {
                 aturdido = false;
+                stunActivado = false;
+
                 agent.isStopped = false;
                 animator.SetBool("isStun", false);
+
+                stunEffect.Stop();
                 Patrullar();
             }
             else
             {
+                DetenerPatrullaje();
                 Aturdido();
             }
         }
@@ -65,6 +75,7 @@ public class CiegoBehaviour : MonoBehaviour
             {
                 if (SonidoCercano())
                 {
+                    DetenerPatrullaje();
                     Atacar();
                 }
                 else
@@ -79,6 +90,7 @@ public class CiegoBehaviour : MonoBehaviour
                         }
                         else
                         {
+                            DetenerPatrullaje();
                             PerseguirSonido();
                         }
                     }
@@ -100,6 +112,7 @@ public class CiegoBehaviour : MonoBehaviour
                     }
                     else
                     {
+                        DetenerPatrullaje();
                         PerseguirSonido();
                     }
                 }
@@ -232,7 +245,7 @@ public class CiegoBehaviour : MonoBehaviour
         atacando = false;
         ataqueActivado = false;
         patrullar = true;
-        if (agent.isStopped)
+        /*if (agent.isStopped)
         {
             return;
         }
@@ -259,7 +272,31 @@ public class CiegoBehaviour : MonoBehaviour
 
                 waitTimer = 0;
             }
+        }*/
+
+        patrullajeScript.ActivarPatrullaje();
+        float speed = agent.velocity.magnitude;
+        bool isMoving = speed > 0.1f && agent.remainingDistance > 0.5f;
+        if (isMoving)
+        {
+            animator.SetInteger("state", 1);
         }
+        else
+        {
+            animator.SetInteger("state", 0);
+        }
+
+        if (agent.velocity.magnitude > 0.1f)
+        {
+            Vector3 direccionMovimiento = agent.velocity.normalized;
+            Quaternion rotacionObjetivo = Quaternion.LookRotation(direccionMovimiento);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotacionObjetivo, Time.deltaTime * 5f);
+        }
+    }
+
+    public void DetenerPatrullaje()
+    {
+        patrullajeScript.DesactivarPatrullaje();
     }
 
     public void Aturdido()
@@ -269,6 +306,7 @@ public class CiegoBehaviour : MonoBehaviour
             //animator.SetTrigger("stun");
             animator.SetBool("isStun", true);
             stunActivado = true;
+            stunEffect.Play();
         }
 
         patrullar = false;

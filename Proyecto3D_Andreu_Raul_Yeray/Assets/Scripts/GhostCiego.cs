@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class GhostCiego : MonoBehaviour
 {
-    private Animator animator;
     public Transform[] patrolPoints;
     private UnityEngine.AI.NavMeshAgent agent;
     private int currentPoint;
@@ -12,7 +11,6 @@ public class GhostCiego : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        animator = GetComponent<Animator>();
         agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
         GetComponent<MeshRenderer>().enabled = false;
         if (patrolPoints.Length > 0)
