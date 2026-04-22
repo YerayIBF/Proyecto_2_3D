@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections.Generic;
+using System.Collections;
 
 public class CiegoBehaviour : MonoBehaviour
 {
@@ -32,9 +33,14 @@ public class CiegoBehaviour : MonoBehaviour
     private bool ataqueActivado = false;
     [HideInInspector]
     public bool stunActivado = false;
+
+    private float ataqueTimer = 0f;
+    private float duracionAtaque = 3f;
+    private float dañoTimer = 0f;
     private CiegoPatrol patrullajeScript;
 
     public ParticleSystem stunEffect;
+    public ParticleSystem attackEffect;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -44,11 +50,19 @@ public class CiegoBehaviour : MonoBehaviour
         animator.SetInteger("state", 0);
         patrullajeScript = GetComponent<CiegoPatrol>();
         stunEffect.Stop();
+        attackEffect.Stop();
     }
 
     // Update is called once per frame
     void Update()
     {
+
+        if (atacando)
+        {
+            DañoAtaque();
+            return;
+        }
+
         if (aturdido)
         {
             aturdidoTimer -= Time.deltaTime;
@@ -194,6 +208,56 @@ public class CiegoBehaviour : MonoBehaviour
         return false;
     }
 
+
+    //Funcion que activa el daño de ataque hacia el jugador mientras atacando sea true    
+    public void DañoAtaque()
+    {
+        dañoTimer += Time.deltaTime;
+
+        if (dañoTimer >= 0.5f)
+        {
+            dañoTimer = 0f;
+
+            Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
+            foreach (Collider col in rango){
+                if (col.CompareTag("Player"))
+                {
+                    //Atacar al jugador, funcion script jugador take damage
+                    Debug.Log("Estoy recibiendo daño");
+                }
+            }
+        }
+    }
+
+    //Particulas efecto ataque en area 
+    public void ActivarParticulasAtaque()
+    {
+        if (attackEffect != null)
+        {
+            attackEffect.Play();
+        }
+    }
+
+    //Funcion llamada al finalizar la animacion de ataque para poder tener control sobre tiempo de ataque y la vuelta a patrullar
+    public void FinAtaque()
+    {
+        agent.isStopped = true;
+        animator.SetInteger("state", 0);
+
+        StartCoroutine(EsperarAtaque());
+    }
+
+    IEnumerator EsperarAtaque()
+    {
+        yield return new WaitForSeconds(duracionAtaque);
+
+        atacando = false;
+        ataqueActivado = false;
+        agent.isStopped = false;
+
+        Patrullar();
+    }
+
     public void Atacar()
     {
         atacando = true;
@@ -203,14 +267,14 @@ public class CiegoBehaviour : MonoBehaviour
             ataqueActivado = true;
         }
 
-        Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
+        /*Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
         foreach (Collider col in rango){
             if (col.CompareTag("Player"))
             {
                 //Atacar al jugador
-                Debug.Log("Atacando al jugador");
+                Debug.Log("Estoy recibiendo daño");
             }
-        }
+        }*/
 
         //Eliminar sonido mas cercano para evitar entrar en bucle
         if (sonidos.Count > 0)
@@ -229,50 +293,25 @@ public class CiegoBehaviour : MonoBehaviour
                 }
             }
 
-            timerSonido += Time.deltaTime;
-            if (timerSonido >= 2f)
-            {
+            //timerSonido += Time.deltaTime;
+            //if (timerSonido >= 2f)
+            //{
                 sonidos.Remove(sonidoCercano);
                 sonidoDetectado = sonidos.Count > 0;
                 ataqueActivado = false;
-                timerSonido = 0;
-            }
+                //timerSonido = 0;
+            //}
         }
     }  
 
     public void Patrullar()
     {
-        atacando = false;
-        ataqueActivado = false;
-        patrullar = true;
-        /*if (agent.isStopped)
+        if (atacando && ataqueActivado)
         {
             return;
         }
-        
-        if (!agent.pathPending && agent.remainingDistance < 0.5f)
-        {
-            animator.SetInteger("state", 0);
-            
-            waitTimer += Time.deltaTime;
-            if (waitTimer >= waitTime)
-            {
-                if (patrolPoints.Length == 0)
-                return;
 
-                int nextPoint;
-                do
-                {
-                    nextPoint = Random.Range(0, patrolPoints.Length);
-                } while (nextPoint == puntoActual && patrolPoints.Length > 1);
-
-                puntoActual = nextPoint;
-                agent.SetDestination(patrolPoints[puntoActual].position);
-                animator.SetInteger("state", 1);
-
-                waitTimer = 0;
-            }
-        }*/
+        patrullar = true;
 
         patrullajeScript.ActivarPatrullaje();
         float speed = agent.velocity.magnitude;
