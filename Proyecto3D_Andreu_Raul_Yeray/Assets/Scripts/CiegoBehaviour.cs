@@ -50,7 +50,7 @@ public class CiegoBehaviour : MonoBehaviour
         animator.SetInteger("state", 0);
         patrullajeScript = GetComponent<CiegoPatrol>();
         stunEffect.Stop();
-        attackEffect.Stop();
+        attackEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     // Update is called once per frame
@@ -234,7 +234,7 @@ public class CiegoBehaviour : MonoBehaviour
     {
         if (attackEffect != null)
         {
-            attackEffect.Play();
+            attackEffect.Play(true);
         }
     }
 
