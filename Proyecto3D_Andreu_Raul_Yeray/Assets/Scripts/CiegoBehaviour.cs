@@ -160,10 +160,12 @@ public class CiegoBehaviour : MonoBehaviour
     public void PerseguirSonido()
     {
         patrullar = false;
+        perseguir = true;
 
         if (sonidos.Count == 0)
         {
             investigando = false;
+            perseguir = false;
             return;
         }
 
@@ -180,12 +182,15 @@ public class CiegoBehaviour : MonoBehaviour
             }
         }
 
-        agent.SetDestination(sonidoCercano);
+        //agent.SetDestination(sonidoCercano);
+        patrullajeScript.ActivarPersecución(sonidoCercano);
         animator.SetInteger("state", 2);
 
 
         if (minDistancia <= areaAtaque)
         {
+            perseguir = false;
+            patrullajeScript.DesactivarPatrullaje();
             Atacar();
         }
     }
@@ -253,6 +258,7 @@ public class CiegoBehaviour : MonoBehaviour
 
         atacando = false;
         ataqueActivado = false;
+        perseguir = false;
         agent.isStopped = false;
 
         Patrullar();
@@ -307,6 +313,11 @@ public class CiegoBehaviour : MonoBehaviour
     public void Patrullar()
     {
         if (atacando && ataqueActivado)
+        {
+            return;
+        }
+
+        if (perseguir)
         {
             return;
         }

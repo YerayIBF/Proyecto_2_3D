@@ -8,6 +8,8 @@ public class GhostCiego : MonoBehaviour
 
     public float waitTime = 2f;
     private float waitTimer;
+    public bool estaPersiguiendo = false;
+    public bool estaEsperando = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -24,13 +26,20 @@ public class GhostCiego : MonoBehaviour
     void Update()
     {
 
+        if (estaPersiguiendo)
+        {
+            return;
+        }
+
         if (!agent.pathPending && agent.remainingDistance < 0.5f)
         {
+            estaEsperando = true;
             waitTimer += Time.deltaTime;
             if (waitTimer >= waitTime)
             {
                 GoToNextPoint();
                 waitTimer = 0;
+                estaEsperando = false;
             }
         }
     }
@@ -52,5 +61,18 @@ public class GhostCiego : MonoBehaviour
 
     public void Detener(){
         agent.ResetPath();
+    }
+
+    public void IrAlSonido(Vector3 destino)
+    {
+        estaPersiguiendo = true;
+        waitTimer = 0f;
+        agent.SetDestination(destino); 
+    }
+
+    public void ReanudarPatrullaje()
+    {
+        estaPersiguiendo = false;
+        GoToNextPoint();
     }
 }
