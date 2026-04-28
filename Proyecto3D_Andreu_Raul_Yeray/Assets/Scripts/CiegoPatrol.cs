@@ -46,8 +46,8 @@ public class CiegoPatrol : MonoBehaviour
 
     public void DesactivarPatrullaje(){
         enabled = false;
-        agent.speed = 1.5f;
-        ghostAgent.speed = 1f;
+        agent.speed = 1f;
+        ghostAgent.speed = 0.5f;
 
         agent.GetComponent<Animator>().speed = 1f;
         agent.ResetPath();
@@ -57,10 +57,10 @@ public class CiegoPatrol : MonoBehaviour
     public void ActivarPersecución(Vector3 destino)
     {
         enabled = true;
-        agent.speed = 2.5f;
-        ghostAgent.speed = 2f;
+        agent.speed = 2f;
+        ghostAgent.speed = 2.5f;
 
-        agent.GetComponent<Animator>().speed = 1.5f;
+        agent.GetComponent<Animator>().speed = 2f;
         ghostScript.IrAlSonido(destino);
         agent.SetDestination(ghost.transform.position);
     }

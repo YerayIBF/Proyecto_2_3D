@@ -5822,7 +5822,7 @@ Transform:
   m_GameObject: {fileID: 859197649}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 1.74, z: 0}
+  m_LocalPosition: {x: 0, y: 1.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6265,7 +6265,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 1.5
+  m_Speed: 1
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -6531,7 +6531,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 1
+  m_Speed: 0.5
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -6560,6 +6560,8 @@ MonoBehaviour:
   - {fileID: 1361178788}
   - {fileID: 1871586319}
   waitTime: 2
+  estaPersiguiendo: 0
+  estaEsperando: 0
 --- !u!1 &1148187037 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5403032428067713898, guid: 64dce48905ffd9b4293e595fa6941544, type: 3}
@@ -7748,7 +7750,7 @@ PrefabInstance:
       objectReference: {fileID: 9100000, guid: 7db1893b8e604954e9727d2960d3700b, type: 2}
     - target: {fileID: 5866666021909216657, guid: 73bcc595955bf584793d278b9bc9937d, type: 3}
       propertyPath: m_ApplyRootMotion
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6240733294840144465, guid: 73bcc595955bf584793d278b9bc9937d, type: 3}
       propertyPath: m_Layer
