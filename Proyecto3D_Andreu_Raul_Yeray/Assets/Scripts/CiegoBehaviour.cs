@@ -185,6 +185,12 @@ public class CiegoBehaviour : MonoBehaviour
         //agent.SetDestination(sonidoCercano);
         patrullajeScript.ActivarPersecución(sonidoCercano);
         animator.SetInteger("state", 2);
+        if (agent.velocity.magnitude > 0.1f)
+        {
+            Vector3 direccionMovimiento = agent.velocity.normalized;
+            Quaternion rotacionObjetivo = Quaternion.LookRotation(direccionMovimiento);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotacionObjetivo, Time.deltaTime * 5f);
+        }
 
 
         if (minDistancia <= areaAtaque)
