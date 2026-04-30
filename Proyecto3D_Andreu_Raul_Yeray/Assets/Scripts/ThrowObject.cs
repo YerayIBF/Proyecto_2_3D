@@ -5,6 +5,8 @@ public class ThrowObject : MonoBehaviour
     private bool lanzado = false;
     private float lanzadoTimer = 0f;
     public float delayDeteccion = 0.2f;
+
+    public GameObject icono;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -42,5 +44,13 @@ public class ThrowObject : MonoBehaviour
             rb.linearVelocity *= 0.5f;
         }
         lanzado = false; 
+    }
+
+    public void MostrarIcono(bool estado)
+    {
+        if (icono != null)
+        {
+            icono.SetActive(estado);
+        }
     }
 }

@@ -9,6 +9,7 @@ TagManager:
   - objetoCogible
   - EnemyBlind
   - ghost
+  - PilaMegafono
   layers:
   - Default
   - TransparentFX

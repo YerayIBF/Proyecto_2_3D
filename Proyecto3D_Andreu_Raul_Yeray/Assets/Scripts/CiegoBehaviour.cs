@@ -146,10 +146,12 @@ public class CiegoBehaviour : MonoBehaviour
 
     public void DetectarSonido(Vector3 posicionSonido)
     {
-        if (sonidos.Count >= 3)
+        /*if (sonidos.Count >= 3)
         {
             sonidos.RemoveAt(0);
-        }
+        }*/
+
+        sonidos.Clear();
 
         sonidos.Add(posicionSonido);
         sonidoDetectado = true;

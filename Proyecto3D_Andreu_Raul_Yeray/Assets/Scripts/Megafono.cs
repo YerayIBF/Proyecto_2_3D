@@ -3,6 +3,9 @@ using UnityEngine;
 public class Megafono : MonoBehaviour
 {
     public SphereCollider sonidoGolpe;
+    public float energiaActual = 100f;
+    public float maxEnergia = 100f;
+    public float coste = 25f;
     private GameObject enemigoCiego;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -15,7 +18,7 @@ public class Megafono : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.M))
+        if (Input.GetKeyDown(KeyCode.M) && energiaActual >= coste)
         {
             ActivarMegafono();
         }
@@ -23,6 +26,8 @@ public class Megafono : MonoBehaviour
 
     public void ActivarMegafono()
     {
+        energiaActual -= coste;
+
         sonidoGolpe.enabled = true;
         Debug.Log("megafono activado");
 
@@ -33,6 +38,15 @@ public class Megafono : MonoBehaviour
     {
         sonidoGolpe.enabled = false;
         Debug.Log("megafono desactivado");
+    }
+
+
+    //Funcion que se llamara desde el script de la pila
+    public void RecargarEnergia(float cantidad)
+    {
+        energiaActual += cantidad;
+
+        energiaActual = Mathf.Clamp(energiaActual, 0, maxEnergia);
     }
 
     private void OnTriggerEnter(Collider other)

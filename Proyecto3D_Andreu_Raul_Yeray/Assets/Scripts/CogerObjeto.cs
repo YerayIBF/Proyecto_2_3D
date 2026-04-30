@@ -84,12 +84,36 @@ public class CogerObjeto : MonoBehaviour
         if (other.gameObject.CompareTag("objetoCogible"))
         {
             if (Input.GetKeyDown(KeyCode.E) && objetoCogido == null){
+                other.GetComponent<ThrowObject>().MostrarIcono(false);
                 other.GetComponent<Rigidbody>().useGravity = false;
                 other.GetComponent<Rigidbody>().isKinematic = true;
                 other.transform.position = handPoint.transform.position;
                 other.gameObject.transform.SetParent(handPoint.gameObject.transform);
                 objetoCogido = other.gameObject;
             }
+        }else if (other.gameObject.CompareTag("PilaMegafono"))
+        {
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                other.GetComponent<PilaMegafono>().Recargar();
+                Destroy(other.gameObject);
+            }
+        }
+    }
+
+    private void OnTriggerEnter(Collider other) 
+    {
+        if (objetoCogido == null && other.CompareTag("objetoCogible"))
+        {
+            other.GetComponent<ThrowObject>().MostrarIcono(true);
+        }
+    }
+
+    private void OnTriggerExit(Collider other) 
+    {
+        if (objetoCogido == null && other.CompareTag("objetoCogible"))
+        {
+            other.GetComponent<ThrowObject>().MostrarIcono(false);
         }
     }
 
