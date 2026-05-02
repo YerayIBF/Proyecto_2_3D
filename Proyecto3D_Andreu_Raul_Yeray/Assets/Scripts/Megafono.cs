@@ -18,7 +18,7 @@ public class Megafono : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.M) && energiaActual >= coste)
+        if (Input.GetKeyDown(KeyCode.M) && energiaActual >= coste && GameManager.instance.tieneMegafono)
         {
             ActivarMegafono();
         }

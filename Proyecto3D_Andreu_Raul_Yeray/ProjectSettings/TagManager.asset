@@ -10,6 +10,7 @@ TagManager:
   - EnemyBlind
   - ghost
   - PilaMegafono
+  - Megafono
   layers:
   - Default
   - TransparentFX

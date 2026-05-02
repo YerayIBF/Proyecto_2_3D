@@ -98,6 +98,18 @@ public class CogerObjeto : MonoBehaviour
                 other.GetComponent<PilaMegafono>().Recargar();
                 Destroy(other.gameObject);
             }
+        }else if (other.gameObject.CompareTag("Megafono"))
+        {
+            if (Input.GetKeyDown(KeyCode.E) && objetoCogido == null)
+            {
+                other.GetComponent<Rigidbody>().useGravity = false;
+                other.GetComponent<Rigidbody>().isKinematic = true;
+                other.transform.position = handPoint.transform.position;
+                other.gameObject.transform.SetParent(handPoint.gameObject.transform);
+                objetoCogido = other.gameObject;
+
+                GameManager.instance.RecogerMegafono();
+            }
         }
     }
 
