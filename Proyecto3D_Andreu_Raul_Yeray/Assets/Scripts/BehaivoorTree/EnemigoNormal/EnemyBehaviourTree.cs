@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-[RequireComponent(typeof(NoiseSensor))]
+
 public class EnemyBehaviourTree : MonoBehaviour
 {
     // ─── Referencias ─────────────────────────────────────────────────────────
@@ -48,7 +48,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     // ─── Componentes ─────────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
-    private NoiseSensor  _sensor;
+    
     // private Animator  _anim;
 
     // ─── Estado principal ─────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void Awake()
     {
         _agent  = GetComponent<NavMeshAgent>();
-        _sensor = GetComponent<NoiseSensor>();
+        
     }
 
     private void Start()
@@ -152,12 +152,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
 
         // 4. Oyó ruido y no está investigando → Investigate
-        if (_sensor.HeardNoise && _state != State.Investigate)
-        {
-            StartInvestigation(_sensor.NoisePosition);
-            _sensor.AcknowledgeNoise();
-            return;
-        }
+        
 
         // 5. Sin estímulos y no está en medio de algo → Wander
         if (_state != State.Investigate && _state != State.CheckLocker)
