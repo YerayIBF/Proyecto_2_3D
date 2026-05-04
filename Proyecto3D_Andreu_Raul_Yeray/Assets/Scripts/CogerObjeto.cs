@@ -10,11 +10,13 @@ public class CogerObjeto : MonoBehaviour
     public LineRenderer lineRenderer;
     public int predictionSteps = 30;
     public float timeStep = 0.1f;
+    private Transform objetoInteractuable;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         cam = Camera.main;
         lineRenderer.enabled = false;
+        objetoInteractuable = GameObject.FindGameObjectWithTag("objetoCogible").transform;
     }
 
     // Update is called once per frame
@@ -30,6 +32,8 @@ public class CogerObjeto : MonoBehaviour
 
                 objetoCogido.gameObject.transform.SetParent(null);
                 objetoCogido = null;
+
+                GameManager.instance.tieneMegafono = false;
             }
         }
 
@@ -55,6 +59,15 @@ public class CogerObjeto : MonoBehaviour
             {
                 LanzarObjeto();
             }
+        }
+
+        if (objetoCogido == null && Vector3.Distance(transform.position, objetoInteractuable.position) < 2f)
+        {
+            objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(true);
+        }
+        else
+        {
+            objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(false);
         }
         
     }
@@ -104,8 +117,10 @@ public class CogerObjeto : MonoBehaviour
             {
                 other.GetComponent<Rigidbody>().useGravity = false;
                 other.GetComponent<Rigidbody>().isKinematic = true;
-                other.transform.position = handPoint.transform.position;
+                Transform handlePoint = other.transform.Find("HandlePoint");
                 other.gameObject.transform.SetParent(handPoint.gameObject.transform);
+                other.transform.localPosition = -handlePoint.localPosition;
+                other.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
                 objetoCogido = other.gameObject;
 
                 GameManager.instance.RecogerMegafono();
@@ -113,7 +128,7 @@ public class CogerObjeto : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other) 
+    /*private void OnTriggerEnter(Collider other) 
     {
         if (objetoCogido == null && other.CompareTag("objetoCogible"))
         {
@@ -127,7 +142,7 @@ public class CogerObjeto : MonoBehaviour
         {
             other.GetComponent<ThrowObject>().MostrarIcono(false);
         }
-    }
+    }*/
 
     void DibujarTrayectoria()
     {

@@ -2,15 +2,31 @@ using UnityEngine;
 
 public class ThrowObject : MonoBehaviour
 {
+    private Transform player;
     private bool lanzado = false;
     private float lanzadoTimer = 0f;
     public float delayDeteccion = 0.2f;
 
     public GameObject icono;
+
+    private Renderer renderer;
+    private Material materialOutline;
+    [SerializeField] private string propiedadSize = "_OutlineSize";
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        renderer = GetComponent<Renderer>();
+        player = GameObject.FindGameObjectWithTag("Player").transform;
+
+        Material[] materials = renderer.materials;
+        if (materials.Length > 1)
+        {
+            materialOutline = materials[1];
+        }
+        else
+        {
+            Debug.Log("Este objeto no tiene el material outline");
+        }
     }
 
     // Update is called once per frame
@@ -19,6 +35,17 @@ public class ThrowObject : MonoBehaviour
         if (lanzado)
         {
             lanzadoTimer += Time.deltaTime;
+        }
+
+        float distancia = Vector3.Distance(transform.position, player.position);
+
+        if (distancia < 4f && materialOutline != null)
+        {
+            materialOutline.SetFloat(propiedadSize, 1.1f);
+        }
+        else
+        {
+            materialOutline.SetFloat(propiedadSize, 0f);
         }
     }
 
