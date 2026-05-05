@@ -27,6 +27,7 @@ public class Megafono : MonoBehaviour
     public void ActivarMegafono()
     {
         energiaActual -= coste;
+        GameManager.instance.ActualizarEnergia(energiaActual, maxEnergia);
 
         sonidoGolpe.enabled = true;
         Debug.Log("megafono activado");
@@ -47,6 +48,7 @@ public class Megafono : MonoBehaviour
         energiaActual += cantidad;
 
         energiaActual = Mathf.Clamp(energiaActual, 0, maxEnergia);
+        GameManager.instance.ActualizarEnergia(energiaActual, maxEnergia);
     }
 
     private void OnTriggerEnter(Collider other)

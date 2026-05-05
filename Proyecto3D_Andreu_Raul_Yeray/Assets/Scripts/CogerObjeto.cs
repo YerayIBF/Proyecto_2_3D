@@ -39,25 +39,43 @@ public class CogerObjeto : MonoBehaviour
 
         if (objetoCogido != null)
         {
-            //Lanzar al pulsar el botón izquierdo del ratón
-            if (Input.GetMouseButton(1))
+            if (GameManager.instance.tieneMegafono)
             {
-                throwForce += 10f * Time.deltaTime;
-                throwForce = Mathf.Clamp(throwForce, 5f, 30f);
+                if (Input.GetMouseButton(1))
+                {
+                    Debug.Log("Apuntando con el megafono");
+                    GameManager.instance.MostrarCanvasMegafono(true);
+                }
+                else
+                {
+                    //se quita la animacion de apuntar
+                    GameManager.instance.MostrarCanvasMegafono(false);
+                }
 
-                lineRenderer.enabled = true;
-                //activar el LineRenderer de trayectoria
-                DibujarTrayectoria();
+                lineRenderer.enabled = false;
             }
             else
             {
-                lineRenderer.enabled = false;
-                throwForce = 10f;
-            }
-            
-            if (Input.GetMouseButtonDown(0))
-            {
-                LanzarObjeto();
+                //Lanzar al pulsar el botón izquierdo del ratón
+                if (Input.GetMouseButton(1))
+                {
+                    throwForce += 10f * Time.deltaTime;
+                    throwForce = Mathf.Clamp(throwForce, 5f, 30f);
+
+                    lineRenderer.enabled = true;
+                    //activar el LineRenderer de trayectoria
+                    DibujarTrayectoria();
+                }
+                else
+                {
+                    lineRenderer.enabled = false;
+                    throwForce = 10f;
+                }
+                
+                if (Input.GetMouseButtonDown(0))
+                {
+                    LanzarObjeto();
+                }
             }
         }
 
