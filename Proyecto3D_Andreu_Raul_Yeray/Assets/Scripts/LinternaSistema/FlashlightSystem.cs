@@ -1,48 +1,54 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
-/// Sistema de linterna con dos modos:
-///   NORMAL  → luz amplia, brazo estático, ilumina hacia adelante
-///   AIMING  → luz estrecha e intensa, brazo sigue al ratón (gestionado por FlashlightAiming)
+/// Sistema de linterna v4.
 ///
-/// Coloca en el mismo GameObject que la Spot Light (hijo de RightHand).
+/// Mejoras:
+/// - Parpadeo natural por patrones (parpadeo-parpadeo-pausa-parpadeo) en lugar de Perlin
+/// - Foco de luz extra al apuntar (Spot Light secundario más estrecho)
+/// - Partículas al apuntar (haz de polvo)
 /// </summary>
 public class FlashlightSystem : MonoBehaviour
 {
     // ─── Referencias ─────────────────────────────────────────────────────────
 
-    [Header("Luz")]
+    [Header("Luz principal")]
     public Light flashlightLight;
     public Camera mainCamera;
 
-    [Header("Modo Normal — luz amplia")]
-    public float normalIntensity  = 1.5f;
-    public float normalSpotAngle  = 80f;
-    public float normalRange      = 12f;
+    [Header("Luz extra al apuntar")]
+    [Tooltip("Spot Light secundaria más estrecha que se activa al apuntar (foco intenso)")]
+    public Light  aimSpotLight;
+    [Tooltip("Sistema de partículas que se activa al apuntar (haz de polvo)")]
+    public ParticleSystem aimParticles;
 
-    [Header("Modo Apuntado — luz estrecha e intensa")]
-    public float aimIntensity     = 8f;
-    public float aimSpotAngle     = 15f;
-    public float aimRange         = 20f;
+    [Header("Modo Normal")]
+    public float normalIntensity = 1.5f;
+    public float normalSpotAngle = 80f;
+    public float normalRange     = 12f;
 
-    [Tooltip("Velocidad de transición entre modos")]
-    public float transitionSpeed  = 8f;
+    [Header("Modo Apuntado")]
+    public float aimIntensity   = 8f;
+    public float aimSpotAngle   = 15f;
+    public float aimRange       = 20f;
+    public float transitionSpeed = 8f;
 
     [Header("Batería")]
-    public float maxBattery       = 120f;
-    public float currentBattery   = 120f;
-    public float drainRate        = 1f;
+    public float maxBattery     = 120f;
+    public float currentBattery = 120f;
+    public float drainRate      = 1f;
 
-    [Header("Intensidad según batería")]
-    [Tooltip("% de batería a partir del cual empieza a bajar la intensidad")]
-    public float dimThreshold     = 0.4f;
+    [Header("Intensidad por batería")]
+    public float dimThreshold = 0.4f;
 
-    [Header("Parpadeo batería baja")]
+    [Header("Parpadeo natural")]
+    [Tooltip("% de batería a partir del cual empieza a parpadear")]
     public float flickerThreshold    = 0.15f;
-    public float flickerSpeed        = 8f;
-    public float flickerMinIntensity = 0.2f;
+    [Tooltip("Intensidad mínima durante el apagón del parpadeo")]
+    public float flickerOffIntensity = 0.05f;
 
-    [Header("Detección de ojos (stun)")]
+    [Header("Detección de ojos")]
     public Collider eyesCollider;
     public int      coneRayCount    = 8;
     public float    coneAngle       = 15f;
@@ -55,20 +61,22 @@ public class FlashlightSystem : MonoBehaviour
 
     // ─── Estado ───────────────────────────────────────────────────────────────
 
-    private bool  _isOn          = false;
-    private bool  _hasFlashlight = true;
-    private bool  _isAiming      = false;
-    private float _flickerTimer  = 0f;
-    private bool  _stunDetected  = false;
+    private bool _isOn          = false;
+    private bool _hasFlashlight = true;
+    private bool _isAiming      = false;
+    private bool _stunDetected  = false;
 
-    // Valores actuales interpolados
     private float _currentIntensity;
     private float _currentSpotAngle;
     private float _currentRange;
 
+    // Parpadeo natural (corutina)
+    private Coroutine _flickerCoroutine = null;
+    private float     _flickerMultiplier = 1f;   // Modifica la intensidad final
+
     private EnemyBehaviourTree _enemyBT;
 
-    // Eventos para HUD y PlayerStateMachine
+    // Eventos
     public System.Action<float> OnBatteryChanged;
     public System.Action<bool>  OnFlashlightToggled;
     public System.Action<bool>  OnAimingChanged;
@@ -77,11 +85,8 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Awake()
     {
-        if (flashlightLight == null)
-            flashlightLight = GetComponentInChildren<Light>();
-
-        if (mainCamera == null)
-            mainCamera = Camera.main;
+        if (flashlightLight == null) flashlightLight = GetComponentInChildren<Light>();
+        if (mainCamera      == null) mainCamera      = Camera.main;
 
         _enemyBT = Object.FindFirstObjectByType<EnemyBehaviourTree>();
 
@@ -90,6 +95,10 @@ public class FlashlightSystem : MonoBehaviour
         _currentRange     = normalRange;
 
         SetLight(false);
+
+        // Asegurar que el foco extra y las partículas empiezan apagados
+        if (aimSpotLight != null) aimSpotLight.enabled = false;
+        if (aimParticles != null) aimParticles.Stop();
     }
 
     // ─── Update ──────────────────────────────────────────────────────────────
@@ -103,7 +112,9 @@ public class FlashlightSystem : MonoBehaviour
         if (_isOn)
         {
             DrainBattery();
+            UpdateFlickerState();
             UpdateLightParameters();
+            UpdateAimEffects();
             DetectEyesStun();
         }
     }
@@ -112,20 +123,17 @@ public class FlashlightSystem : MonoBehaviour
 
     private void HandleInput()
     {
-        // F → encender/apagar
         if (Input.GetKeyDown(KeyCode.F) && currentBattery > 0f)
             ToggleFlashlight();
 
-        // R → recargar (consume batería del PlayerStateMachine)
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (PlayerStateMachine.Instance != null)
                 PlayerStateMachine.Instance.TryReloadFlashlight();
             else
-                Reload(); // Fallback sin PlayerStateMachine
+                Reload();
         }
 
-        // Click derecho → modo apuntado
         bool aimInput = Input.GetMouseButton(1) && _isOn;
         if (aimInput != _isAiming)
         {
@@ -134,34 +142,76 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── Parámetros de luz — transición suave entre modos ────────────────────
+    // ─── Parpadeo natural por patrones ───────────────────────────────────────
+
+    private void UpdateFlickerState()
+    {
+        float pct = currentBattery / maxBattery;
+
+        // Si batería baja → activar parpadeo si no está activo
+        if (pct <= flickerThreshold && _flickerCoroutine == null)
+            _flickerCoroutine = StartCoroutine(FlickerRoutine());
+        // Si batería sube por encima del umbral → detener parpadeo
+        else if (pct > flickerThreshold && _flickerCoroutine != null)
+        {
+            StopCoroutine(_flickerCoroutine);
+            _flickerCoroutine  = null;
+            _flickerMultiplier = 1f;
+        }
+    }
+
+    /// <summary>
+    /// Patrón natural de parpadeo: secuencia de apagones cortos + pausas variables.
+    /// Imita un mal contacto eléctrico.
+    /// </summary>
+    private IEnumerator FlickerRoutine()
+    {
+        while (true)
+        {
+            // Pausa aleatoria entre tandas de parpadeos
+            float pauseBetweenBursts = Random.Range(1.5f, 4f);
+            yield return new WaitForSeconds(pauseBetweenBursts);
+
+            // Una tanda de 2-4 parpadeos rápidos
+            int flickerCount = Random.Range(2, 5);
+            for (int i = 0; i < flickerCount; i++)
+            {
+                // Apagón corto
+                _flickerMultiplier = Random.Range(0.05f, 0.2f);
+                yield return new WaitForSeconds(Random.Range(0.04f, 0.1f));
+
+                // Vuelve a encender
+                _flickerMultiplier = Random.Range(0.7f, 1f);
+                yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
+            }
+
+            // Vuelve al máximo entre tandas
+            _flickerMultiplier = 1f;
+        }
+    }
+
+    // ─── Parámetros de luz ────────────────────────────────────────────────────
 
     private void UpdateLightParameters()
     {
-        float batteryPct = currentBattery / maxBattery;
+        float pct = currentBattery / maxBattery;
 
         // Valores objetivo según modo
         float targetIntensity = _isAiming ? aimIntensity  : normalIntensity;
         float targetAngle     = _isAiming ? aimSpotAngle  : normalSpotAngle;
         float targetRange     = _isAiming ? aimRange      : normalRange;
 
-        // Modificar intensidad según nivel de batería
-        if (batteryPct <= flickerThreshold)
+        // Reducir progresivamente entre dimThreshold y flickerThreshold
+        if (pct <= dimThreshold && pct > flickerThreshold)
         {
-            // Parpadeo
-            _flickerTimer += Time.deltaTime * flickerSpeed;
-            float flicker  = Mathf.PerlinNoise(_flickerTimer, 0f);
-            targetIntensity = Mathf.Lerp(flickerMinIntensity,
-                                         targetIntensity * 0.4f, flicker);
-        }
-        else if (batteryPct <= dimThreshold)
-        {
-            // Reducir progresivamente
-            float t = Mathf.InverseLerp(0f, dimThreshold, batteryPct);
-            targetIntensity = Mathf.Lerp(targetIntensity * 0.2f, targetIntensity, t);
+            float t = Mathf.InverseLerp(flickerThreshold, dimThreshold, pct);
+            targetIntensity *= Mathf.Lerp(0.4f, 1f, t);
         }
 
-        // Interpolar suavemente
+        // Aplicar parpadeo (cuando está activo)
+        targetIntensity *= _flickerMultiplier;
+
+        // Interpolación suave
         _currentIntensity = Mathf.Lerp(_currentIntensity, targetIntensity,
                                         Time.deltaTime * transitionSpeed);
         _currentSpotAngle = Mathf.Lerp(_currentSpotAngle, targetAngle,
@@ -169,10 +219,27 @@ public class FlashlightSystem : MonoBehaviour
         _currentRange     = Mathf.Lerp(_currentRange, targetRange,
                                         Time.deltaTime * transitionSpeed);
 
-        // Aplicar a la luz
-        flashlightLight.intensity  = _currentIntensity;
-        flashlightLight.spotAngle  = _currentSpotAngle;
-        flashlightLight.range      = _currentRange;
+        flashlightLight.intensity = _currentIntensity;
+        flashlightLight.spotAngle = _currentSpotAngle;
+        flashlightLight.range     = _currentRange;
+    }
+
+    // ─── Efectos al apuntar ──────────────────────────────────────────────────
+
+    private void UpdateAimEffects()
+    {
+        // Foco extra
+        if (aimSpotLight != null && aimSpotLight.enabled != _isAiming)
+            aimSpotLight.enabled = _isAiming;
+
+        // Partículas
+        if (aimParticles != null)
+        {
+            if (_isAiming && !aimParticles.isPlaying)
+                aimParticles.Play();
+            else if (!_isAiming && aimParticles.isPlaying)
+                aimParticles.Stop();
+        }
     }
 
     // ─── Batería ─────────────────────────────────────────────────────────────
@@ -196,14 +263,12 @@ public class FlashlightSystem : MonoBehaviour
 
     private void DetectEyesStun()
     {
-        // Solo detecta stun en modo apuntado
         if (!_isAiming || eyesCollider == null || _enemyBT == null) return;
 
-        Ray   ray     = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        bool  hitting = false;
+        Ray  ray     = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        bool hitting = false;
 
-        if (RaycastHitsEyes(ray.origin, ray.direction))
-            hitting = true;
+        if (RaycastHitsEyes(ray.origin, ray.direction)) hitting = true;
 
         if (!hitting)
         {
@@ -271,29 +336,26 @@ public class FlashlightSystem : MonoBehaviour
 
     // ─── Toggle ──────────────────────────────────────────────────────────────
 
-    public void ToggleFlashlight()
-    {
-        SetLight(!_isOn);
-    }
+    public void ToggleFlashlight() => SetLight(!_isOn);
 
     private void SetLight(bool on)
     {
         _isOn = on;
-        if (flashlightLight != null)
-            flashlightLight.enabled = on;
+        if (flashlightLight != null) flashlightLight.enabled = on;
 
-        if (!on) _isAiming = false;
+        if (!on)
+        {
+            _isAiming = false;
+            if (aimSpotLight != null) aimSpotLight.enabled = false;
+            if (aimParticles != null) aimParticles.Stop();
+        }
 
         OnFlashlightToggled?.Invoke(on);
-        CrosshairHUD.Instance?.SetState(on
-            ? CrosshairHUD.CrosshairState.Flashlight
-            : CrosshairHUD.CrosshairState.Normal);
     }
 
     public void PickupFlashlight()
     {
         _hasFlashlight = true;
-        Debug.Log("[Flashlight] Recogida.");
     }
 
     // ─── Propiedades ─────────────────────────────────────────────────────────

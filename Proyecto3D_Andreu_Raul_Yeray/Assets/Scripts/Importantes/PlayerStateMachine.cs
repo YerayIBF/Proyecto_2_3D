@@ -1,10 +1,11 @@
 using UnityEngine;
 using StarterAssets;
-using UnityEngine.InputSystem;
 
 /// <summary>
 /// Máquina de estados central del jugador.
-/// Coordina: movimiento, linterna, taquillas, inventario y muerte.
+/// Gestiona: estados de movimiento, linterna, taquillas, baterías y muerte.
+///
+/// Coloca este script en PlayerArmature.
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -17,14 +18,14 @@ public class PlayerStateMachine : MonoBehaviour
         Idle,
         Walking,
         Running,
-        Aiming,
-        Hiding,
+        Aiming,     // Click derecho — linterna apuntando
+        Hiding,     // Dentro de la taquilla
         Dead
     }
 
     public PlayerState CurrentState { get; private set; } = PlayerState.Idle;
 
-    // ─── Referencias ─────────────────────────────────────────────────────────
+    // ─── Referencias a sistemas ───────────────────────────────────────────────
 
     [Header("Sistemas")]
     public FlashlightSystem flashlightSystem;
@@ -35,10 +36,12 @@ public class PlayerStateMachine : MonoBehaviour
     public StarterAssetsInputs   inputs;
     public CharacterController   characterController;
 
-    // ─── Inventario ──────────────────────────────────────────────────────────
+    // ─── Inventario de baterías ───────────────────────────────────────────────
 
     [Header("Inventario")]
+    [Tooltip("Número de baterías al inicio")]
     public int startingBatteries = 2;
+    [Tooltip("Máximo de baterías que puede llevar")]
     public int maxBatteries      = 5;
 
     private int _batteryCount;
@@ -50,23 +53,23 @@ public class PlayerStateMachine : MonoBehaviour
     public System.Action<int>         OnBatteryCountChanged;
     public System.Action              OnPlayerDied;
 
-    // ─── Estado interno ─────────────────────────────────────────────────────
+    // ─── Estado interno ───────────────────────────────────────────────────────
 
     private float _originalRunSpeed;
 
-    // ─── Init ────────────────────────────────────────────────────────────────
+    // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        if (tpController == null) tpController = GetComponent<ThirdPersonController>();
-        if (inputs == null) inputs = GetComponent<StarterAssetsInputs>();
-        if (lockerSystem == null) lockerSystem = GetComponent<LockerSystem>();
-
-        if (flashlightSystem == null)
-            flashlightSystem = GetComponentInChildren<FlashlightSystem>();
+        // Auto-buscar componentes si no están asignados
+        if (tpController       == null) tpController       = GetComponent<ThirdPersonController>();
+        if (inputs             == null) inputs             = GetComponent<StarterAssetsInputs>();
+        if (characterController == null) characterController = GetComponent<CharacterController>();
+        if (lockerSystem       == null) lockerSystem       = GetComponent<LockerSystem>();
+        if (flashlightSystem   == null) flashlightSystem   = GetComponentInChildren<FlashlightSystem>();
     }
 
     private void Start()
@@ -87,16 +90,20 @@ public class PlayerStateMachine : MonoBehaviour
         ApplyStateRules();
     }
 
-    // ─── Evaluación de estado ────────────────────────────────────────────────
+    // ─── Evaluación de estado ─────────────────────────────────────────────────
 
     private void EvaluateState()
     {
+        // Prioridad: Dead > Hiding > Aiming > Running > Walking > Idle
+
+        // Escondido en taquilla
         if (lockerSystem != null && lockerSystem.IsHiding)
         {
             ChangeState(PlayerState.Hiding);
             return;
         }
 
+        // Apuntando con linterna (click derecho)
         bool isAiming = Input.GetMouseButton(1)
                      && flashlightSystem != null
                      && flashlightSystem.IsOn;
@@ -107,6 +114,7 @@ public class PlayerStateMachine : MonoBehaviour
             return;
         }
 
+        // Movimiento
         if (inputs != null)
         {
             float speed = new Vector2(inputs.move.x, inputs.move.y).magnitude;
@@ -120,7 +128,7 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
 
-    // ─── Reglas por estado ───────────────────────────────────────────────────
+    // ─── Reglas por estado ────────────────────────────────────────────────────
 
     private void ApplyStateRules()
     {
@@ -131,6 +139,7 @@ public class PlayerStateMachine : MonoBehaviour
                 break;
 
             case PlayerState.Hiding:
+                // Lo gestiona LockerSystem
                 break;
 
             case PlayerState.Running:
@@ -152,7 +161,7 @@ public class PlayerStateMachine : MonoBehaviour
         if (tpController != null) tpController.SprintSpeed = _originalRunSpeed;
     }
 
-    // ─── Cambio de estado ────────────────────────────────────────────────────
+    // ─── Cambio de estado ─────────────────────────────────────────────────────
 
     private void ChangeState(PlayerState newState)
     {
@@ -162,34 +171,42 @@ public class PlayerStateMachine : MonoBehaviour
         Debug.Log($"[PlayerState] → {newState}");
     }
 
-    // ─── Baterías ────────────────────────────────────────────────────────────
+    // ─── API pública — Baterías ───────────────────────────────────────────────
 
+    /// <summary>Añade baterías al inventario. Devuelve true si se añadieron.</summary>
     public bool AddBattery(int amount = 1)
     {
         if (_batteryCount >= maxBatteries) return false;
 
         _batteryCount = Mathf.Min(_batteryCount + amount, maxBatteries);
         OnBatteryCountChanged?.Invoke(_batteryCount);
+        Debug.Log($"[Inventory] Baterías: {_batteryCount}/{maxBatteries}");
         return true;
     }
 
+    /// <summary>
+    /// Intenta recargar la linterna consumiendo una batería del inventario.
+    /// </summary>
     public bool TryReloadFlashlight()
     {
-        if (_batteryCount <= 0) return false;
+        if (_batteryCount <= 0)
+        {
+            Debug.Log("[Inventory] Sin baterías.");
+            return false;
+        }
+
         if (flashlightSystem == null) return false;
 
         _batteryCount--;
         flashlightSystem.Reload();
         OnBatteryCountChanged?.Invoke(_batteryCount);
+        Debug.Log($"[Inventory] Batería usada. Quedan: {_batteryCount}");
         return true;
     }
 
-    public void PickupBattery()
-    {
-        AddBattery(1);
-    }
+    public void PickupBattery() => AddBattery(1);
 
-    // ─── Muerte ──────────────────────────────────────────────────────────────
+    // ─── API pública — Muerte ─────────────────────────────────────────────────
 
     public void Die()
     {
@@ -198,7 +215,6 @@ public class PlayerStateMachine : MonoBehaviour
         ChangeState(PlayerState.Dead);
 
         if (tpController != null) tpController.enabled = false;
-
         if (inputs != null)
         {
             inputs.move   = Vector2.zero;
@@ -210,9 +226,10 @@ public class PlayerStateMachine : MonoBehaviour
             flashlightSystem.ToggleFlashlight();
 
         OnPlayerDied?.Invoke();
+        Debug.Log("[PlayerState] JUGADOR MUERTO.");
     }
 
-    // ─── Props ───────────────────────────────────────────────────────────────
+    // ─── Propiedades públicas ────────────────────────────────────────────────
 
     public bool IsAlive    => CurrentState != PlayerState.Dead;
     public bool IsHiding   => CurrentState == PlayerState.Hiding;
