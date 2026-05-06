@@ -1,26 +1,14 @@
 using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Sistema de linterna v4.
-///
-/// Mejoras:
-/// - Parpadeo natural por patrones (parpadeo-parpadeo-pausa-parpadeo) en lugar de Perlin
-/// - Foco de luz extra al apuntar (Spot Light secundario más estrecho)
-/// - Partículas al apuntar (haz de polvo)
-/// </summary>
 public class FlashlightSystem : MonoBehaviour
 {
-    // ─── Referencias ─────────────────────────────────────────────────────────
-
     [Header("Luz principal")]
     public Light flashlightLight;
     public Camera mainCamera;
 
     [Header("Luz extra al apuntar")]
-    [Tooltip("Spot Light secundaria más estrecha que se activa al apuntar (foco intenso)")]
     public Light  aimSpotLight;
-    [Tooltip("Sistema de partículas que se activa al apuntar (haz de polvo)")]
     public ParticleSystem aimParticles;
 
     [Header("Modo Normal")]
@@ -37,15 +25,16 @@ public class FlashlightSystem : MonoBehaviour
     [Header("Batería")]
     public float maxBattery     = 120f;
     public float currentBattery = 120f;
+    [Tooltip("Consumo por segundo en modo normal")]
     public float drainRate      = 1f;
+    [Tooltip("Multiplicador de consumo al apuntar (3 = consume 3x más rápido)")]
+    public float aimDrainMultiplier = 3f;
 
     [Header("Intensidad por batería")]
     public float dimThreshold = 0.4f;
 
     [Header("Parpadeo natural")]
-    [Tooltip("% de batería a partir del cual empieza a parpadear")]
     public float flickerThreshold    = 0.15f;
-    [Tooltip("Intensidad mínima durante el apagón del parpadeo")]
     public float flickerOffIntensity = 0.05f;
 
     [Header("Detección de ojos")]
@@ -59,8 +48,7 @@ public class FlashlightSystem : MonoBehaviour
     public Transform  dropPoint;
     public float      dropForce = 2f;
 
-    // ─── Estado ───────────────────────────────────────────────────────────────
-
+    // Estado
     private bool _isOn          = false;
     private bool _hasFlashlight = true;
     private bool _isAiming      = false;
@@ -70,9 +58,8 @@ public class FlashlightSystem : MonoBehaviour
     private float _currentSpotAngle;
     private float _currentRange;
 
-    // Parpadeo natural (corutina)
     private Coroutine _flickerCoroutine = null;
-    private float     _flickerMultiplier = 1f;   // Modifica la intensidad final
+    private float     _flickerMultiplier = 1f;
 
     private EnemyBehaviourTree _enemyBT;
 
@@ -96,7 +83,6 @@ public class FlashlightSystem : MonoBehaviour
 
         SetLight(false);
 
-        // Asegurar que el foco extra y las partículas empiezan apagados
         if (aimSpotLight != null) aimSpotLight.enabled = false;
         if (aimParticles != null) aimParticles.Stop();
     }
@@ -142,16 +128,14 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── Parpadeo natural por patrones ───────────────────────────────────────
+    // ─── Parpadeo natural ────────────────────────────────────────────────────
 
     private void UpdateFlickerState()
     {
         float pct = currentBattery / maxBattery;
 
-        // Si batería baja → activar parpadeo si no está activo
         if (pct <= flickerThreshold && _flickerCoroutine == null)
             _flickerCoroutine = StartCoroutine(FlickerRoutine());
-        // Si batería sube por encima del umbral → detener parpadeo
         else if (pct > flickerThreshold && _flickerCoroutine != null)
         {
             StopCoroutine(_flickerCoroutine);
@@ -160,32 +144,23 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Patrón natural de parpadeo: secuencia de apagones cortos + pausas variables.
-    /// Imita un mal contacto eléctrico.
-    /// </summary>
     private IEnumerator FlickerRoutine()
     {
         while (true)
         {
-            // Pausa aleatoria entre tandas de parpadeos
             float pauseBetweenBursts = Random.Range(1.5f, 4f);
             yield return new WaitForSeconds(pauseBetweenBursts);
 
-            // Una tanda de 2-4 parpadeos rápidos
             int flickerCount = Random.Range(2, 5);
             for (int i = 0; i < flickerCount; i++)
             {
-                // Apagón corto
                 _flickerMultiplier = Random.Range(0.05f, 0.2f);
                 yield return new WaitForSeconds(Random.Range(0.04f, 0.1f));
 
-                // Vuelve a encender
                 _flickerMultiplier = Random.Range(0.7f, 1f);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
             }
 
-            // Vuelve al máximo entre tandas
             _flickerMultiplier = 1f;
         }
     }
@@ -196,22 +171,18 @@ public class FlashlightSystem : MonoBehaviour
     {
         float pct = currentBattery / maxBattery;
 
-        // Valores objetivo según modo
         float targetIntensity = _isAiming ? aimIntensity  : normalIntensity;
         float targetAngle     = _isAiming ? aimSpotAngle  : normalSpotAngle;
         float targetRange     = _isAiming ? aimRange      : normalRange;
 
-        // Reducir progresivamente entre dimThreshold y flickerThreshold
         if (pct <= dimThreshold && pct > flickerThreshold)
         {
             float t = Mathf.InverseLerp(flickerThreshold, dimThreshold, pct);
             targetIntensity *= Mathf.Lerp(0.4f, 1f, t);
         }
 
-        // Aplicar parpadeo (cuando está activo)
         targetIntensity *= _flickerMultiplier;
 
-        // Interpolación suave
         _currentIntensity = Mathf.Lerp(_currentIntensity, targetIntensity,
                                         Time.deltaTime * transitionSpeed);
         _currentSpotAngle = Mathf.Lerp(_currentSpotAngle, targetAngle,
@@ -228,11 +199,9 @@ public class FlashlightSystem : MonoBehaviour
 
     private void UpdateAimEffects()
     {
-        // Foco extra
         if (aimSpotLight != null && aimSpotLight.enabled != _isAiming)
             aimSpotLight.enabled = _isAiming;
 
-        // Partículas
         if (aimParticles != null)
         {
             if (_isAiming && !aimParticles.isPlaying)
@@ -242,7 +211,7 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── Batería ─────────────────────────────────────────────────────────────
+    // ─── Batería — drenaje variable según modo ───────────────────────────────
 
     private void DrainBattery()
     {
@@ -254,7 +223,10 @@ public class FlashlightSystem : MonoBehaviour
             return;
         }
 
-        currentBattery -= drainRate * Time.deltaTime;
+        // Drenaje multiplicado al apuntar
+        float currentDrain = _isAiming ? drainRate * aimDrainMultiplier : drainRate;
+
+        currentBattery -= currentDrain * Time.deltaTime;
         currentBattery  = Mathf.Max(currentBattery, 0f);
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
@@ -334,8 +306,6 @@ public class FlashlightSystem : MonoBehaviour
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
 
-    // ─── Toggle ──────────────────────────────────────────────────────────────
-
     public void ToggleFlashlight() => SetLight(!_isOn);
 
     private void SetLight(bool on)
@@ -353,12 +323,7 @@ public class FlashlightSystem : MonoBehaviour
         OnFlashlightToggled?.Invoke(on);
     }
 
-    public void PickupFlashlight()
-    {
-        _hasFlashlight = true;
-    }
-
-    // ─── Propiedades ─────────────────────────────────────────────────────────
+    public void PickupFlashlight() => _hasFlashlight = true;
 
     public float BatteryPercent => currentBattery / maxBattery;
     public bool  IsOn           => _isOn;
