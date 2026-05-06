@@ -7,6 +7,7 @@ public class Megafono : MonoBehaviour
     public float maxEnergia = 100f;
     public float coste = 25f;
     private GameObject enemigoCiego;
+    public CogerObjeto cogerObjetoScript;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -18,7 +19,7 @@ public class Megafono : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.M) && energiaActual >= coste && GameManager.instance.tieneMegafono)
+        if (Input.GetKeyDown(KeyCode.M) && energiaActual >= coste && GameManager.instance.tieneMegafono && cogerObjetoScript.apuntando)
         {
             ActivarMegafono();
         }

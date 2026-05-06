@@ -116,6 +116,8 @@ namespace StarterAssets
 
         private bool _hasAnimator;
 
+        private bool cercaDePila = false;
+
         private bool IsCurrentDeviceMouse
         {
             get
@@ -160,6 +162,12 @@ namespace StarterAssets
 
         private void Update()
         {
+
+            if (Input.GetKeyDown(KeyCode.E) && !cercaDePila)
+            {
+                _animator.SetTrigger("Coger");
+            }
+
             _hasAnimator = TryGetComponent(out _animator);
 
             JumpAndGravity();
@@ -413,6 +421,27 @@ namespace StarterAssets
                 Debug.Log("He pisado el cristal");
 
                 cristalSonidoCooldown = Time.time + 10f;
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("PilaMegafono"))
+            {
+                cercaDePila = true;
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    other.GetComponent<PilaMegafono>().Recargar();
+                    Destroy(other.gameObject);
+                }
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other.CompareTag("PilaMegafono"))
+            {
+                cercaDePila = false;
             }
         }
     }

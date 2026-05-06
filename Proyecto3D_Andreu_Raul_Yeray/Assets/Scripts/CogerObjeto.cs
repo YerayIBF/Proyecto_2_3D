@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class CogerObjeto : MonoBehaviour
 {
+    public Animator animator;
     public GameObject handPoint;
     private GameObject objetoCogido;
     public float throwForce = 10f;
@@ -11,6 +12,8 @@ public class CogerObjeto : MonoBehaviour
     public int predictionSteps = 30;
     public float timeStep = 0.1f;
     private Transform objetoInteractuable;
+    private GameObject objeto;
+    public bool apuntando = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -44,11 +47,15 @@ public class CogerObjeto : MonoBehaviour
                 if (Input.GetMouseButton(1))
                 {
                     Debug.Log("Apuntando con el megafono");
+                    apuntando = true;
+                    animator.SetBool("isAiming", true);
                     GameManager.instance.MostrarCanvasMegafono(true);
                 }
                 else
                 {
                     //se quita la animacion de apuntar
+                    apuntando = false;
+                    animator.SetBool("isAiming", false);
                     GameManager.instance.MostrarCanvasMegafono(false);
                 }
 
@@ -114,26 +121,22 @@ public class CogerObjeto : MonoBehaviour
     private void OnTriggerStay(Collider other) {
         if (other.gameObject.CompareTag("objetoCogible"))
         {
-            if (Input.GetKeyDown(KeyCode.E) && objetoCogido == null){
+            if (objetoCogido == null){
                 other.GetComponent<ThrowObject>().MostrarIcono(false);
-                other.GetComponent<Rigidbody>().useGravity = false;
+                /*other.GetComponent<Rigidbody>().useGravity = false;
                 other.GetComponent<Rigidbody>().isKinematic = true;
                 other.transform.position = handPoint.transform.position;
-                other.gameObject.transform.SetParent(handPoint.gameObject.transform);
-                objetoCogido = other.gameObject;
+                other.gameObject.transform.SetParent(handPoint.gameObject.transform);*/
+                objeto = other.gameObject;
             }
-        }else if (other.gameObject.CompareTag("PilaMegafono"))
+        }
+        else if (other.gameObject.CompareTag("Megafono"))
         {
-            if (Input.GetKeyDown(KeyCode.E))
+            if (objetoCogido == null)
             {
-                other.GetComponent<PilaMegafono>().Recargar();
-                Destroy(other.gameObject);
-            }
-        }else if (other.gameObject.CompareTag("Megafono"))
-        {
-            if (Input.GetKeyDown(KeyCode.E) && objetoCogido == null)
-            {
-                other.GetComponent<Rigidbody>().useGravity = false;
+                objeto = other.gameObject;
+                //animator.SetTrigger("Coger");
+                /*other.GetComponent<Rigidbody>().useGravity = false;
                 other.GetComponent<Rigidbody>().isKinematic = true;
                 Transform handlePoint = other.transform.Find("HandlePoint");
                 other.gameObject.transform.SetParent(handPoint.gameObject.transform);
@@ -141,26 +144,37 @@ public class CogerObjeto : MonoBehaviour
                 other.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
                 objetoCogido = other.gameObject;
 
+                GameManager.instance.RecogerMegafono();*/
+            }
+        }
+    }
+
+    public void AnimatorCogerObjeto()
+    {
+        if (objeto != null)
+        {
+            objeto.GetComponent<Rigidbody>().useGravity = false;
+            objeto.GetComponent<Rigidbody>().isKinematic = true;
+            Transform handlePoint = objeto.transform.Find("HandlePoint");
+            objeto.transform.SetParent(handPoint.gameObject.transform);
+
+            if (handlePoint != null)
+            {
+                objeto.transform.localPosition = -handlePoint.localPosition;
+                objeto.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
+            }
+
+            objetoCogido = objeto;
+            objeto = null;
+
+            if (objetoCogido.CompareTag("Megafono"))
+            {
                 GameManager.instance.RecogerMegafono();
             }
         }
     }
 
-    /*private void OnTriggerEnter(Collider other) 
-    {
-        if (objetoCogido == null && other.CompareTag("objetoCogible"))
-        {
-            other.GetComponent<ThrowObject>().MostrarIcono(true);
-        }
-    }
-
-    private void OnTriggerExit(Collider other) 
-    {
-        if (objetoCogido == null && other.CompareTag("objetoCogible"))
-        {
-            other.GetComponent<ThrowObject>().MostrarIcono(false);
-        }
-    }*/
+    
 
     void DibujarTrayectoria()
     {
