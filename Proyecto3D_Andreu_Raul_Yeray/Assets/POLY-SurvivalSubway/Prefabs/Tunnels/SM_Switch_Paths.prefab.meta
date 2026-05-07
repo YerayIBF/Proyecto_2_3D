@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0ea3cad7a315fe2418b48b6934a56df7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Tunnels/SM_Switch_Paths.prefab
+  uploadId: 896816

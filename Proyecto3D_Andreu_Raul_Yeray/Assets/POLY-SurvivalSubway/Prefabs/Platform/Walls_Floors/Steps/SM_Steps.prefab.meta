@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 394f8ec0169ca154b9567e2ef3a3d7fb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Platform/Walls_Floors/Steps/SM_Steps.prefab
+  uploadId: 896816

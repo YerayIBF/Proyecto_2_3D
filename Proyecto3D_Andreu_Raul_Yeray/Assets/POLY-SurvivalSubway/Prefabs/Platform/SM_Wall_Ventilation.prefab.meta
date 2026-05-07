@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3c638f045c737f4488612ce9381ecc20
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Platform/SM_Wall_Ventilation.prefab
+  uploadId: 896816

@@ -1807,9 +1807,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fc750de80fd6cb479da2392946b4c9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  flashlightLight: {fileID: 0}
+  flashlightLight: {fileID: 1921567762}
   mainCamera: {fileID: 1554159522}
-  aimSpotLight: {fileID: 2114283754330233425}
+  aimSpotLight: {fileID: 0}
   aimParticles: {fileID: 0}
   normalIntensity: 1.5
   normalSpotAngle: 80

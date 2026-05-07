@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b91f5f8b9b6a65f479c9ac13f4e7f24d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Platform/Walls_Floors/Door&Windows/SM_Lattice_Gate_01.prefab
+  uploadId: 896816
