@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-[RequireComponent(typeof(NoiseSensor))]
+
 public class EnemyBehaviourTree : MonoBehaviour
 {
     // ─── Referencias ─────────────────────────────────────────────────────────
@@ -37,6 +37,9 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float lockerCheckRange = 8f;
     public float lockerOpenWait   = 2f;
 
+    private float _lockerMoveTimer = 0f;
+    private const float _MAX_LOCKER_MOVE_TIME = 5f;
+
     [Header("Velocidades")]
     public float patrolSpeed      = 2f;
     public float chaseSpeed       = 4.5f;
@@ -45,7 +48,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     // ─── Componentes ─────────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
-    private NoiseSensor  _sensor;
+    
     // private Animator  _anim;
 
     // ─── Estado principal ─────────────────────────────────────────────────────
@@ -72,7 +75,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     private bool _attackOnCooldown = false;
 
     // Vio al jugador esconderse
-    private LockerInteractable _knownLockerWithPlayer = null;
+    public LockerInteractable _knownLockerWithPlayer = null;
     private bool _playerWasHiding = false;
 
     // ─── Init ─────────────────────────────────────────────────────────────────
@@ -80,7 +83,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void Awake()
     {
         _agent  = GetComponent<NavMeshAgent>();
-        _sensor = GetComponent<NoiseSensor>();
+        
     }
 
     private void Start()
@@ -114,15 +117,7 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     // ─── Transiciones ────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Evalúa cada frame si hay que cambiar de estado.
-    /// Las prioridades van de mayor a menor:
-    ///   1. Aturdido
-    ///   2. Vio al jugador entrar en taquilla → CheckLocker directo
-    ///   3. Ve al jugador → Chase
-    ///   4. Oyó ruido → Investigate
-    ///   5. Nada → Wander
-    /// </summary>
+
     private void EvaluateTransitions()
     {
         // No interrumpir Attack ni CheckLocker en mitad de su secuencia
@@ -157,12 +152,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
 
         // 4. Oyó ruido y no está investigando → Investigate
-        if (_sensor.HeardNoise && _state != State.Investigate)
-        {
-            StartInvestigation(_sensor.NoisePosition);
-            _sensor.AcknowledgeNoise();
-            return;
-        }
+        
 
         // 5. Sin estímulos y no está en medio de algo → Wander
         if (_state != State.Investigate && _state != State.CheckLocker)
@@ -268,47 +258,101 @@ public class EnemyBehaviourTree : MonoBehaviour
     }
 
     private void UpdateInvestigate()
+{
+    if (!_reachedInvestigation)
     {
-        if (!_reachedInvestigation)
+        // Moviéndose al punto de ruido
+        if (!_agent.pathPending && _agent.remainingDistance < 0.6f)
         {
-            // Moviéndose al punto de ruido
-            if (!_agent.pathPending && _agent.remainingDistance < 0.6f)
-            {
-                _reachedInvestigation = true;
-                _agent.ResetPath();
-                Debug.Log("[BT] Llegó al punto investigado.");
+            _reachedInvestigation = true;
+            _agent.ResetPath();
+            Debug.Log("[BT] Llegó al punto investigado.");
 
-                // ¿Hay taquillas cerca?
-                LockerInteractable locker = FindRandomNearbyLocker();
-                if (locker != null)
-                {
-                    // Ir a revisar esa taquilla — cambiar estado a CheckLocker
-                    _targetLocker    = locker;
-                    _lockerOpened    = false;
-                    _lockerWaitTimer = 0f;
-                    _agent.speed     = investigateSpeed;
-                    _agent.SetDestination(_targetLocker.transform.position);
-                    ChangeState(State.CheckLocker);   // ← transición limpia
-                    Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
-                }
-                // Si no hay taquillas, esperar en el punto
-            }
-        }
-        else
-        {
-            // Esperando en el punto (sin taquillas cercanas)
-            _investigateWaitTimer += Time.deltaTime;
-            if (_investigateWaitTimer >= investigateWaitTime)
+            // ¿Hay taquillas cerca? Siempre revisar si existe alguna en rango
+            LockerInteractable locker = FindRandomNearbyLocker();
+            if (locker != null)
             {
-                Debug.Log("[BT] Investigación terminada → Wander.");
-                ChangeState(State.Wander);
+                _targetLocker    = locker;
+                _lockerOpened    = false;
+                _lockerWaitTimer = 0f;
+                _agent.speed     = investigateSpeed;
+                _agent.SetDestination(_targetLocker.transform.position);
+                ChangeState(State.CheckLocker);
+                Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
+                return;
+            }
+            else
+            {
+                Debug.Log("[BT] No hay taquillas cercanas. Esperando...");
             }
         }
     }
+    else
+    {
+        // Esperando en el punto (sin taquillas)
+        _investigateWaitTimer += Time.deltaTime;
+        if (_investigateWaitTimer >= investigateWaitTime)
+        {
+            Debug.Log("[BT] Investigación terminada → Wander.");
+            ChangeState(State.Wander);
+        }
+    }
+}
 
     // ── CHECK LOCKER ─────────────────────────────────────────────────────────
 
-    private void UpdateCheckLocker()
+   private void UpdateCheckLocker()
+{
+    // Si no hay taquilla objetivo, salir
+    if (_targetLocker == null)
+    {
+        ChangeState(State.Wander);
+        return;
+    }
+
+    // Si el jugador ya no está escondido y no estamos abriendo la puerta, cancelar
+    if (_knownLockerWithPlayer == null && !_lockerOpened)
+    {
+        Debug.Log("[BT] Jugador salió de la taquilla, cancelando inspección.");
+        _targetLocker = null;
+        ChangeState(State.Wander);
+        return;
+    }
+
+    float dist = Vector3.Distance(transform.position, _targetLocker.transform.position);
+
+    if (!_lockerOpened)
+    {
+        _agent.SetDestination(_targetLocker.transform.position);
+        _lockerMoveTimer += Time.deltaTime;
+
+        // Timeout de movimiento
+        if (_lockerMoveTimer > _MAX_LOCKER_MOVE_TIME || _agent.pathStatus == NavMeshPathStatus.PathInvalid)
+        {
+            Debug.LogWarning("[BT] No se pudo alcanzar la taquilla. Abortando.");
+            _knownLockerWithPlayer = null;
+            _targetLocker = null;
+            ChangeState(State.Wander);
+            return;
+        }
+
+        if (dist < 1.5f)
+        {
+            _lockerOpened = true;
+            _lockerWaitTimer = 0f;
+            _lockerMoveTimer = 0f;
+            _agent.ResetPath();
+
+            Vector3 dir = (_targetLocker.transform.position - transform.position).normalized;
+            dir.y = 0f;
+            if (dir != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(dir);
+
+            _targetLocker.OpenDoor();
+            Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
+        }
+    }
+    else
     {
         if (_targetLocker == null)
         {
@@ -316,58 +360,31 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
-        float dist = Vector3.Distance(transform.position, _targetLocker.transform.position);
-
-        if (!_lockerOpened)
+        _lockerWaitTimer += Time.deltaTime;
+        if (_lockerWaitTimer >= lockerOpenWait)
         {
-            // Moviéndose a la taquilla
-            _agent.SetDestination(_targetLocker.transform.position);
+            bool playerInside = lockerSystem != null
+                             && lockerSystem.IsHiding
+                             && lockerSystem.CurrentLocker == _targetLocker;
 
-            if (dist < 1.5f)
+            if (playerInside)
             {
-                // Llegó — abrir puerta
-                _lockerOpened    = true;
-                _lockerWaitTimer = 0f;
-                _agent.ResetPath();
-
-                Vector3 dir = (_targetLocker.transform.position - transform.position).normalized;
-                dir.y = 0f;
-                if (dir != Vector3.zero)
-                    transform.rotation = Quaternion.LookRotation(dir);
-
-                _targetLocker.OpenDoor();
-                Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
+                Debug.Log("[BT] ¡Jugador encontrado!");
+                KillPlayer();
             }
-        }
-        else
-        {
-            // Puerta abierta — esperar y comprobar
-            _lockerWaitTimer += Time.deltaTime;
-            if (_lockerWaitTimer >= lockerOpenWait)
+            else
             {
-                bool playerInside = lockerSystem != null
-                                 && lockerSystem.IsHiding
-                                 && lockerSystem.CurrentLocker == _targetLocker;
-
-                if (playerInside)
-                {
-                    Debug.Log("[BT] ¡Jugador encontrado!");
-                    KillPlayer();
-                }
-                else
-                {
-                    Debug.Log("[BT] Taquilla vacía.");
-                    _targetLocker.CloseDoor();
-                }
-
-                // Limpiar y volver a Wander
-                _knownLockerWithPlayer = null;
-                _targetLocker          = null;
-                _lockerOpened          = false;
-                ChangeState(State.Wander);
+                Debug.Log("[BT] Taquilla vacía.");
+                _targetLocker.CloseDoor();
             }
+
+            _knownLockerWithPlayer = null;
+            _targetLocker = null;
+            _lockerOpened = false;
+            ChangeState(State.Wander);
         }
     }
+}
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  DETECCIÓN
@@ -472,4 +489,46 @@ public class EnemyBehaviourTree : MonoBehaviour
             Gizmos.DrawLine(transform.position, _targetLocker.transform.position);
         }
     }
+
+        // ─── Propiedades para Debug UI ──────────────────────────────────────────
+
+    public string CurrentStateName => _state.ToString();
+    public float DistanceToPlayer
+    {
+        get
+        {
+            if (player == null) return -1f;
+            return Vector3.Distance(transform.position, player.position);
+        }
+    }
+    public bool IsSeeingPlayer => CanSeePlayer();
+    public bool IsCurrentlyStunned => _isStunned;
+    public bool HasKnownLockerWithPlayer => _knownLockerWithPlayer != null;
+    public string CurrentTargetInfo
+    {
+        get
+        {
+            switch (_state)
+            {
+                case State.Wander:
+                    return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length 
+                        ? $"Punto {_patrolIndex}: {patrolPoints[_patrolIndex].position}" 
+                        : "Sin puntos";
+                case State.Chase:
+                    return "Jugador";
+                case State.Attack:
+                    return "Atacando";
+                case State.Stunned:
+                    return "Aturdido";
+                case State.Investigate:
+                    return _reachedInvestigation ? "Esperando en punto" : $"Investigando: {_investigateTarget}";
+                case State.CheckLocker:
+                    return _targetLocker != null ? _targetLocker.name : "Ninguna";
+                default:
+                    return "";
+            }
+        }
+    }
+    public float AgentRemainingDistance => _agent != null && _agent.hasPath ? _agent.remainingDistance : -1f;
+    public float AgentSpeed => _agent != null ? _agent.speed : 0f;
 }

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b900b8af0f448354b813d6e5d27791d1
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Platform/Walls_Floors/Inner_Walls_Floors/SM_Inner_Wall_Gate.prefab
+  uploadId: 896816

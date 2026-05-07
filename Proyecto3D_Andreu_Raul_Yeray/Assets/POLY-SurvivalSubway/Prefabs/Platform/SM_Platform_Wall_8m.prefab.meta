@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ae67ef17e19afe442b8573b38d950874
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 372488
+  packageName: POLY - Post-apocalyptic Survival Subway 2.0
+  packageVersion: 2.0
+  assetPath: Assets/POLY-SurvivalSubway/Prefabs/Platform/SM_Platform_Wall_8m.prefab
+  uploadId: 896816
