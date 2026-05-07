@@ -12,6 +12,7 @@ public class CogerObjeto : MonoBehaviour
     public int predictionSteps = 30;
     public float timeStep = 0.1f;
     private Transform objetoInteractuable;
+    private Transform megafonoObject;
     private GameObject objeto;
     public bool apuntando = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -20,6 +21,7 @@ public class CogerObjeto : MonoBehaviour
         cam = Camera.main;
         lineRenderer.enabled = false;
         objetoInteractuable = GameObject.FindGameObjectWithTag("objetoCogible").transform;
+        megafonoObject = GameObject.FindGameObjectWithTag("Megafono").transform;
     }
 
     // Update is called once per frame
@@ -89,10 +91,14 @@ public class CogerObjeto : MonoBehaviour
         if (objetoCogido == null && Vector3.Distance(transform.position, objetoInteractuable.position) < 2f)
         {
             objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(true);
+        }else if (objetoCogido == null && Vector3.Distance(transform.position, megafonoObject.position) < 2f)
+        {
+            megafonoObject.GetComponent<ThrowObject>().MostrarIcono(true);
         }
         else
         {
             objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(false);
+            megafonoObject.GetComponent<ThrowObject>().MostrarIcono(false);
         }
         
     }
@@ -134,6 +140,7 @@ public class CogerObjeto : MonoBehaviour
         {
             if (objetoCogido == null)
             {
+                other.GetComponent<ThrowObject>().MostrarIcono(false);
                 objeto = other.gameObject;
                 //animator.SetTrigger("Coger");
                 /*other.GetComponent<Rigidbody>().useGravity = false;

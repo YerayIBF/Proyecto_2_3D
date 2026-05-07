@@ -117,6 +117,7 @@ namespace StarterAssets
         private bool _hasAnimator;
 
         private bool cercaDePila = false;
+        private GameObject pilaCercana;
 
         private bool IsCurrentDeviceMouse
         {
@@ -166,6 +167,11 @@ namespace StarterAssets
             if (Input.GetKeyDown(KeyCode.E) && !cercaDePila)
             {
                 _animator.SetTrigger("Coger");
+            }else if (Input.GetKeyDown(KeyCode.E) && cercaDePila)
+            {
+                pilaCercana.GetComponent<PilaMegafono>().Recargar();
+                Destroy(pilaCercana);
+                cercaDePila = false;
             }
 
             _hasAnimator = TryGetComponent(out _animator);
@@ -429,11 +435,9 @@ namespace StarterAssets
             if (other.CompareTag("PilaMegafono"))
             {
                 cercaDePila = true;
-                if (Input.GetKeyDown(KeyCode.E))
-                {
-                    other.GetComponent<PilaMegafono>().Recargar();
-                    Destroy(other.gameObject);
-                }
+
+                pilaCercana = other.gameObject;
+
             }
         }
 
