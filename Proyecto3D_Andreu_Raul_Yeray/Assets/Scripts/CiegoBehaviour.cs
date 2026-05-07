@@ -71,6 +71,7 @@ public class CiegoBehaviour : MonoBehaviour
                 aturdido = false;
                 stunActivado = false;
                 perseguir = false;
+                sonidoDetectado = false;
 
                 agent.isStopped = false;
                 animator.SetBool("isStun", false);
@@ -368,6 +369,8 @@ public class CiegoBehaviour : MonoBehaviour
             stunEffect.Play();
         }
 
+        investigando = false;
+        sonidoDetectado = false;
         perseguir = false;
         patrullar = false;
         sonidos.Clear();
