@@ -5,36 +5,6 @@ EditorUserSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 4
   m_ConfigSettings:
-    RecentlyUsedSceneGuid-0:
-      value: 5a08575f5207595a0f5d59741173094444164f7d7d2a23317c7a4465bbe1646d
-      flags: 0
-    RecentlyUsedSceneGuid-1:
-      value: 5052515306500f0e08570876137a0e44154e4e282a712731797e4835b5b0376b
-      flags: 0
-    RecentlyUsedSceneGuid-2:
-      value: 0608045752515c5d54580e7b167306444e4e1a7e2e7b71357c2d4b36e0b9656c
-      flags: 0
-    RecentlyUsedSceneGuid-3:
-      value: 06540c5e03010a0c09560a2645705e4444161e2e7c2972642f2f4e36b1b66d3e
-      flags: 0
-    RecentlyUsedSceneGuid-4:
-      value: 5254070206055e5f5c0c592414760944474f4a29797e76342c7e4c30e1b63569
-      flags: 0
-    RecentlyUsedSceneGuid-5:
-      value: 0503075154070a0c540f082149720f44464f1d727b7a24617f7e186bb0b5373e
-      flags: 0
-    RecentlyUsedSceneGuid-6:
-      value: 5753525706545f5a5d5f5474457b0b444f4e4c7f7c7e71632c2d1f32b2e1676b
-      flags: 0
-    UnityEditor.ShaderGraph.Blackboard:
-      value: 18135939215a0a5004000b0e15254b524c030a3f2964643d120d1230e9e93a3fd6e826abbd3c3e302a07a37e0901373ae01e0008f707250d171df81a53a5405d419548954b914f4b984d44989e4f89b2878398a8d5d4cfd7ccd6bafdfae4eff4daf7a3e8afbcbe9afae1aefdedcff8f7c8d0b28696dd8bdff8888383ee9d829f9bcfc78c8dd788958990bd
-      flags: 0
-    UnityEditor.ShaderGraph.FloatingWindowsLayout2:
-      value: 181344140043005e1a220d3b1f364b524c0c5a27130c293326201334cee5322ca0bd30e8eb293a707b0fd0180b3d0a36fc0d3d04e649500d1002ee0b5dbd1d2c27c00ad113cb1e10e41f1addc80993b98d9884a69ae6d8f0d1cda9e8fbfefaf9f9dea3fdb9ade882f0f7b0e1e380cafbf2c3adc18e9cd285a2908b82ec879c84808fdc8e8ed0818980dbf8daf7dce5bdd1fbf5c4c1ebc1fbcdcecdea33e2ff35323130e2a1a5ab
-      flags: 0
-    UnityEditor.ShaderGraph.InspectorWindow:
-      value: 18135939215a0a5004000b0e15254b524c1119263f2d6a722016393ce1eb3d36e5d339f9a5602b2e2c07a37e0901373ae01e0008f707250d171df81a53a545445f9348954a984d4e9341449f954e87af97dbebc2d7f9eec2d1d1b4f3f8dfe8fee6f4b1b9f0ffaf8efcffaee1fc949196909aee979b938585b7ede2daa4d69089c2949d9483d48e8897dcf9d4fbc8f6f2cbf8f0c3c6f4d5e984dcc6e038e1e1333f3e31e3efe0efd6e9e139d76f6d
-      flags: 0
     vcSharedLogLevel:
       value: 0d5e400f0650
       flags: 0
@@ -43,7 +13,7 @@ EditorUserSettings:
   m_VCDebugCmd: 0
   m_VCDebugOut: 0
   m_SemanticMergeMode: 2
-  m_DesiredImportWorkerCount: 6
+  m_DesiredImportWorkerCount: 4
   m_StandbyImportWorkerCount: 2
   m_IdleImportWorkerShutdownDelay: 60000
   m_VCShowFailedCheckout: 1
