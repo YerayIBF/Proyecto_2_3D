@@ -5,6 +5,12 @@ TagManager:
   serializedVersion: 3
   tags:
   - CinemachineTarget
+  - Cristal
+  - objetoCogible
+  - EnemyBlind
+  - ghost
+  - PilaMegafono
+  - Megafono
   layers:
   - Default
   - TransparentFX
@@ -12,15 +18,15 @@ TagManager:
   - 
   - Water
   - UI
+  - Player
+  - ghost
   - 
   - 
   - 
   - 
   - 
   - 
-  - 
-  - 
-  - 
+  - BlindEnemy
   - Throwable
   - Casilla
   - Pared

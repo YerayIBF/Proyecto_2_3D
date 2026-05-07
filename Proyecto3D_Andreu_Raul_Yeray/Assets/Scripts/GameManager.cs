@@ -1,0 +1,99 @@
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+public class GameManager : MonoBehaviour
+{
+    public static GameManager instance;
+    public bool tieneLinterna = false;
+    public bool tieneMegafono = false;
+    public GameObject canvasMegafono;
+    public TextMeshProUGUI textoEnergia;
+    private GameObject megafono;
+    public GameObject[] bateriaRayas;
+    public Image bateriaFondo;
+    public Image megafonoImg;
+    public Sprite iconoBateria;
+    public Sprite iconoSinBateria;
+
+    void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        megafono = GameObject.FindGameObjectWithTag("Megafono");
+        megafonoImg.sprite = iconoBateria;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        
+    }
+
+    public void RecogerMegafono()
+    {
+        tieneMegafono = true;
+    }
+
+    public void MostrarCanvasMegafono(bool mostrar)
+    {
+        canvasMegafono.SetActive(mostrar);
+
+        Megafono megafonoScript = megafono.GetComponent<Megafono>();
+
+        if (megafonoScript != null)
+        {
+            ActualizarEnergia(megafonoScript.energiaActual, megafonoScript.maxEnergia);
+        } 
+    }
+
+    public void ActualizarEnergia(float energiaActual, float maxEnergia)
+    {
+        //textoEnergia.text = Mathf.RoundToInt(energiaActual) + " / " + Mathf.RoundToInt(maxEnergia);
+        float porcentaje = energiaActual/maxEnergia;
+        float limite = porcentaje * bateriaRayas.Length;
+        int rayas = Mathf.CeilToInt(porcentaje * bateriaRayas.Length);
+
+        Color colorFondo;
+
+        if (porcentaje <= 0.25f) 
+        {
+            ColorUtility.TryParseHtmlString("#F7000A", out colorFondo);
+            megafonoImg.sprite = iconoSinBateria;
+        } 
+        else 
+        {
+            ColorUtility.TryParseHtmlString("#4EF700", out colorFondo);
+            megafonoImg.sprite = iconoBateria;
+        }
+
+        bateriaFondo.color = colorFondo;
+
+        for (int i = 0; i < bateriaRayas.Length; i++)
+        {
+            if (i < rayas) 
+            {
+                bateriaRayas[i].SetActive(true);
+
+                if (rayas <= 2) 
+                    bateriaRayas[i].GetComponent<Image>().color = Color.red;
+                else 
+                    bateriaRayas[i].GetComponent<Image>().color = Color.black;
+            } 
+            else 
+            {
+                bateriaRayas[i].SetActive(false);
+            }
+        }
+    }
+}

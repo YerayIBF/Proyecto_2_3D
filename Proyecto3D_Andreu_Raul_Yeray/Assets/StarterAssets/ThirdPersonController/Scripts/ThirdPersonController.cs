@@ -83,6 +83,9 @@ namespace StarterAssets
         private float _cinemachineTargetPitch;
 
         // player
+        private float cristalSonidoCooldown = 0f;
+        private float soundCooldown = 0f;
+        public float soundCooldownTime = 0.5f; 
         private float _speed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
@@ -112,6 +115,9 @@ namespace StarterAssets
         private const float _threshold = 0.01f;
 
         private bool _hasAnimator;
+
+        private bool cercaDePila = false;
+        private GameObject pilaCercana;
 
         private bool IsCurrentDeviceMouse
         {
@@ -157,6 +163,17 @@ namespace StarterAssets
 
         private void Update()
         {
+
+            if (Input.GetKeyDown(KeyCode.E) && !cercaDePila)
+            {
+                _animator.SetTrigger("Coger");
+            }else if (Input.GetKeyDown(KeyCode.E) && cercaDePila)
+            {
+                pilaCercana.GetComponent<PilaMegafono>().Recargar();
+                Destroy(pilaCercana);
+                cercaDePila = false;
+            }
+
             _hasAnimator = TryGetComponent(out _animator);
 
             JumpAndGravity();
@@ -382,6 +399,13 @@ namespace StarterAssets
                 if (AudioFoley != null)
                     AudioFoley.Play();
             }
+
+            //Si esta corriendo con esprint, emite un sonido cada 0.5 segundos
+            if (Time.time >= soundCooldown && _input.sprint)
+            {
+                EmitirSonido.instance.EmitirRuido(transform.position, 10f);
+                soundCooldown = Time.time + soundCooldownTime;
+            }
         }
 
         private void OnLand(AnimationEvent animationEvent)
@@ -391,6 +415,37 @@ namespace StarterAssets
                 if (LandingAudio != null)
                     LandingAudio.Play();
 
+            }
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            if (hit.gameObject.CompareTag("Cristal") && Time.time >= cristalSonidoCooldown)
+            {
+            
+                EmitirSonido.instance.EmitirRuido(transform.position, 15f);
+                Debug.Log("He pisado el cristal");
+
+                cristalSonidoCooldown = Time.time + 10f;
+            }
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("PilaMegafono"))
+            {
+                cercaDePila = true;
+
+                pilaCercana = other.gameObject;
+
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other.CompareTag("PilaMegafono"))
+            {
+                cercaDePila = false;
             }
         }
     }
