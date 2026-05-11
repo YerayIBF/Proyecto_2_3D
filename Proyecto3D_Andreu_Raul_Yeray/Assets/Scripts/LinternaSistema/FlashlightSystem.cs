@@ -25,9 +25,7 @@ public class FlashlightSystem : MonoBehaviour
     [Header("Batería")]
     public float maxBattery     = 120f;
     public float currentBattery = 120f;
-    [Tooltip("Consumo por segundo en modo normal")]
     public float drainRate      = 1f;
-    [Tooltip("Multiplicador de consumo al apuntar (3 = consume 3x más rápido)")]
     public float aimDrainMultiplier = 3f;
 
     [Header("Intensidad por batería")]
@@ -37,11 +35,12 @@ public class FlashlightSystem : MonoBehaviour
     public float flickerThreshold    = 0.15f;
     public float flickerOffIntensity = 0.05f;
 
-    [Header("Detección de ojos")]
-    public Collider eyesCollider;
-    public int      coneRayCount    = 8;
-    public float    coneAngle       = 15f;
-    public float    stunDetectRange = 10f;
+    [Header("Detección de ojos (GLOBAL)")]
+    [Tooltip("Layer que tienen los colliders de los ojos de los enemigos")]
+    public LayerMask eyesLayerMask;
+    public int       coneRayCount    = 8;
+    public float     coneAngle       = 15f;
+    public float     stunDetectRange = 10f;
 
     [Header("Recarga")]
     public GameObject drainedBatteriesPrefab;
@@ -61,8 +60,6 @@ public class FlashlightSystem : MonoBehaviour
     private Coroutine _flickerCoroutine = null;
     private float     _flickerMultiplier = 1f;
 
-    private EnemyBehaviourTree _enemyBT;
-
     // Eventos
     public System.Action<float> OnBatteryChanged;
     public System.Action<bool>  OnFlashlightToggled;
@@ -74,8 +71,6 @@ public class FlashlightSystem : MonoBehaviour
     {
         if (flashlightLight == null) flashlightLight = GetComponentInChildren<Light>();
         if (mainCamera      == null) mainCamera      = Camera.main;
-
-        _enemyBT = Object.FindFirstObjectByType<EnemyBehaviourTree>();
 
         _currentIntensity = normalIntensity;
         _currentSpotAngle = normalSpotAngle;
@@ -156,11 +151,9 @@ public class FlashlightSystem : MonoBehaviour
             {
                 _flickerMultiplier = Random.Range(0.05f, 0.2f);
                 yield return new WaitForSeconds(Random.Range(0.04f, 0.1f));
-
                 _flickerMultiplier = Random.Range(0.7f, 1f);
                 yield return new WaitForSeconds(Random.Range(0.05f, 0.15f));
             }
-
             _flickerMultiplier = 1f;
         }
     }
@@ -183,12 +176,9 @@ public class FlashlightSystem : MonoBehaviour
 
         targetIntensity *= _flickerMultiplier;
 
-        _currentIntensity = Mathf.Lerp(_currentIntensity, targetIntensity,
-                                        Time.deltaTime * transitionSpeed);
-        _currentSpotAngle = Mathf.Lerp(_currentSpotAngle, targetAngle,
-                                        Time.deltaTime * transitionSpeed);
-        _currentRange     = Mathf.Lerp(_currentRange, targetRange,
-                                        Time.deltaTime * transitionSpeed);
+        _currentIntensity = Mathf.Lerp(_currentIntensity, targetIntensity, Time.deltaTime * transitionSpeed);
+        _currentSpotAngle = Mathf.Lerp(_currentSpotAngle, targetAngle,     Time.deltaTime * transitionSpeed);
+        _currentRange     = Mathf.Lerp(_currentRange,     targetRange,     Time.deltaTime * transitionSpeed);
 
         flashlightLight.intensity = _currentIntensity;
         flashlightLight.spotAngle = _currentSpotAngle;
@@ -211,7 +201,7 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── Batería — drenaje variable según modo ───────────────────────────────
+    // ─── Batería ─────────────────────────────────────────────────────────────
 
     private void DrainBattery()
     {
@@ -223,26 +213,25 @@ public class FlashlightSystem : MonoBehaviour
             return;
         }
 
-        // Drenaje multiplicado al apuntar
         float currentDrain = _isAiming ? drainRate * aimDrainMultiplier : drainRate;
-
         currentBattery -= currentDrain * Time.deltaTime;
         currentBattery  = Mathf.Max(currentBattery, 0f);
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
 
-    // ─── Detección de ojos ────────────────────────────────────────────────────
+    // ─── Detección de ojos POR LAYER ─────────────────────────────────────────
 
     private void DetectEyesStun()
     {
-        if (!_isAiming || eyesCollider == null || _enemyBT == null) return;
+        if (!_isAiming) return;
+        if (mainCamera == null) return;
 
         Ray  ray     = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         bool hitting = false;
 
-        if (RaycastHitsEyes(ray.origin, ray.direction)) hitting = true;
+        EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
 
-        if (!hitting)
+        if (hitEnemy == null)
         {
             for (int i = 0; i < coneRayCount; i++)
             {
@@ -250,27 +239,41 @@ public class FlashlightSystem : MonoBehaviour
                 Vector3 dir   = Quaternion.AngleAxis(angle, ray.direction)
                               * (Quaternion.AngleAxis(coneAngle * 0.5f,
                                  mainCamera.transform.right) * ray.direction);
-                if (RaycastHitsEyes(ray.origin, dir)) { hitting = true; break; }
+
+                hitEnemy = TryRaycastEyes(ray.origin, dir);
+                if (hitEnemy != null) break;
             }
         }
 
-        if (hitting && !_stunDetected)
+        if (hitEnemy != null)
         {
-            _stunDetected = true;
-            _enemyBT.Stun();
-            Debug.Log("[Flashlight] ¡Stun!");
+            hitting = true;
+            if (!_stunDetected)
+            {
+                _stunDetected = true;
+                hitEnemy.Stun();
+                Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
+            }
         }
-        else if (!hitting)
+        else
         {
             _stunDetected = false;
         }
     }
 
-    private bool RaycastHitsEyes(Vector3 origin, Vector3 direction)
+    /// <summary>
+    /// Devuelve el EnemyBehaviourTree del enemigo al que pertenecen los ojos
+    /// que ha tocado el raycast, o null si no toca ningún ojo.
+    /// </summary>
+    private EnemyBehaviourTree TryRaycastEyes(Vector3 origin, Vector3 direction)
     {
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange))
-            return hit.collider == eyesCollider;
-        return false;
+        if (Physics.Raycast(origin, direction, out RaycastHit hit,
+                            stunDetectRange, eyesLayerMask))
+        {
+            // Buscar el EnemyBehaviourTree en el padre del collider impactado
+            return hit.collider.GetComponentInParent<EnemyBehaviourTree>();
+        }
+        return null;
     }
 
     // ─── Recarga ──────────────────────────────────────────────────────────────
@@ -330,3 +333,4 @@ public class FlashlightSystem : MonoBehaviour
     public bool  IsAiming       => _isAiming;
     public bool  HasFlashlight  => _hasFlashlight;
 }
+
