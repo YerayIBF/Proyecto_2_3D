@@ -15,6 +15,7 @@ public class CogerObjeto : MonoBehaviour
     private Transform megafonoObject;
     private GameObject objeto;
     public bool apuntando = false;
+    private Vector3 handPointRotation;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -22,6 +23,8 @@ public class CogerObjeto : MonoBehaviour
         lineRenderer.enabled = false;
         objetoInteractuable = GameObject.FindGameObjectWithTag("objetoCogible").transform;
         megafonoObject = GameObject.FindGameObjectWithTag("Megafono").transform;
+
+        handPointRotation = handPoint.transform.localEulerAngles;
     }
 
     // Update is called once per frame
@@ -39,6 +42,7 @@ public class CogerObjeto : MonoBehaviour
                 objetoCogido = null;
 
                 GameManager.instance.tieneMegafono = false;
+                handPoint.transform.localEulerAngles = handPointRotation;
             }
         }
 
@@ -110,7 +114,7 @@ public class CogerObjeto : MonoBehaviour
         rb.isKinematic = false;
         rb.useGravity = true;
 
-        Vector3 direction = (handPoint.transform.forward + Vector3.up * 0.4f).normalized;
+        Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 force = direction * throwForce;
         rb.AddForce(force, ForceMode.VelocityChange);
 
@@ -122,6 +126,8 @@ public class CogerObjeto : MonoBehaviour
 
         objetoCogido.transform.SetParent(null);
         objetoCogido = null;
+
+        handPoint.transform.localEulerAngles = handPointRotation;
     }
 
     private void OnTriggerStay(Collider other) {
@@ -171,6 +177,17 @@ public class CogerObjeto : MonoBehaviour
                 objeto.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
             }
 
+            if (objeto.CompareTag("objetoCogible"))
+            {
+                Vector3 rotacion = handPoint.transform.localEulerAngles;
+                handPoint.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
+            }
+            else if (objeto.CompareTag("Megafono"))
+            {
+                Vector3 rotacion = handPoint.transform.localEulerAngles;
+                handPoint.transform.localEulerAngles = new Vector3(rotacion.x, 150.3f, rotacion.z);
+            }
+
             objetoCogido = objeto;
             objeto = null;
 
@@ -186,7 +203,7 @@ public class CogerObjeto : MonoBehaviour
     void DibujarTrayectoria()
     {
         Vector3 startPoint = handPoint.transform.position;
-        Vector3 direction = (handPoint.transform.forward + Vector3.up * 0.4f).normalized;
+        Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 startVelocity = direction * throwForce;
 
         lineRenderer.positionCount = predictionSteps;
