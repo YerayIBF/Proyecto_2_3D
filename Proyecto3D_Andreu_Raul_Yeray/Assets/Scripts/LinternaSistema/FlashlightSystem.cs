@@ -115,7 +115,7 @@ public class FlashlightSystem : MonoBehaviour
                 Reload();
         }
 
-        bool aimInput = Input.GetMouseButton(1) && _isOn;
+        bool aimInput = Input.GetMouseButton(0) && _isOn;
         if (aimInput != _isAiming)
         {
             _isAiming = aimInput;

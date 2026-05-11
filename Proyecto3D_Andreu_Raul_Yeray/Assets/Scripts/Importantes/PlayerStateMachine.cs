@@ -3,9 +3,10 @@ using StarterAssets;
 
 /// <summary>
 /// Máquina de estados central del jugador.
-/// Gestiona: estados de movimiento, linterna, taquillas, baterías y muerte.
+/// Lee el estado del PlayerEquipmentManager y otros sistemas, y coordina
+/// las restricciones de movimiento, sprint, etc.
 ///
-/// Coloca este script en PlayerArmature.
+/// Coloca en PlayerArmature.
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -18,18 +19,21 @@ public class PlayerStateMachine : MonoBehaviour
         Idle,
         Walking,
         Running,
-        Aiming,     // Click derecho — linterna apuntando
-        Hiding,     // Dentro de la taquilla
+        AimingFlashlight,
+        AimingMegaphone,
+        HoldingObject,
+        Hiding,
         Dead
     }
 
     public PlayerState CurrentState { get; private set; } = PlayerState.Idle;
 
-    // ─── Referencias a sistemas ───────────────────────────────────────────────
+    // ─── Referencias ─────────────────────────────────────────────────────────
 
     [Header("Sistemas")]
-    public FlashlightSystem flashlightSystem;
-    public LockerSystem     lockerSystem;
+    public FlashlightSystem       flashlightSystem;
+    public LockerSystem           lockerSystem;
+    public PlayerEquipmentManager equipmentManager;
 
     [Header("Starter Assets")]
     public ThirdPersonController tpController;
@@ -39,9 +43,7 @@ public class PlayerStateMachine : MonoBehaviour
     // ─── Inventario de baterías ───────────────────────────────────────────────
 
     [Header("Inventario")]
-    [Tooltip("Número de baterías al inicio")]
     public int startingBatteries = 2;
-    [Tooltip("Máximo de baterías que puede llevar")]
     public int maxBatteries      = 5;
 
     private int _batteryCount;
@@ -64,12 +66,12 @@ public class PlayerStateMachine : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        // Auto-buscar componentes si no están asignados
-        if (tpController       == null) tpController       = GetComponent<ThirdPersonController>();
-        if (inputs             == null) inputs             = GetComponent<StarterAssetsInputs>();
+        if (tpController        == null) tpController        = GetComponent<ThirdPersonController>();
+        if (inputs              == null) inputs              = GetComponent<StarterAssetsInputs>();
         if (characterController == null) characterController = GetComponent<CharacterController>();
-        if (lockerSystem       == null) lockerSystem       = GetComponent<LockerSystem>();
-        if (flashlightSystem   == null) flashlightSystem   = GetComponentInChildren<FlashlightSystem>();
+        if (lockerSystem        == null) lockerSystem        = GetComponent<LockerSystem>();
+        if (equipmentManager    == null) equipmentManager    = GetComponent<PlayerEquipmentManager>();
+        if (flashlightSystem    == null) flashlightSystem    = GetComponentInChildren<FlashlightSystem>();
     }
 
     private void Start()
@@ -94,7 +96,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void EvaluateState()
     {
-        // Prioridad: Dead > Hiding > Aiming > Running > Walking > Idle
+        // Prioridad: Dead > Hiding > AimingFlashlight > AimingMegaphone > HoldingObject > movimiento
 
         // Escondido en taquilla
         if (lockerSystem != null && lockerSystem.IsHiding)
@@ -103,18 +105,27 @@ public class PlayerStateMachine : MonoBehaviour
             return;
         }
 
-        // Apuntando con linterna (click derecho)
-        bool isAiming = Input.GetMouseButton(1)
-                     && flashlightSystem != null
-                     && flashlightSystem.IsOn;
-
-        if (isAiming)
+        // Estados del equipment manager
+        if (equipmentManager != null)
         {
-            ChangeState(PlayerState.Aiming);
-            return;
+            if (equipmentManager.IsAimingFlashlight)
+            {
+                ChangeState(PlayerState.AimingFlashlight);
+                return;
+            }
+            if (equipmentManager.IsAimingMegaphone)
+            {
+                ChangeState(PlayerState.AimingMegaphone);
+                return;
+            }
+            if (equipmentManager.IsHoldingThrowable)
+            {
+                ChangeState(PlayerState.HoldingObject);
+                return;
+            }
         }
 
-        // Movimiento
+        // Movimiento normal
         if (inputs != null)
         {
             float speed = new Vector2(inputs.move.x, inputs.move.y).magnitude;
@@ -134,8 +145,16 @@ public class PlayerStateMachine : MonoBehaviour
     {
         switch (CurrentState)
         {
-            case PlayerState.Aiming:
+            case PlayerState.AimingFlashlight:
+            case PlayerState.AimingMegaphone:
+                // No puede correr mientras apunta cualquier cosa
                 BlockSprint();
+                break;
+
+            case PlayerState.HoldingObject:
+                // Puede correr llevando un objeto pero más lento (opcional)
+                if (tpController != null)
+                    tpController.SprintSpeed = _originalRunSpeed * 0.7f;
                 break;
 
             case PlayerState.Hiding:
@@ -173,7 +192,6 @@ public class PlayerStateMachine : MonoBehaviour
 
     // ─── API pública — Baterías ───────────────────────────────────────────────
 
-    /// <summary>Añade baterías al inventario. Devuelve true si se añadieron.</summary>
     public bool AddBattery(int amount = 1)
     {
         if (_batteryCount >= maxBatteries) return false;
@@ -184,9 +202,6 @@ public class PlayerStateMachine : MonoBehaviour
         return true;
     }
 
-    /// <summary>
-    /// Intenta recargar la linterna consumiendo una batería del inventario.
-    /// </summary>
     public bool TryReloadFlashlight()
     {
         if (_batteryCount <= 0)
@@ -194,7 +209,6 @@ public class PlayerStateMachine : MonoBehaviour
             Debug.Log("[Inventory] Sin baterías.");
             return false;
         }
-
         if (flashlightSystem == null) return false;
 
         _batteryCount--;
@@ -231,9 +245,12 @@ public class PlayerStateMachine : MonoBehaviour
 
     // ─── Propiedades públicas ────────────────────────────────────────────────
 
-    public bool IsAlive    => CurrentState != PlayerState.Dead;
-    public bool IsHiding   => CurrentState == PlayerState.Hiding;
-    public bool IsAiming   => CurrentState == PlayerState.Aiming;
-    public bool CanRun     => CurrentState != PlayerState.Aiming && CurrentState != PlayerState.Hiding;
-    public bool HasBattery => _batteryCount > 0;
+    public bool IsAlive            => CurrentState != PlayerState.Dead;
+    public bool IsHiding           => CurrentState == PlayerState.Hiding;
+    public bool IsAimingFlashlight => CurrentState == PlayerState.AimingFlashlight;
+    public bool IsAimingMegaphone  => CurrentState == PlayerState.AimingMegaphone;
+    public bool IsAiming           => IsAimingFlashlight || IsAimingMegaphone;
+    public bool IsHoldingObject    => CurrentState == PlayerState.HoldingObject;
+    public bool CanRun             => !IsAiming && !IsHiding;
+    public bool HasBattery         => _batteryCount > 0;
 }
