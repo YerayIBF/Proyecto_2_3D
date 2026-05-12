@@ -174,6 +174,12 @@ namespace StarterAssets
                 cercaDePila = false;
             }
 
+            //testear minijuego
+            /*if (Input.GetKeyDown(KeyCode.K))
+            {
+                GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+            }*/
+
             _hasAnimator = TryGetComponent(out _animator);
 
             JumpAndGravity();

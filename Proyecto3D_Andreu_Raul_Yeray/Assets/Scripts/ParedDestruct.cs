@@ -3,6 +3,9 @@ using UnityEngine;
 public class ParedDestruct : MonoBehaviour
 {
     public GameObject paredDestruidaPrefab;
+    public GameObject cristalesRotos;
+    public Transform puntoSpawnSuelo;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -23,7 +26,20 @@ public class ParedDestruct : MonoBehaviour
         {
             if (paredDestruidaPrefab != null)
             {
-                Instantiate(paredDestruidaPrefab, transform.position, transform.rotation);
+                GameObject panelRoto = Instantiate(paredDestruidaPrefab, transform.position, transform.rotation);
+
+                panelRoto.transform.localScale = transform.localScale;
+
+                MeshCollider col = panelRoto.GetComponent<MeshCollider>();
+                if (col != null)
+                {
+                    col.enabled = false;
+                }
+            }
+
+            if (cristalesRotos != null)
+            {
+                Instantiate(cristalesRotos, puntoSpawnSuelo.position, puntoSpawnSuelo.rotation);
             }
             
             Destroy(gameObject);
