@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 51ca808ef72e3924799fe79db413f29e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11700000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Textures/VolumetricNoise/Perlin/Perlin-3-128px.asset
+  uploadId: 608692

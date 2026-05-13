@@ -3,8 +3,7 @@ using StarterAssets;
 
 /// <summary>
 /// Máquina de estados central del jugador.
-/// Lee el estado del PlayerEquipmentManager y otros sistemas, y coordina
-/// las restricciones de movimiento, sprint, etc.
+/// Gestiona estados + vida + stamina.
 ///
 /// Coloca en PlayerArmature.
 /// </summary>
@@ -42,17 +41,42 @@ public class PlayerStateMachine : MonoBehaviour
 
     // ─── Inventario de baterías ───────────────────────────────────────────────
 
-    [Header("Inventario")]
+    [Header("Inventario — Baterías")]
     public int startingBatteries = 2;
     public int maxBatteries      = 5;
-
-    private int _batteryCount;
+    [Header("Inventario — Baterías (en tiempo real)")]
+    [SerializeField] private int _batteryCount;
     public int BatteryCount => _batteryCount;
+    // ─── Vida ────────────────────────────────────────────────────────────────
+
+    [Header("Vida")]
+    public float maxHealth     = 100f;
+    public float currentHealth = 100f;
+    [Tooltip("Velocidad de regeneración (por segundo) si no recibe daño durante un tiempo")]
+    public float healthRegenRate    = 2f;
+    [Tooltip("Segundos sin recibir daño antes de empezar a regenerar")]
+    public float healthRegenDelay   = 5f;
+    private float _lastDamageTime = -999f;
+
+    // ─── Stamina ─────────────────────────────────────────────────────────────
+
+    [Header("Stamina")]
+    public float maxStamina     = 100f;
+    public float currentStamina = 100f;
+    [Tooltip("Consumo por segundo al correr")]
+    public float staminaDrainRate  = 15f;
+    [Tooltip("Regeneración por segundo cuando no corre")]
+    public float staminaRegenRate  = 10f;
+    [Tooltip("Stamina mínima necesaria para empezar a correr")]
+    public float staminaRunThreshold = 10f;
+    private bool _staminaExhausted = false;
 
     // ─── Eventos ─────────────────────────────────────────────────────────────
 
     public System.Action<PlayerState> OnStateChanged;
     public System.Action<int>         OnBatteryCountChanged;
+    public System.Action<float>       OnHealthChanged;     // 0-1 (porcentaje)
+    public System.Action<float>       OnStaminaChanged;    // 0-1 (porcentaje)
     public System.Action              OnPlayerDied;
 
     // ─── Estado interno ───────────────────────────────────────────────────────
@@ -76,10 +100,15 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void Start()
     {
-        _batteryCount = startingBatteries;
+        _batteryCount  = startingBatteries;
+        currentHealth  = maxHealth;
+        currentStamina = maxStamina;
 
         if (tpController != null)
             _originalRunSpeed = tpController.SprintSpeed;
+
+        OnHealthChanged?.Invoke(currentHealth / maxHealth);
+        OnStaminaChanged?.Invoke(currentStamina / maxStamina);
     }
 
     // ─── Update ──────────────────────────────────────────────────────────────
@@ -90,47 +119,39 @@ public class PlayerStateMachine : MonoBehaviour
 
         EvaluateState();
         ApplyStateRules();
+        UpdateStamina();
+        UpdateHealthRegen();
     }
 
     // ─── Evaluación de estado ─────────────────────────────────────────────────
 
     private void EvaluateState()
     {
-        // Prioridad: Dead > Hiding > AimingFlashlight > AimingMegaphone > HoldingObject > movimiento
+        // Prioridad: Dead > Hiding > Aiming > HoldingObject > movimiento
 
-        // Escondido en taquilla
         if (lockerSystem != null && lockerSystem.IsHiding)
         {
             ChangeState(PlayerState.Hiding);
             return;
         }
 
-        // Estados del equipment manager
         if (equipmentManager != null)
         {
-            if (equipmentManager.IsAimingFlashlight)
-            {
-                ChangeState(PlayerState.AimingFlashlight);
-                return;
-            }
-            if (equipmentManager.IsAimingMegaphone)
-            {
-                ChangeState(PlayerState.AimingMegaphone);
-                return;
-            }
-            if (equipmentManager.IsHoldingThrowable)
-            {
-                ChangeState(PlayerState.HoldingObject);
-                return;
-            }
+            if (equipmentManager.IsAimingFlashlight) { ChangeState(PlayerState.AimingFlashlight); return; }
+            if (equipmentManager.IsAimingMegaphone)  { ChangeState(PlayerState.AimingMegaphone);  return; }
+            if (equipmentManager.IsHoldingThrowable) { ChangeState(PlayerState.HoldingObject);    return; }
         }
 
-        // Movimiento normal
+        // Movimiento
         if (inputs != null)
         {
             float speed = new Vector2(inputs.move.x, inputs.move.y).magnitude;
 
-            if (speed > 0.1f && inputs.sprint)
+            // Solo puede correr si tiene stamina
+            bool wantsToRun = speed > 0.1f && inputs.sprint;
+            bool canRun     = !_staminaExhausted && currentStamina > 0f;
+
+            if (wantsToRun && canRun)
                 ChangeState(PlayerState.Running);
             else if (speed > 0.1f)
                 ChangeState(PlayerState.Walking);
@@ -147,18 +168,15 @@ public class PlayerStateMachine : MonoBehaviour
         {
             case PlayerState.AimingFlashlight:
             case PlayerState.AimingMegaphone:
-                // No puede correr mientras apunta cualquier cosa
                 BlockSprint();
                 break;
 
             case PlayerState.HoldingObject:
-                // Puede correr llevando un objeto pero más lento (opcional)
                 if (tpController != null)
                     tpController.SprintSpeed = _originalRunSpeed * 0.7f;
                 break;
 
             case PlayerState.Hiding:
-                // Lo gestiona LockerSystem
                 break;
 
             case PlayerState.Running:
@@ -180,47 +198,99 @@ public class PlayerStateMachine : MonoBehaviour
         if (tpController != null) tpController.SprintSpeed = _originalRunSpeed;
     }
 
-    // ─── Cambio de estado ─────────────────────────────────────────────────────
+    // ─── Stamina ─────────────────────────────────────────────────────────────
 
-    private void ChangeState(PlayerState newState)
+    private void UpdateStamina()
     {
-        if (CurrentState == newState) return;
-        CurrentState = newState;
-        OnStateChanged?.Invoke(newState);
-        Debug.Log($"[PlayerState] → {newState}");
+        if (CurrentState == PlayerState.Running)
+        {
+            currentStamina -= staminaDrainRate * Time.deltaTime;
+            currentStamina  = Mathf.Max(currentStamina, 0f);
+
+            // Si se agota → bloquear sprint hasta llegar al umbral mínimo
+            if (currentStamina <= 0f)
+            {
+                _staminaExhausted = true;
+                if (inputs != null) inputs.sprint = false;
+            }
+        }
+        else
+        {
+            // Regenerar mientras no corre
+            currentStamina += staminaRegenRate * Time.deltaTime;
+            currentStamina  = Mathf.Min(currentStamina, maxStamina);
+
+            // Cuando vuelve a tener stamina suficiente, deja correr otra vez
+            if (_staminaExhausted && currentStamina >= staminaRunThreshold)
+                _staminaExhausted = false;
+        }
+
+        OnStaminaChanged?.Invoke(currentStamina / maxStamina);
     }
 
-    // ─── API pública — Baterías ───────────────────────────────────────────────
+    // ─── Vida ────────────────────────────────────────────────────────────────
+
+    private void UpdateHealthRegen()
+    {
+        if (currentHealth >= maxHealth) return;
+
+        if (Time.time - _lastDamageTime < healthRegenDelay) return;
+
+        currentHealth += healthRegenRate * Time.deltaTime;
+        currentHealth  = Mathf.Min(currentHealth, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth / maxHealth);
+    }
+
+    /// <summary>
+    /// Llamado cuando el jugador recibe daño (del enemigo, caída, etc.)
+    /// </summary>
+    public void TakeDamage(float amount)
+    {
+        if (CurrentState == PlayerState.Dead) return;
+
+        currentHealth -= amount;
+        currentHealth  = Mathf.Max(currentHealth, 0f);
+        _lastDamageTime = Time.time;
+
+        OnHealthChanged?.Invoke(currentHealth / maxHealth);
+        Debug.Log($"[Health] -{amount}. Vida: {currentHealth:F0}/{maxHealth}");
+
+        if (currentHealth <= 0f)
+            Die();
+    }
+
+    /// <summary>Cura al jugador (botiquines, checkpoints, etc.)</summary>
+    public void Heal(float amount)
+    {
+        currentHealth += amount;
+        currentHealth  = Mathf.Min(currentHealth, maxHealth);
+        OnHealthChanged?.Invoke(currentHealth / maxHealth);
+    }
+
+    // ─── Baterías ────────────────────────────────────────────────────────────
 
     public bool AddBattery(int amount = 1)
     {
         if (_batteryCount >= maxBatteries) return false;
-
         _batteryCount = Mathf.Min(_batteryCount + amount, maxBatteries);
         OnBatteryCountChanged?.Invoke(_batteryCount);
-        Debug.Log($"[Inventory] Baterías: {_batteryCount}/{maxBatteries}");
         return true;
     }
 
     public bool TryReloadFlashlight()
     {
-        if (_batteryCount <= 0)
-        {
-            Debug.Log("[Inventory] Sin baterías.");
-            return false;
-        }
+        if (_batteryCount <= 0) return false;
         if (flashlightSystem == null) return false;
 
         _batteryCount--;
         flashlightSystem.Reload();
         OnBatteryCountChanged?.Invoke(_batteryCount);
-        Debug.Log($"[Inventory] Batería usada. Quedan: {_batteryCount}");
         return true;
     }
 
     public void PickupBattery() => AddBattery(1);
 
-    // ─── API pública — Muerte ─────────────────────────────────────────────────
+    // ─── Muerte ──────────────────────────────────────────────────────────────
 
     public void Die()
     {
@@ -240,17 +310,28 @@ public class PlayerStateMachine : MonoBehaviour
             flashlightSystem.ToggleFlashlight();
 
         OnPlayerDied?.Invoke();
-        Debug.Log("[PlayerState] JUGADOR MUERTO.");
+        Debug.Log("[PlayerState] MUERTO");
     }
 
-    // ─── Propiedades públicas ────────────────────────────────────────────────
+    // ─── Cambio de estado ────────────────────────────────────────────────────
 
-    public bool IsAlive            => CurrentState != PlayerState.Dead;
-    public bool IsHiding           => CurrentState == PlayerState.Hiding;
-    public bool IsAimingFlashlight => CurrentState == PlayerState.AimingFlashlight;
-    public bool IsAimingMegaphone  => CurrentState == PlayerState.AimingMegaphone;
-    public bool IsAiming           => IsAimingFlashlight || IsAimingMegaphone;
-    public bool IsHoldingObject    => CurrentState == PlayerState.HoldingObject;
-    public bool CanRun             => !IsAiming && !IsHiding;
-    public bool HasBattery         => _batteryCount > 0;
+    private void ChangeState(PlayerState newState)
+    {
+        if (CurrentState == newState) return;
+        CurrentState = newState;
+        OnStateChanged?.Invoke(newState);
+    }
+
+    // ─── Propiedades ─────────────────────────────────────────────────────────
+
+    public float HealthPercent  => currentHealth / maxHealth;
+    public float StaminaPercent => currentStamina / maxStamina;
+    public bool  IsAlive            => CurrentState != PlayerState.Dead;
+    public bool  IsHiding           => CurrentState == PlayerState.Hiding;
+    public bool  IsAimingFlashlight => CurrentState == PlayerState.AimingFlashlight;
+    public bool  IsAimingMegaphone  => CurrentState == PlayerState.AimingMegaphone;
+    public bool  IsAiming           => IsAimingFlashlight || IsAimingMegaphone;
+    public bool  IsHoldingObject    => CurrentState == PlayerState.HoldingObject;
+    public bool  CanRun             => !IsAiming && !IsHiding && !_staminaExhausted;
+    public bool  HasBattery         => _batteryCount > 0;
 }

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 2e57da6cfe98ce54cb01f0c478ce104a
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Shaders/Resources/TemporalAA.shader
+  uploadId: 608692

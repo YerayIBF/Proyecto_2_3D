@@ -1,9 +1,24 @@
 using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// Sistema de linterna.
+///
+/// - El jugador no puede usar la linterna hasta recogerla con E
+/// - Si startPickedUp = true, ya la tiene equipada al inicio (test/tutorial saltado)
+/// - F = encender/apagar
+/// - Click izquierdo = apuntar (zoom + más intensa)
+/// - R = recargar
+/// </summary>
 public class FlashlightSystem : MonoBehaviour
 {
-    [Header("Luz principal")]
+    [Header("Pickup")]
+    [Tooltip("Si está marcado, la linterna empieza ya recogida (no necesita E)")]
+    public bool startPickedUp = false;
+    public float pickupRange = 2f;
+    public GameObject pickupIcon;
+
+    [Header("Luz")]
     public Light flashlightLight;
     public Camera mainCamera;
 
@@ -23,35 +38,31 @@ public class FlashlightSystem : MonoBehaviour
     public float transitionSpeed = 8f;
 
     [Header("Batería")]
-    public float maxBattery     = 120f;
-    public float currentBattery = 120f;
-    public float drainRate      = 1f;
+    public float maxBattery        = 120f;
+    public float currentBattery    = 120f;
+    public float drainRate         = 1f;
     public float aimDrainMultiplier = 3f;
 
     [Header("Intensidad por batería")]
     public float dimThreshold = 0.4f;
 
     [Header("Parpadeo natural")]
-    public float flickerThreshold    = 0.15f;
-    public float flickerOffIntensity = 0.05f;
+    public float flickerThreshold = 0.15f;
 
-    [Header("Detección de ojos (GLOBAL)")]
-    [Tooltip("Layer que tienen los colliders de los ojos de los enemigos")]
+    [Header("Detección de ojos")]
     public LayerMask eyesLayerMask;
-    public int       coneRayCount    = 8;
-    public float     coneAngle       = 15f;
-    public float     stunDetectRange = 10f;
+    public int      coneRayCount    = 8;
+    public float    coneAngle       = 15f;
+    public float    stunDetectRange = 10f;
 
-    [Header("Recarga")]
-    public GameObject drainedBatteriesPrefab;
-    public Transform  dropPoint;
-    public float      dropForce = 2f;
+    // ─── Estado ───────────────────────────────────────────────────────────────
 
-    // Estado
     private bool _isOn          = false;
-    private bool _hasFlashlight = true;
+    private bool _hasFlashlight = false;
     private bool _isAiming      = false;
     private bool _stunDetected  = false;
+    private bool _playerInRange = false;
+    private Transform _player;
 
     private float _currentIntensity;
     private float _currentSpotAngle;
@@ -76,18 +87,46 @@ public class FlashlightSystem : MonoBehaviour
         _currentSpotAngle = normalSpotAngle;
         _currentRange     = normalRange;
 
-        SetLight(false);
-
         if (aimSpotLight != null) aimSpotLight.enabled = false;
         if (aimParticles != null) aimParticles.Stop();
+        if (pickupIcon != null) pickupIcon.SetActive(false);
+
+        GameObject p = GameObject.FindGameObjectWithTag("Player");
+        if (p != null) _player = p.transform;
+
+        // ── IMPORTANTE: empezar con la luz apagada y sin estado de pickup ──
+        if (flashlightLight != null) flashlightLight.enabled = false;
+    }
+
+    private void Start()
+    {
+        // Si empieza ya recogida (modo testing / saltar tutorial)
+        if (startPickedUp)
+        {
+            _hasFlashlight = true;
+            // NO desactivamos el GameObject — está en la mano
+            // El equipment manager lo posiciona en su Start()
+        }
+        else
+        {
+            // No recogida: está en el suelo, esperando E
+            _hasFlashlight = false;
+            // NO desactivamos el GameObject — el jugador tiene que verlo en el suelo
+        }
     }
 
     // ─── Update ──────────────────────────────────────────────────────────────
 
     private void Update()
     {
-        if (!_hasFlashlight) return;
+        // Si aún no la ha recogido → solo gestionar pickup
+        if (!_hasFlashlight)
+        {
+            HandlePickup();
+            return;
+        }
 
+        // Linterna en uso
         HandleInput();
 
         if (_isOn)
@@ -100,13 +139,59 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
+    // ─── PICKUP ──────────────────────────────────────────────────────────────
+
+    private void HandlePickup()
+    {
+        if (_player == null) return;
+
+        float dist = Vector3.Distance(transform.position, _player.position);
+        bool nowInRange = dist <= pickupRange;
+
+        if (nowInRange != _playerInRange)
+        {
+            _playerInRange = nowInRange;
+            if (pickupIcon != null) pickupIcon.SetActive(_playerInRange);
+        }
+
+        if (_playerInRange && Input.GetKeyDown(KeyCode.E))
+            Pickup();
+    }
+
+    private void Pickup()
+    {
+        _hasFlashlight = true;
+        if (pickupIcon != null) pickupIcon.SetActive(false);
+
+        // Avisar al equipment manager
+        if (PlayerEquipmentManager.Instance != null)
+            PlayerEquipmentManager.Instance.PickupFlashlight(gameObject);
+
+        // Compatibilidad con GameManager de tu compañero
+        if (GameManager.instance != null)
+            GameManager.instance.tieneLinterna = true;
+
+        Debug.Log("[Flashlight] Linterna recogida.");
+    }
+
+    /// <summary>
+    /// Llamado por el equipment manager cuando ya está equipada.
+    /// </summary>
+    public void PickupFlashlight()
+    {
+        _hasFlashlight = true;
+        if (pickupIcon != null) pickupIcon.SetActive(false);
+    }
+
     // ─── Input ───────────────────────────────────────────────────────────────
 
     private void HandleInput()
     {
+        // F → encender/apagar
         if (Input.GetKeyDown(KeyCode.F) && currentBattery > 0f)
             ToggleFlashlight();
 
+        // R → recargar
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (PlayerStateMachine.Instance != null)
@@ -115,15 +200,22 @@ public class FlashlightSystem : MonoBehaviour
                 Reload();
         }
 
-        bool aimInput = Input.GetMouseButton(0) && _isOn;
+        // Click izquierdo → apuntar (con bloqueos del equipment manager)
+        bool canAim = _isOn;
+        if (PlayerEquipmentManager.Instance != null)
+            canAim = canAim && PlayerEquipmentManager.Instance.CanAimFlashlight;
+
+        bool aimInput = Input.GetMouseButton(1) && canAim;
+
         if (aimInput != _isAiming)
         {
             _isAiming = aimInput;
             OnAimingChanged?.Invoke(_isAiming);
+            PlayerEquipmentManager.Instance?.SetAimingFlashlight(_isAiming);
         }
     }
 
-    // ─── Parpadeo natural ────────────────────────────────────────────────────
+    // ─── Parpadeo ─────────────────────────────────────────────────────────────
 
     private void UpdateFlickerState()
     {
@@ -143,11 +235,9 @@ public class FlashlightSystem : MonoBehaviour
     {
         while (true)
         {
-            float pauseBetweenBursts = Random.Range(1.5f, 4f);
-            yield return new WaitForSeconds(pauseBetweenBursts);
-
-            int flickerCount = Random.Range(2, 5);
-            for (int i = 0; i < flickerCount; i++)
+            yield return new WaitForSeconds(Random.Range(1.5f, 4f));
+            int count = Random.Range(2, 5);
+            for (int i = 0; i < count; i++)
             {
                 _flickerMultiplier = Random.Range(0.05f, 0.2f);
                 yield return new WaitForSeconds(Random.Range(0.04f, 0.1f));
@@ -158,7 +248,7 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── Parámetros de luz ────────────────────────────────────────────────────
+    // ─── Luz ─────────────────────────────────────────────────────────────────
 
     private void UpdateLightParameters()
     {
@@ -185,8 +275,6 @@ public class FlashlightSystem : MonoBehaviour
         flashlightLight.range     = _currentRange;
     }
 
-    // ─── Efectos al apuntar ──────────────────────────────────────────────────
-
     private void UpdateAimEffects()
     {
         if (aimSpotLight != null && aimSpotLight.enabled != _isAiming)
@@ -194,14 +282,10 @@ public class FlashlightSystem : MonoBehaviour
 
         if (aimParticles != null)
         {
-            if (_isAiming && !aimParticles.isPlaying)
-                aimParticles.Play();
-            else if (!_isAiming && aimParticles.isPlaying)
-                aimParticles.Stop();
+            if (_isAiming && !aimParticles.isPlaying) aimParticles.Play();
+            else if (!_isAiming && aimParticles.isPlaying) aimParticles.Stop();
         }
     }
-
-    // ─── Batería ─────────────────────────────────────────────────────────────
 
     private void DrainBattery()
     {
@@ -219,87 +303,50 @@ public class FlashlightSystem : MonoBehaviour
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
 
-    // ─── Detección de ojos POR LAYER ─────────────────────────────────────────
-
     private void DetectEyesStun()
     {
-        if (!_isAiming) return;
-        if (mainCamera == null) return;
+        if (!_isAiming || mainCamera == null) return;
 
-        Ray  ray     = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        bool hitting = false;
-
+        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
 
         if (hitEnemy == null)
         {
             for (int i = 0; i < coneRayCount; i++)
             {
-                float   angle = (360f / coneRayCount) * i;
-                Vector3 dir   = Quaternion.AngleAxis(angle, ray.direction)
-                              * (Quaternion.AngleAxis(coneAngle * 0.5f,
-                                 mainCamera.transform.right) * ray.direction);
-
+                float angle = (360f / coneRayCount) * i;
+                Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
+                            * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
                 hitEnemy = TryRaycastEyes(ray.origin, dir);
                 if (hitEnemy != null) break;
             }
         }
 
-        if (hitEnemy != null)
+        if (hitEnemy != null && !_stunDetected)
         {
-            hitting = true;
-            if (!_stunDetected)
-            {
-                _stunDetected = true;
-                hitEnemy.Stun();
-                Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
-            }
+            _stunDetected = true;
+            hitEnemy.Stun();
+            Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
         }
-        else
+        else if (hitEnemy == null)
         {
             _stunDetected = false;
         }
     }
 
-    /// <summary>
-    /// Devuelve el EnemyBehaviourTree del enemigo al que pertenecen los ojos
-    /// que ha tocado el raycast, o null si no toca ningún ojo.
-    /// </summary>
     private EnemyBehaviourTree TryRaycastEyes(Vector3 origin, Vector3 direction)
     {
-        if (Physics.Raycast(origin, direction, out RaycastHit hit,
-                            stunDetectRange, eyesLayerMask))
-        {
-            // Buscar el EnemyBehaviourTree en el padre del collider impactado
+        if (Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange, eyesLayerMask))
             return hit.collider.GetComponentInParent<EnemyBehaviourTree>();
-        }
         return null;
     }
-
-    // ─── Recarga ──────────────────────────────────────────────────────────────
 
     public void Reload()
     {
         if (currentBattery >= maxBattery) return;
-
-        if (drainedBatteriesPrefab != null && dropPoint != null)
-        {
-            GameObject dropped = Instantiate(drainedBatteriesPrefab,
-                                             dropPoint.position, dropPoint.rotation);
-            Rigidbody rb = dropped.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                Vector3 dir = dropPoint.forward * 0.5f + Vector3.down;
-                rb.AddForce(dir.normalized * dropForce, ForceMode.Impulse);
-                rb.AddTorque(Random.insideUnitSphere * dropForce, ForceMode.Impulse);
-            }
-            Destroy(dropped, 10f);
-        }
-
         currentBattery = maxBattery;
         OnBatteryChanged?.Invoke(1f);
-
-        if (!_isOn) SetLight(true);
+        if (!_isOn && _hasFlashlight) SetLight(true);
         Debug.Log("[Flashlight] Recargada.");
     }
 
@@ -326,11 +373,17 @@ public class FlashlightSystem : MonoBehaviour
         OnFlashlightToggled?.Invoke(on);
     }
 
-    public void PickupFlashlight() => _hasFlashlight = true;
-
     public float BatteryPercent => currentBattery / maxBattery;
     public bool  IsOn           => _isOn;
     public bool  IsAiming       => _isAiming;
     public bool  HasFlashlight  => _hasFlashlight;
-}
 
+    private void OnDrawGizmosSelected()
+    {
+        if (!startPickedUp)
+        {
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(transform.position, pickupRange);
+        }
+    }
+}

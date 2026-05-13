@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 713c2afee1d35cc4f90ecae279e58e2b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11700000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Textures/VolumetricNoise/PerlinWorley/PerlinWorley-1-64px.asset
+  uploadId: 608692

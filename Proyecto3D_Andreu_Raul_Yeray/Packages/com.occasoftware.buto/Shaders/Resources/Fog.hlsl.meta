@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 62cff38155e818041bd2398b6c2a6439
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Shaders/Resources/Fog.hlsl
+  uploadId: 608692

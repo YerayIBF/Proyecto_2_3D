@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: a0f00a9427f52384abeeac4dfa055318
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Shaders/Resources/DepthAwareUpscale.shader
+  uploadId: 608692

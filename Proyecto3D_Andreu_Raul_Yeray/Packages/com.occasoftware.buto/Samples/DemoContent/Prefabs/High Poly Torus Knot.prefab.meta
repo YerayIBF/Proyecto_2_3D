@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 439903e08014e974aad7d47810804f4f
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Prefabs/High Poly
+    Torus Knot.prefab
+  uploadId: 608692

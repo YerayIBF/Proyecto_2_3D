@@ -1,14 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// Manager central de equipamiento del jugador.
-/// Coordina dónde está cada item y bloquea acciones incompatibles.
+/// Manager central de equipamiento.
+///
+/// REGLAS:
+/// - Mano dcha: linterna O megáfono (alterna con Q)
+/// - Mano izq: solo lanzables
+/// - Si llevas lanzable → NO puedes apuntar nada
+/// - Si apuntas → NO puedes cambiar de mano ni recoger
 /// </summary>
 public class PlayerEquipmentManager : MonoBehaviour
 {
     public static PlayerEquipmentManager Instance { get; private set; }
-
-    // ─── Anclajes ─────────────────────────────────────────────────────────────
 
     [Header("Anclajes — Linterna")]
     public Transform linternaAnchor_Hand;
@@ -21,76 +24,68 @@ public class PlayerEquipmentManager : MonoBehaviour
     [Header("Anclajes — Objetos lanzables")]
     public Transform throwableAnchor_Hand;
 
-    // ─── Items físicos ───────────────────────────────────────────────────────
-
-    [Header("Items físicos")]
+    [Header("Items físicos (se asignan al recogerlos)")]
     public GameObject linternaObject;
     public GameObject megafonoObject;
 
-    // ─── Estado ───────────────────────────────────────────────────────────────
+    [Header("Offset — Linterna en mano")]
+    public Vector3 linternaHandPos = Vector3.zero;
+    public Vector3 linternaHandRot = Vector3.zero;
 
-    public enum EquipmentState
-    {
-        Normal,
-        AimingFlashlight,
-        AimingMegaphone,
-        HoldingObject
-    }
+    [Header("Offset — Linterna en hombro")]
+    public Vector3 linternaShoulderPos = Vector3.zero;
+    public Vector3 linternaShoulderRot = Vector3.zero;
 
-    public EquipmentState CurrentState { get; private set; } = EquipmentState.Normal;
+    [Header("Offset — Megáfono en mano")]
+    public Vector3 megafonoHandPos = Vector3.zero;
+    public Vector3 megafonoHandRot = Vector3.zero;
 
-    private bool _hasFlashlight = true;
+    [Header("Offset — Megáfono en espalda")]
+    public Vector3 megafonoBackPos = Vector3.zero;
+    public Vector3 megafonoBackRot = Vector3.zero;
+
+    [Header("Inicio")]
+    public bool startWithFlashlight = false;
+
+    [Header("Tecla de cambio")]
+    public KeyCode swapKey = KeyCode.Q;
+
+    public enum RightHandItem { Flashlight, Megaphone }
+    public RightHandItem CurrentRightHand { get; private set; } = RightHandItem.Flashlight;
+
+    private bool _hasFlashlight = false;
     private bool _hasMegaphone  = false;
+    private bool _aimingFlashlight = false;
+    private bool _aimingMegaphone  = false;
     private GameObject _heldThrowable = null;
 
     // ─── Reglas de bloqueo ───────────────────────────────────────────────────
 
-    /// <summary>
-    /// El FlashlightSystem consulta esto antes de activar el apuntado.
-    /// Devuelve false si el megáfono está apuntando o se está usando un objeto.
-    /// </summary>
-    public bool CanAimFlashlight
-    {
-        get
-        {
-            // No se puede apuntar la linterna si el megáfono ya está apuntando
-            if (CurrentState == EquipmentState.AimingMegaphone) return false;
-            return _hasFlashlight;
-        }
-    }
+    public bool CanAimFlashlight =>
+        _hasFlashlight
+        && CurrentRightHand == RightHandItem.Flashlight
+        && !_aimingMegaphone
+        && _heldThrowable == null;          // ← NUEVO: no apuntar con lanzable
 
-    /// <summary>
-    /// El MegaphoneSystem consulta esto antes de activar el apuntado.
-    /// Devuelve false si la linterna está apuntando o se está llevando un objeto.
-    /// </summary>
-    public bool CanAimMegaphone
-    {
-        get
-        {
-            if (!_hasMegaphone) return false;
-            // No se puede apuntar el megáfono si la linterna ya está apuntando
-            if (CurrentState == EquipmentState.AimingFlashlight) return false;
-            // Tampoco se puede si lleva un objeto en la mano
-            if (CurrentState == EquipmentState.HoldingObject) return false;
-            return true;
-        }
-    }
+    public bool CanAimMegaphone =>
+        _hasMegaphone
+        && CurrentRightHand == RightHandItem.Megaphone
+        && !_aimingFlashlight
+        && _heldThrowable == null;          // ← NUEVO
 
-    /// <summary>
-    /// El PlayerThrowSystem consulta esto antes de recoger un objeto.
-    /// </summary>
-    public bool CanPickupThrowable
-    {
-        get
-        {
-            // No se puede recoger objetos mientras apuntas algo
-            if (CurrentState == EquipmentState.AimingFlashlight) return false;
-            if (CurrentState == EquipmentState.AimingMegaphone)  return false;
-            return true;
-        }
-    }
+    public bool CanPickupThrowable =>
+        _heldThrowable == null
+        && !_aimingFlashlight
+        && !_aimingMegaphone;
 
-    // ─── Init ─────────────────────────────────────────────────────────────────
+    public bool CanSwapHand =>
+        _hasFlashlight
+        && _hasMegaphone
+        && !_aimingFlashlight
+        && !_aimingMegaphone
+        && _heldThrowable == null;          // ← NUEVO: tampoco cambiar de mano
+
+    // ─── Init ────────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -100,118 +95,161 @@ public class PlayerEquipmentManager : MonoBehaviour
 
     private void Start()
     {
-        ApplyState(EquipmentState.Normal);
+        // Si el flag startWithFlashlight está activado Y hay linterna asignada
+        if (startWithFlashlight && linternaObject != null)
+        {
+            _hasFlashlight = true;
+
+            // Activar la linterna y desactivar su física/colliders
+            linternaObject.SetActive(true);
+            DisablePhysicsOf(linternaObject);
+
+            // Avisar al FlashlightSystem que ya está recogida
+            FlashlightSystem fs = linternaObject.GetComponentInChildren<FlashlightSystem>();
+            if (fs != null) fs.PickupFlashlight();
+        }
+
+        ApplyState();
     }
 
-    // ─── API pública ─────────────────────────────────────────────────────────
+    private void Update()
+    {
+        if (Input.GetKeyDown(swapKey) && CanSwapHand)
+            SwapRightHand();
+    }
+
+    // ─── Cambio de mano ──────────────────────────────────────────────────────
+
+    public void SwapRightHand()
+    {
+        if (!CanSwapHand) return;
+
+        CurrentRightHand = (CurrentRightHand == RightHandItem.Flashlight)
+            ? RightHandItem.Megaphone
+            : RightHandItem.Flashlight;
+
+        ApplyState();
+        Debug.Log($"[Equipment] Mano dcha → {CurrentRightHand}");
+    }
+
+    // ─── Recoger items ───────────────────────────────────────────────────────
+
+    public void PickupFlashlight(GameObject flashlight)
+    {
+        if (_hasFlashlight) return;
+
+        linternaObject = flashlight;
+        _hasFlashlight = true;
+        linternaObject.SetActive(true);
+        DisablePhysicsOf(linternaObject);
+
+        CurrentRightHand = RightHandItem.Flashlight;
+
+        FlashlightSystem fs = linternaObject.GetComponentInChildren<FlashlightSystem>();
+        if (fs != null) fs.PickupFlashlight();
+
+        ApplyState();
+        Debug.Log("[Equipment] Linterna recogida.");
+    }
 
     public void PickupMegaphone(GameObject megaphone)
     {
+        if (_hasMegaphone) return;
+
         megafonoObject = megaphone;
         _hasMegaphone  = true;
-        ApplyState(CurrentState);
+        DisablePhysicsOf(megafonoObject);
+
+        CurrentRightHand = RightHandItem.Megaphone;
+
+        ApplyState();
+        Debug.Log("[Equipment] Megáfono recogido.");
     }
 
-    /// <summary>
-    /// Llamado por FlashlightSystem. Solo cambia el estado si CanAimFlashlight es true.
-    /// Devuelve true si se aplicó el cambio.
-    /// </summary>
+    private void DisablePhysicsOf(GameObject item)
+    {
+        Rigidbody rb = item.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.useGravity  = false;
+            rb.isKinematic = true;
+        }
+
+        Collider col = item.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+    }
+
+    // ─── Apuntado ────────────────────────────────────────────────────────────
+
     public bool SetAimingFlashlight(bool aiming)
     {
-        if (aiming)
-        {
-            if (!CanAimFlashlight) return false;
-            ChangeState(EquipmentState.AimingFlashlight);
-        }
-        else if (CurrentState == EquipmentState.AimingFlashlight)
-        {
-            ChangeState(EquipmentState.Normal);
-        }
+        if (aiming && !CanAimFlashlight) return false;
+        _aimingFlashlight = aiming;
         return true;
     }
 
-    /// <summary>
-    /// Llamado por MegaphoneSystem. Solo cambia si CanAimMegaphone es true.
-    /// </summary>
     public bool SetAimingMegaphone(bool aiming)
     {
-        if (aiming)
-        {
-            if (!CanAimMegaphone) return false;
-            ChangeState(EquipmentState.AimingMegaphone);
-        }
-        else if (CurrentState == EquipmentState.AimingMegaphone)
-        {
-            ChangeState(EquipmentState.Normal);
-        }
+        if (aiming && !CanAimMegaphone) return false;
+        _aimingMegaphone = aiming;
         return true;
     }
+
+    // ─── Objetos lanzables ───────────────────────────────────────────────────
 
     public bool PickupThrowable(GameObject throwable)
     {
         if (!CanPickupThrowable) return false;
         _heldThrowable = throwable;
-        ChangeState(EquipmentState.HoldingObject);
         return true;
     }
 
-    public void ReleaseThrowable()
-    {
-        _heldThrowable = null;
-        ChangeState(EquipmentState.Normal);
-    }
+    public void ReleaseThrowable() => _heldThrowable = null;
 
-    // ─── Cambio de estado ─────────────────────────────────────────────────────
+    // ─── Aplicar estado físico ───────────────────────────────────────────────
 
-    private void ChangeState(EquipmentState newState)
+    private void ApplyState()
     {
-        if (CurrentState == newState) return;
-        CurrentState = newState;
-        ApplyState(newState);
-        Debug.Log($"[Equipment] Estado → {newState}");
-    }
-
-    private void ApplyState(EquipmentState state)
-    {
-        switch (state)
+        // Linterna
+        if (_hasFlashlight && linternaObject != null)
         {
-            case EquipmentState.Normal:
-                AttachItem(linternaObject, linternaAnchor_Hand);
-                if (_hasMegaphone) AttachItem(megafonoObject, megafonoAnchor_Hand);
-                break;
+            if (CurrentRightHand == RightHandItem.Flashlight)
+                AttachItem(linternaObject, linternaAnchor_Hand,
+                           linternaHandPos, linternaHandRot);
+            else
+                AttachItem(linternaObject, linternaAnchor_Shoulder,
+                           linternaShoulderPos, linternaShoulderRot);
+        }
 
-            case EquipmentState.AimingFlashlight:
-                AttachItem(linternaObject, linternaAnchor_Hand);
-                if (_hasMegaphone) AttachItem(megafonoObject, megafonoAnchor_Hand);
-                break;
-
-            case EquipmentState.AimingMegaphone:
-                AttachItem(linternaObject, linternaAnchor_Shoulder);
-                if (_hasMegaphone) AttachItem(megafonoObject, megafonoAnchor_Hand);
-                break;
-
-            case EquipmentState.HoldingObject:
-                AttachItem(linternaObject, linternaAnchor_Hand);
-                if (_hasMegaphone) AttachItem(megafonoObject, megafonoAnchor_Back);
-                if (_heldThrowable != null)
-                    AttachItem(_heldThrowable, throwableAnchor_Hand);
-                break;
+        // Megáfono
+        if (_hasMegaphone && megafonoObject != null)
+        {
+            if (CurrentRightHand == RightHandItem.Megaphone)
+                AttachItem(megafonoObject, megafonoAnchor_Hand,
+                           megafonoHandPos, megafonoHandRot);
+            else
+                AttachItem(megafonoObject, megafonoAnchor_Back,
+                           megafonoBackPos, megafonoBackRot);
         }
     }
 
-    private void AttachItem(GameObject item, Transform anchor)
+    private void AttachItem(GameObject item, Transform anchor,
+                            Vector3 localPos, Vector3 localRot)
     {
         if (item == null || anchor == null) return;
         item.transform.SetParent(anchor, false);
-        item.transform.localPosition = Vector3.zero;
-        item.transform.localRotation = Quaternion.identity;
+        item.transform.localPosition = localPos;
+        item.transform.localRotation = Quaternion.Euler(localRot);
     }
 
-    // ─── Consultas ────────────────────────────────────────────────────────────
+    // ─── Consultas ───────────────────────────────────────────────────────────
 
     public bool HasFlashlight       => _hasFlashlight;
     public bool HasMegaphone        => _hasMegaphone;
     public bool IsHoldingThrowable  => _heldThrowable != null;
-    public bool IsAimingFlashlight  => CurrentState == EquipmentState.AimingFlashlight;
-    public bool IsAimingMegaphone   => CurrentState == EquipmentState.AimingMegaphone;
+    public bool IsAimingFlashlight  => _aimingFlashlight;
+    public bool IsAimingMegaphone   => _aimingMegaphone;
+    public bool IsAiming            => _aimingFlashlight || _aimingMegaphone;
+    public bool IsFlashlightInHand  => CurrentRightHand == RightHandItem.Flashlight && _hasFlashlight;
+    public bool IsMegaphoneInHand   => CurrentRightHand == RightHandItem.Megaphone && _hasMegaphone;
 }
