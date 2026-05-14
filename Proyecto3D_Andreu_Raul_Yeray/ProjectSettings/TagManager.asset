@@ -12,6 +12,8 @@ TagManager:
   - PilaMegafono
   - Megafono
   - Linterna
+  - ZonaOscura
+  - Flashlight
   layers:
   - Default
   - TransparentFX
