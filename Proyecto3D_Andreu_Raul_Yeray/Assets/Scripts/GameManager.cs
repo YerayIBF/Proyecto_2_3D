@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     public Image megafonoImg;
     public Sprite iconoBateria;
     public Sprite iconoSinBateria;
+    public bool zonaActivacion = false;
 
     void Awake()
     {
