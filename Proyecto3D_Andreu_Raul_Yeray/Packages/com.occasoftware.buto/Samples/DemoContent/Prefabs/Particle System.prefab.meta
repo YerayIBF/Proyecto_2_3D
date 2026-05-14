@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: fca90ec180d88bb4d9fa3853941638af
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Prefabs/Particle
+    System.prefab
+  uploadId: 608692

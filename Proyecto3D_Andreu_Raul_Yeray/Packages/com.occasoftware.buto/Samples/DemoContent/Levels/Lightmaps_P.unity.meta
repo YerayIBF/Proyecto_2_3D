@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e2e0a4f0eadfa944e89f51cab10e303d
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Levels/Lightmaps_P.unity
+  uploadId: 608692
