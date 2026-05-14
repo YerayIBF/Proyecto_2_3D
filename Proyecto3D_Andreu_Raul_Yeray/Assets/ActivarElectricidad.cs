@@ -23,7 +23,16 @@ public class ActivarElectricidad : MonoBehaviour
         {
             canvasElectricidad.SetActive(true);
             GameManager.instance.zonaActivacion = true;
-            puertaAnim.SetTrigger("Abrir");
+            //puertaAnim.SetTrigger("Abrir");
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.CompareTag("Player"))
+        {
+            canvasElectricidad.SetActive(false);
+            GameManager.instance.zonaActivacion = false;
         }
     }
 }

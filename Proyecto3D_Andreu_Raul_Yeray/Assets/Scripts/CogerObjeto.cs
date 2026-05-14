@@ -13,7 +13,8 @@ public class CogerObjeto : MonoBehaviour
     public float timeStep = 0.1f;
     private Transform objetoInteractuable;
     private Transform megafonoObject;
-    private GameObject objeto;
+    [HideInInspector]
+    public GameObject objeto;
     public bool apuntando = false;
     private Vector3 handPointRotation;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -40,6 +41,7 @@ public class CogerObjeto : MonoBehaviour
 
                 objetoCogido.gameObject.transform.SetParent(null);
                 objetoCogido = null;
+                objeto = null;
 
                 GameManager.instance.tieneMegafono = false;
                 handPoint.transform.localEulerAngles = handPointRotation;
@@ -135,10 +137,6 @@ public class CogerObjeto : MonoBehaviour
         {
             if (objetoCogido == null){
                 other.GetComponent<ThrowObject>().MostrarIcono(false);
-                /*other.GetComponent<Rigidbody>().useGravity = false;
-                other.GetComponent<Rigidbody>().isKinematic = true;
-                other.transform.position = handPoint.transform.position;
-                other.gameObject.transform.SetParent(handPoint.gameObject.transform);*/
                 objeto = other.gameObject;
             }
         }
@@ -148,16 +146,6 @@ public class CogerObjeto : MonoBehaviour
             {
                 other.GetComponent<ThrowObject>().MostrarIcono(false);
                 objeto = other.gameObject;
-                //animator.SetTrigger("Coger");
-                /*other.GetComponent<Rigidbody>().useGravity = false;
-                other.GetComponent<Rigidbody>().isKinematic = true;
-                Transform handlePoint = other.transform.Find("HandlePoint");
-                other.gameObject.transform.SetParent(handPoint.gameObject.transform);
-                other.transform.localPosition = -handlePoint.localPosition;
-                other.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
-                objetoCogido = other.gameObject;
-
-                GameManager.instance.RecogerMegafono();*/
             }
         }
     }

@@ -118,6 +118,8 @@ namespace StarterAssets
 
         private bool cercaDePila = false;
         private GameObject pilaCercana;
+        public Animator puertaAnim;
+        public CogerObjeto cogerObjetoScript;
 
         private bool IsCurrentDeviceMouse
         {
@@ -164,7 +166,7 @@ namespace StarterAssets
         private void Update()
         {
 
-            if (Input.GetKeyDown(KeyCode.E) && !cercaDePila)
+            if (Input.GetKeyDown(KeyCode.E) && !cercaDePila && !GameManager.instance.zonaActivacion)
             {
                 _animator.SetTrigger("Coger");
             }else if (Input.GetKeyDown(KeyCode.E) && cercaDePila)
@@ -172,6 +174,9 @@ namespace StarterAssets
                 pilaCercana.GetComponent<PilaMegafono>().Recargar();
                 Destroy(pilaCercana);
                 cercaDePila = false;
+            }else if (Input.GetKeyDown(KeyCode.E) && GameManager.instance.zonaActivacion)
+            {
+                puertaAnim.SetTrigger("Abrir");
             }
 
             //testear minijuego
@@ -452,6 +457,9 @@ namespace StarterAssets
             if (other.CompareTag("PilaMegafono"))
             {
                 cercaDePila = false;
+            }else if (other.gameObject == cogerObjetoScript.objeto)
+            {
+                cogerObjetoScript.objeto = null;
             }
         }
     }
