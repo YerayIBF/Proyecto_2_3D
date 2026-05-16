@@ -13,6 +13,7 @@ public class MinijuegoElectric : MonoBehaviour
 
     private float progreso = 0f;
     private bool juegoActivo = false;
+    public Animator puertaAnim;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Update() {
         if (!juegoActivo) return;
@@ -24,7 +25,7 @@ public class MinijuegoElectric : MonoBehaviour
         float anchoTotal = fondoBarra.rect.width;
         aguja.anchoredPosition = new Vector2(progreso * anchoTotal - (anchoTotal / 2), 0);
 
-        if (Input.GetKeyDown(KeyCode.E)) { 
+        if (Input.GetKeyDown(KeyCode.X)) { 
             ComprobarExito();
         }
     }
@@ -32,6 +33,7 @@ public class MinijuegoElectric : MonoBehaviour
     void ComprobarExito() {
         if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
             Debug.Log("Correcto");
+            puertaAnim.SetTrigger("Abrir");
             TerminarJuego();
             //Activar electricidad
         } else {

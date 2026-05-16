@@ -176,7 +176,7 @@ namespace StarterAssets
                 cercaDePila = false;
             }else if (Input.GetKeyDown(KeyCode.E) && GameManager.instance.zonaActivacion)
             {
-                puertaAnim.SetTrigger("Abrir");
+                GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
             }
 
             //testear minijuego
