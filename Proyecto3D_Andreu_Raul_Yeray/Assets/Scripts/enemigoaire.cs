@@ -19,12 +19,15 @@ public class enemigoaire : MonoBehaviour
     [Header("Sensores")]
     public Transform jugador;
     public bool cannotSee;
-    public bool puedoAtacar; 
+    public bool JugadorDentroRango; 
+    public PlayerStateMachine PlayerState; //pillar si esta corriendo
 
     [Header("Tiempo para Stunearlo")]
     public float tiempoParaStunearlo = 2.0f;
     private Coroutine cuentaAtrasStun;
 
+public float radioDeAudicion = 10f;    // Distancia máxima para escuchar
+public float anguloDeVision = 90f;
     void Update()
     {
         ManejarEstados();
@@ -43,7 +46,7 @@ public class enemigoaire : MonoBehaviour
                 currentState = EnemyState.Wander;
             }
         }
-        else if (!cannotSee && puedoAtacar) 
+        else if (!cannotSee && JugadorDentroRango) 
         {
             PuedeVerAlJugador();
         }
@@ -53,39 +56,51 @@ public class enemigoaire : MonoBehaviour
     {
         if (jugador == null) return false;
 
-        Vector3 origen = transform.position ; 
+        Vector3 origen = transform.position; 
         Vector3 direccion = (jugador.position + Vector3.up) - origen;
+        float distanciaAlJugador = direccion.magnitude;
 
-        RaycastHit hit;
-
-        if (Physics.Raycast(origen, direccion, out hit, direccion.magnitude, capasQueBloqueanVista))
+        if (PlayerState != null && PlayerState.CurrentState == PlayerStateMachine.PlayerState.Running && distanciaAlJugador <= radioDeAudicion)    
         {
-            if (hit.collider.CompareTag("Player"))
-            {
-                Debug.DrawRay(origen, direccion, Color.green);
-                Vector3 direccionMirada = new Vector3(direccion.x, direccion.y, direccion.z);
-                if (direccionMirada != Vector3.zero) 
-                {
-                    Quaternion rotacionObjetivo = Quaternion.LookRotation(direccionMirada);
-                    
-                    transform.rotation = Quaternion.Slerp(transform.rotation, rotacionObjetivo, Time.deltaTime * 5f);
-                    if (hit.transform.CompareTag("Player"))
+            Debug.DrawRay(origen, direccion, Color.yellow); // Amarillo = Alerta por sonido
+            if (direccion != Vector3.zero) 
                     {
-                        Debug.Log("Hit");
-                        //TODO: QUITAR VIDA
+                        Quaternion rotacionObjetivo = Quaternion.LookRotation(direccion);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, rotacionObjetivo, Time.deltaTime * 5f);
                     }
+            
+            Debug.Log("Te escucho a través de la pared: Ataque");
+            
+            return true;
+        }
+
+        float anguloAlJugador = Vector3.Angle(transform.forward, direccion);
+
+        if (anguloAlJugador <= anguloDeVision / 2f && !cannotSee)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(origen, direccion, out hit, distanciaAlJugador, capasQueBloqueanVista))
+            {
+                if (hit.collider.CompareTag("Player"))
+                {
+                    Debug.DrawRay(origen, direccion, Color.green);
+                    if (direccion != Vector3.zero) 
+                    {
+                        Quaternion rotacionObjetivo = Quaternion.LookRotation(direccion);
+                        transform.rotation = Quaternion.Slerp(transform.rotation, rotacionObjetivo, Time.deltaTime * 5f);
+                    }
+                    
+                    Debug.Log("Te veo de frente con mis ojos: Ataque");
+                    // TODO: Atacar
+                    return true;
                 }
-                return true;
             }
         }
-        else 
-        {
-        Debug.DrawRay(origen, direccion, Color.red);
 
-        }
-        
-        return false;
-    }
+    // Si estás detrás de él, o fuera de su cono de visión en silencio: no te ve
+    Debug.DrawRay(origen, direccion, Color.red);
+    return false;
+}
 
     // --- TRIGGERS ---
     private void OnTriggerEnter(Collider other)
@@ -93,7 +108,8 @@ public class enemigoaire : MonoBehaviour
         // 1. Detección de rango (Cápsula Grande)
         if (other.CompareTag("Player"))
         {
-            puedoAtacar = true;
+            JugadorDentroRango = true;
+
             Debug.Log("Jugador en rango.");
         }
 
@@ -106,7 +122,7 @@ public class enemigoaire : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            puedoAtacar = false;
+            JugadorDentroRango = false;
         }
 
         if (other.CompareTag("Flashlight"))
