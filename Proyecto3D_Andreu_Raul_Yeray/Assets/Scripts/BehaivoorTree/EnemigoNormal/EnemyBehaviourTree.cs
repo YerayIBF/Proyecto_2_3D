@@ -12,6 +12,14 @@ public class EnemyBehaviourTree : MonoBehaviour
     public LockerSystem lockerSystem;
     public Transform    eyes;
 
+    [Header("GHOST — Modelo visual de Mixamo")]
+    [Tooltip("El modelo visual con el Animator. Sigue al agent suavizado para movimiento fluido.")]
+    public Transform ghostModel;
+    [Tooltip("Suavizado de posición (más bajo = más pegado al agent, más alto = más fluido pero con retraso)")]
+    public float ghostPositionSmooth = 0.08f;
+    [Tooltip("Velocidad de rotación del ghost hacia la dirección de movimiento")]
+    public float ghostRotationSpeed = 12f;
+
     [Header("Patrulla")]
     public Transform[] patrolPoints;
     private int _patrolIndex = 0;
@@ -25,6 +33,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float attackRange        = 1.5f;
     public float chaseRange         = 15f;
     public float attackCooldownTime = 1.5f;
+    public float attackDamage       = 100f;
 
     [Header("Aturdimiento")]
     public float stunDuration = 3f;
@@ -48,8 +57,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     // ─── Componentes ─────────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
-    
-    // private Animator  _anim;
+    private Animator     _anim;   // está en el ghostModel
 
     // ─── Estado principal ─────────────────────────────────────────────────────
 
@@ -78,18 +86,80 @@ public class EnemyBehaviourTree : MonoBehaviour
     public LockerInteractable _knownLockerWithPlayer = null;
     private bool _playerWasHiding = false;
 
+    // Ghost
+    private Vector3 _ghostVelocity = Vector3.zero;
+
+    // ─── Hashes de Animator (rendimiento) ────────────────────────────────────
+
+    private static readonly int HashSpeed   = Animator.StringToHash("Speed");
+    private static readonly int HashState   = Animator.StringToHash("State");
+    private static readonly int HashAttack  = Animator.StringToHash("Attack");
+    private static readonly int HashStunned = Animator.StringToHash("Stunned");
+    private static readonly int HashOpen    = Animator.StringToHash("Open");
+
     // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void Awake()
     {
-        _agent  = GetComponent<NavMeshAgent>();
-        
+        _agent = GetComponent<NavMeshAgent>();
+
+        // El Animator está en el ghost, no aquí
+        if (ghostModel != null)
+            _anim = ghostModel.GetComponent<Animator>();
+
+        // CLAVE del sistema ghost: el agent NO rota el transform visual.
+        // El ghost se encarga de rotar suave.
+        if (_agent != null)
+        {
+            _agent.updateRotation = false;
+            _agent.updatePosition = true;
+        }
     }
 
     private void Start()
     {
         _allLockers = Object.FindObjectsByType<LockerInteractable>(FindObjectsSortMode.None);
         Debug.Log($"[BT] Taquillas en escena: {_allLockers.Length}");
+
+        // Desparentar el ghost para que no herede los saltos del agent
+        if (ghostModel != null)
+            ghostModel.SetParent(null);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  GHOST — el modelo visual sigue al agent suavemente
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    private void LateUpdate()
+    {
+        if (ghostModel == null) return;
+
+        // Posición: el ghost persigue la posición del agent con suavizado
+        ghostModel.position = Vector3.SmoothDamp(
+            ghostModel.position,
+            transform.position,
+            ref _ghostVelocity,
+            ghostPositionSmooth);
+
+        // Rotación: el ghost mira hacia donde se mueve el agent
+        Vector3 moveDir = _agent.velocity;
+        moveDir.y = 0f;
+
+        if (moveDir.sqrMagnitude > 0.05f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(moveDir);
+            ghostModel.rotation = Quaternion.Slerp(
+                ghostModel.rotation,
+                targetRot,
+                Time.deltaTime * ghostRotationSpeed);
+        }
+
+        // Animator: velocidad normalizada para el blend tree Idle→Walk→Run
+        if (_anim != null)
+        {
+            float normalizedSpeed = _agent.velocity.magnitude / chaseSpeed;
+            _anim.SetFloat(HashSpeed, normalizedSpeed, 0.1f, Time.deltaTime);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -100,7 +170,6 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         TrackPlayerHiding();
 
-        // Ejecutar el comportamiento del estado actual
         switch (_state)
         {
             case State.Wander:       UpdateWander();      break;
@@ -111,16 +180,13 @@ public class EnemyBehaviourTree : MonoBehaviour
             case State.CheckLocker:  UpdateCheckLocker(); break;
         }
 
-        // Transiciones globales que pueden interrumpir cualquier estado
         EvaluateTransitions();
     }
 
     // ─── Transiciones ────────────────────────────────────────────────────────
 
-
     private void EvaluateTransitions()
     {
-        // No interrumpir Attack ni CheckLocker en mitad de su secuencia
         if (_state == State.Attack) return;
         if (_state == State.CheckLocker) return;
 
@@ -150,9 +216,6 @@ public class EnemyBehaviourTree : MonoBehaviour
             ChangeState(State.Chase);
             return;
         }
-
-        // 4. Oyó ruido y no está investigando → Investigate
-        
 
         // 5. Sin estímulos y no está en medio de algo → Wander
         if (_state != State.Investigate && _state != State.CheckLocker)
@@ -202,7 +265,9 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void UpdateAttack()
     {
         _agent.ResetPath();
-        // _anim?.SetTrigger("Attack");
+
+        // Disparar animación de ataque en el ghost
+        if (_anim != null) _anim.SetTrigger(HashAttack);
 
         bool playerHiding = lockerSystem != null && lockerSystem.IsHiding;
         if (!playerHiding)
@@ -211,7 +276,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         _attackOnCooldown = true;
         Invoke(nameof(ResetAttack), attackCooldownTime);
 
-        // Volver a Chase tras el ataque
         ChangeState(State.Chase);
     }
 
@@ -222,11 +286,15 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void UpdateStunned()
     {
         _agent.ResetPath();
+
+        if (_anim != null) _anim.SetBool(HashStunned, true);
+
         _stunTimer += Time.deltaTime;
         if (_stunTimer >= stunDuration)
         {
             _isStunned = false;
             _stunTimer = 0f;
+            if (_anim != null) _anim.SetBool(HashStunned, false);
             ChangeState(State.Wander);
             Debug.Log("[BT] Recuperado.");
         }
@@ -258,101 +326,47 @@ public class EnemyBehaviourTree : MonoBehaviour
     }
 
     private void UpdateInvestigate()
-{
-    if (!_reachedInvestigation)
     {
-        // Moviéndose al punto de ruido
-        if (!_agent.pathPending && _agent.remainingDistance < 0.6f)
+        if (!_reachedInvestigation)
         {
-            _reachedInvestigation = true;
-            _agent.ResetPath();
-            Debug.Log("[BT] Llegó al punto investigado.");
+            if (!_agent.pathPending && _agent.remainingDistance < 0.6f)
+            {
+                _reachedInvestigation = true;
+                _agent.ResetPath();
+                Debug.Log("[BT] Llegó al punto investigado.");
 
-            // ¿Hay taquillas cerca? Siempre revisar si existe alguna en rango
-            LockerInteractable locker = FindRandomNearbyLocker();
-            if (locker != null)
-            {
-                _targetLocker    = locker;
-                _lockerOpened    = false;
-                _lockerWaitTimer = 0f;
-                _agent.speed     = investigateSpeed;
-                _agent.SetDestination(_targetLocker.transform.position);
-                ChangeState(State.CheckLocker);
-                Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
-                return;
-            }
-            else
-            {
-                Debug.Log("[BT] No hay taquillas cercanas. Esperando...");
+                LockerInteractable locker = FindRandomNearbyLocker();
+                if (locker != null)
+                {
+                    _targetLocker    = locker;
+                    _lockerOpened    = false;
+                    _lockerWaitTimer = 0f;
+                    _agent.speed     = investigateSpeed;
+                    _agent.SetDestination(_targetLocker.transform.position);
+                    ChangeState(State.CheckLocker);
+                    Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
+                    return;
+                }
+                else
+                {
+                    Debug.Log("[BT] No hay taquillas cercanas. Esperando...");
+                }
             }
         }
-    }
-    else
-    {
-        // Esperando en el punto (sin taquillas)
-        _investigateWaitTimer += Time.deltaTime;
-        if (_investigateWaitTimer >= investigateWaitTime)
+        else
         {
-            Debug.Log("[BT] Investigación terminada → Wander.");
-            ChangeState(State.Wander);
+            _investigateWaitTimer += Time.deltaTime;
+            if (_investigateWaitTimer >= investigateWaitTime)
+            {
+                Debug.Log("[BT] Investigación terminada → Wander.");
+                ChangeState(State.Wander);
+            }
         }
     }
-}
 
     // ── CHECK LOCKER ─────────────────────────────────────────────────────────
 
-   private void UpdateCheckLocker()
-{
-    // Si no hay taquilla objetivo, salir
-    if (_targetLocker == null)
-    {
-        ChangeState(State.Wander);
-        return;
-    }
-
-    // Si el jugador ya no está escondido y no estamos abriendo la puerta, cancelar
-    if (_knownLockerWithPlayer == null && !_lockerOpened)
-    {
-        Debug.Log("[BT] Jugador salió de la taquilla, cancelando inspección.");
-        _targetLocker = null;
-        ChangeState(State.Wander);
-        return;
-    }
-
-    float dist = Vector3.Distance(transform.position, _targetLocker.transform.position);
-
-    if (!_lockerOpened)
-    {
-        _agent.SetDestination(_targetLocker.transform.position);
-        _lockerMoveTimer += Time.deltaTime;
-
-        // Timeout de movimiento
-        if (_lockerMoveTimer > _MAX_LOCKER_MOVE_TIME || _agent.pathStatus == NavMeshPathStatus.PathInvalid)
-        {
-            Debug.LogWarning("[BT] No se pudo alcanzar la taquilla. Abortando.");
-            _knownLockerWithPlayer = null;
-            _targetLocker = null;
-            ChangeState(State.Wander);
-            return;
-        }
-
-        if (dist < 1.5f)
-        {
-            _lockerOpened = true;
-            _lockerWaitTimer = 0f;
-            _lockerMoveTimer = 0f;
-            _agent.ResetPath();
-
-            Vector3 dir = (_targetLocker.transform.position - transform.position).normalized;
-            dir.y = 0f;
-            if (dir != Vector3.zero)
-                transform.rotation = Quaternion.LookRotation(dir);
-
-            _targetLocker.OpenDoor();
-            Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
-        }
-    }
-    else
+    private void UpdateCheckLocker()
     {
         if (_targetLocker == null)
         {
@@ -360,31 +374,87 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
-        _lockerWaitTimer += Time.deltaTime;
-        if (_lockerWaitTimer >= lockerOpenWait)
+        if (_knownLockerWithPlayer == null && !_lockerOpened)
         {
-            bool playerInside = lockerSystem != null
-                             && lockerSystem.IsHiding
-                             && lockerSystem.CurrentLocker == _targetLocker;
-
-            if (playerInside)
-            {
-                Debug.Log("[BT] ¡Jugador encontrado!");
-                KillPlayer();
-            }
-            else
-            {
-                Debug.Log("[BT] Taquilla vacía.");
-                _targetLocker.CloseDoor();
-            }
-
-            _knownLockerWithPlayer = null;
+            Debug.Log("[BT] Jugador salió de la taquilla, cancelando inspección.");
             _targetLocker = null;
-            _lockerOpened = false;
             ChangeState(State.Wander);
+            return;
+        }
+
+        float dist = Vector3.Distance(transform.position, _targetLocker.transform.position);
+
+        if (!_lockerOpened)
+        {
+            _agent.SetDestination(_targetLocker.transform.position);
+            _lockerMoveTimer += Time.deltaTime;
+
+            if (_lockerMoveTimer > _MAX_LOCKER_MOVE_TIME || _agent.pathStatus == NavMeshPathStatus.PathInvalid)
+            {
+                Debug.LogWarning("[BT] No se pudo alcanzar la taquilla. Abortando.");
+                _knownLockerWithPlayer = null;
+                _targetLocker = null;
+                ChangeState(State.Wander);
+                return;
+            }
+
+            if (dist < 1.5f)
+            {
+                _lockerOpened = true;
+                _lockerWaitTimer = 0f;
+                _lockerMoveTimer = 0f;
+                _agent.ResetPath();
+
+                Vector3 dir = (_targetLocker.transform.position - transform.position).normalized;
+                dir.y = 0f;
+                if (dir != Vector3.zero)
+                {
+                    // Rotar el ghost también hacia la taquilla
+                    if (ghostModel != null)
+                        ghostModel.rotation = Quaternion.LookRotation(dir);
+                    transform.rotation = Quaternion.LookRotation(dir);
+                }
+
+                // Disparar animación de abrir taquilla
+                if (_anim != null) _anim.SetTrigger(HashOpen);
+
+                _targetLocker.OpenDoor();
+                Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
+            }
+        }
+        else
+        {
+            if (_targetLocker == null)
+            {
+                ChangeState(State.Wander);
+                return;
+            }
+
+            _lockerWaitTimer += Time.deltaTime;
+            if (_lockerWaitTimer >= lockerOpenWait)
+            {
+                bool playerInside = lockerSystem != null
+                                 && lockerSystem.IsHiding
+                                 && lockerSystem.CurrentLocker == _targetLocker;
+
+                if (playerInside)
+                {
+                    Debug.Log("[BT] ¡Jugador encontrado!");
+                    KillPlayer();
+                }
+                else
+                {
+                    Debug.Log("[BT] Taquilla vacía.");
+                    _targetLocker.CloseDoor();
+                }
+
+                _knownLockerWithPlayer = null;
+                _targetLocker = null;
+                _lockerOpened = false;
+                ChangeState(State.Wander);
+            }
         }
     }
-}
 
     // ═══════════════════════════════════════════════════════════════════════════
     //  DETECCIÓN
@@ -398,7 +468,6 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         if (hidingNow && !_playerWasHiding)
         {
-            // Acaba de esconderse — ¿lo veía?
             if (CanSeePlayerRaw())
             {
                 _knownLockerWithPlayer = lockerSystem.CurrentLocker;
@@ -436,7 +505,10 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void KillPlayer()
     {
         Debug.Log("[BT] GAME OVER.");
-        // GameManager.Instance?.GameOver();
+
+        // Conectar con el sistema de vida del jugador
+        if (PlayerStateMachine.Instance != null)
+            PlayerStateMachine.Instance.TakeDamage(attackDamage);
     }
 
     private LockerInteractable FindRandomNearbyLocker()
@@ -456,6 +528,10 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (_state == newState) return;
         _state = newState;
         Debug.Log($"[BT] → {newState}");
+
+        // Notificar el estado al Animator (por si usas un parámetro Int State)
+        if (_anim != null)
+            _anim.SetInteger(HashState, (int)newState);
     }
 
     // ─── Gizmos ──────────────────────────────────────────────────────────────
@@ -490,7 +566,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
     }
 
-        // ─── Propiedades para Debug UI ──────────────────────────────────────────
+    // ─── Propiedades para Debug UI ──────────────────────────────────────────
 
     public string CurrentStateName => _state.ToString();
     public float DistanceToPlayer
@@ -511,8 +587,8 @@ public class EnemyBehaviourTree : MonoBehaviour
             switch (_state)
             {
                 case State.Wander:
-                    return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length 
-                        ? $"Punto {_patrolIndex}: {patrolPoints[_patrolIndex].position}" 
+                    return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length
+                        ? $"Punto {_patrolIndex}: {patrolPoints[_patrolIndex].position}"
                         : "Sin puntos";
                 case State.Chase:
                     return "Jugador";
