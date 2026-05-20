@@ -26,6 +26,13 @@ public class enemigoaire : MonoBehaviour
     public float tiempoParaStunearlo = 2.0f;
     private Coroutine cuentaAtrasStun;
 
+    [Header("Ataque por Proyectil")]
+    public GameObject prefabProyectil;   // Arrastra aquí el Prefab de tu bola
+    public Transform puntoDisparo;       // Un objeto vacío hijo del enemigo (donde nacerá la bola)
+    public float fuerzaDisparo = 20f;    // Qué tan rápido vuela la bola
+    public float tiempoEntreAtaques = 1.5f; // Cooldown en segundos
+    private float tiempoSiguienteAtaque = 0f; // Cronómetro interno
+
 public float radioDeAudicion = 10f;    // Distancia máxima para escuchar
 public float anguloDeVision = 90f;
     void Update()
@@ -91,7 +98,11 @@ public float anguloDeVision = 90f;
                     }
                     
                     Debug.Log("Te veo de frente con mis ojos: Ataque");
-                    // TODO: Atacar
+                    if (Time.time >= tiempoSiguienteAtaque)
+                    {
+                        LanzarBola(direccion.normalized); // Enviamos la dirección hacia el jugador
+                        tiempoSiguienteAtaque = Time.time + tiempoEntreAtaques; // Aplicamos cooldown
+                    }
                     return true;
                 }
             }
@@ -138,10 +149,26 @@ public float anguloDeVision = 90f;
         if (other.CompareTag("ZonaOscura")) cannotSee = false;
     }
 
-    void AtacoAlEnemigo() 
-    { 
-         
+    void LanzarBola(Vector3 direccionHaciaJugador)
+{
+    // Si olvidaste asignar el punto de disparo, usamos la posición del enemigo
+    Vector3 posicionSpawn = puntoDisparo != null ? puntoDisparo.position : transform.position + transform.forward;
+    
+    // 1. Clonar el prefab de la bola en la posición de disparo
+    GameObject bolaClonada = Instantiate(prefabProyectil, posicionSpawn, Quaternion.identity);
+    
+    // 2. Conseguir el Rigidbody de la bola para darle fuerza
+    Rigidbody rb = bolaClonada.GetComponent<Rigidbody>();
+    
+    if (rb != null)
+    {
+        // Empujamos la bola en dirección al jugador
+        rb.AddForce(direccionHaciaJugador * fuerzaDisparo, ForceMode.Impulse);
     }
+    
+    // 3. Auto-destruir la bola después de 4 segundos para que no llene la escena de basura
+    Destroy(bolaClonada, 4f);
+}
 
   /*  IEnumerator DuracionDeStun()
     {        

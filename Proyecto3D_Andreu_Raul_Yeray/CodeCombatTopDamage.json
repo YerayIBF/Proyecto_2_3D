@@ -2,8 +2,8 @@
     "list": [
         {
             "scriptPath": "D:/Usuaris/rpucholgimenez/Documents/GitHub/Proyecto_2_3D/Proyecto3D_Andreu_Raul_Yeray/Assets\\Scripts\\enemigoaire.cs",
-            "damage": 274,
-            "lastTime": 1474.188232421875
+            "damage": 301,
+            "lastTime": 952.0892333984375
         },
         {
             "scriptPath": "D:/Usuaris/rpucholgimenez/Documents/GitHub/Proyecto_2_3D/Proyecto3D_Andreu_Raul_Yeray/Assets\\Scripts\\BehaivoorTree\\EnemigoNormal\\EnemyBehaviourTree.cs",
