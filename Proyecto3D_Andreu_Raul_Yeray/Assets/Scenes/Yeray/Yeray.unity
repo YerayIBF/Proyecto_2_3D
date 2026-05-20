@@ -2528,7 +2528,7 @@ Transform:
   m_GameObject: {fileID: 827948238}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.001, y: 1.59, z: 0.322}
+  m_LocalPosition: {x: 0.114, y: 2.009, z: 0.322}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4804,6 +4804,10 @@ PrefabInstance:
       value: Linterna
       objectReference: {fileID: 0}
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
+      propertyPath: coneAngle
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: startPickedUp
       value: 0
       objectReference: {fileID: 0}
@@ -6226,7 +6230,7 @@ MonoBehaviour:
   attackRange: 1.5
   chaseRange: 15
   attackCooldownTime: 1.5
-  attackDamage: 100
+  attackDamage: 30
   stunDuration: 3
   investigateWaitTime: 4
   approximateNoiseOffset: 2
