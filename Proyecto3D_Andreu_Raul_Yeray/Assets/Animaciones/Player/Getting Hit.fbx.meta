@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c9dc98e60762f6a4bbf6697be6aa81c7
+guid: e0fd951eb0bc9214e878d65eacc5ac59
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: AgacharseIdle
+      name: RecibirGolpeJugador
       takeName: mixamo.com
       internalID: -203655887218126122
       firstFrame: 0
-      lastFrame: 75
+      lastFrame: 49
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
