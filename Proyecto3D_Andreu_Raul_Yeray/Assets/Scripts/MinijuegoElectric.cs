@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class MinijuegoElectric : MonoBehaviour
 {
+    public string puzzle1;
     public GameObject panelMinijuego;
     public RectTransform aguja;       
     public RectTransform fondoBarra;
@@ -14,6 +15,15 @@ public class MinijuegoElectric : MonoBehaviour
     private float progreso = 0f;
     private bool juegoActivo = false;
     public Animator puertaAnim;
+
+    void Start()
+    {
+        //Si el puzzle ya ha sido completado antes y se ha guardado el progreso se abre la puerta al iniciar
+        if (ProgressManager.instance.PuzzleCompletado(puzzle1))
+        {
+            puertaAnim.SetTrigger("Abrir");
+        }
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Update() {
         if (!juegoActivo) return;
@@ -33,6 +43,8 @@ public class MinijuegoElectric : MonoBehaviour
     void ComprobarExito() {
         if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
             Debug.Log("Correcto");
+            //guardamos el progreso llamando al script de progress manager
+            ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
             puertaAnim.SetTrigger("Abrir");
             TerminarJuego();
             //Activar electricidad
