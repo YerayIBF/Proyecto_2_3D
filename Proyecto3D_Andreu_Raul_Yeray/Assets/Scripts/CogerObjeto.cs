@@ -22,8 +22,16 @@ public class CogerObjeto : MonoBehaviour
     {
         cam = Camera.main;
         lineRenderer.enabled = false;
-        objetoInteractuable = GameObject.FindGameObjectWithTag("objetoCogible").transform;
-        megafonoObject = GameObject.FindGameObjectWithTag("Megafono").transform;
+        GameObject objetoCerca = GameObject.FindGameObjectWithTag("objetoCogible");
+        GameObject megafonoCerca = GameObject.FindGameObjectWithTag("Megafono");
+        if (objetoCerca != null)
+        {
+            objetoInteractuable = objetoCerca.transform;
+        }
+        if (megafonoCerca != null)
+        {
+            megafonoObject = megafonoCerca.transform;
+        }
 
         handPointRotation = handPoint.transform.localEulerAngles;
     }
@@ -94,17 +102,20 @@ public class CogerObjeto : MonoBehaviour
             }
         }
 
-        if (objetoCogido == null && Vector3.Distance(transform.position, objetoInteractuable.position) < 2f)
+        if (objetoInteractuable != null && megafonoObject != null)
         {
-            objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(true);
-        }else if (objetoCogido == null && Vector3.Distance(transform.position, megafonoObject.position) < 2f)
-        {
-            megafonoObject.GetComponent<ThrowObject>().MostrarIcono(true);
-        }
-        else
-        {
-            objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(false);
-            megafonoObject.GetComponent<ThrowObject>().MostrarIcono(false);
+            if (objetoCogido == null && Vector3.Distance(transform.position, objetoInteractuable.position) < 2f)
+            {
+                objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(true);
+            }else if (objetoCogido == null && Vector3.Distance(transform.position, megafonoObject.position) < 2f)
+            {
+                megafonoObject.GetComponent<ThrowObject>().MostrarIcono(true);
+            }
+            else
+            {
+                objetoInteractuable.GetComponent<ThrowObject>().MostrarIcono(false);
+                megafonoObject.GetComponent<ThrowObject>().MostrarIcono(false);
+            }   
         }
         
     }
