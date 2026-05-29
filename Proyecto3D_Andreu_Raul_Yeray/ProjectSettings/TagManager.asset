@@ -12,6 +12,7 @@ TagManager:
   - PilaMegafono
   - Megafono
   - Linterna
+  - EnemyEyes
   layers:
   - Default
   - TransparentFX

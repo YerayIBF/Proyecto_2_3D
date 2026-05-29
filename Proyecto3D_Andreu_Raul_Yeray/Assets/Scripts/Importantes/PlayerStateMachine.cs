@@ -3,9 +3,7 @@ using StarterAssets;
 
 /// <summary>
 /// Máquina de estados central del jugador.
-/// Gestiona estados + vida + stamina.
-///
-/// Coloca en PlayerArmature.
+/// Gestiona estados + vida + stamina + agachado + animación de daño.
 /// </summary>
 public class PlayerStateMachine : MonoBehaviour
 {
@@ -18,6 +16,7 @@ public class PlayerStateMachine : MonoBehaviour
         Idle,
         Walking,
         Running,
+        Crouched,
         AimingFlashlight,
         AimingMegaphone,
         HoldingObject,
@@ -39,23 +38,24 @@ public class PlayerStateMachine : MonoBehaviour
     public StarterAssetsInputs   inputs;
     public CharacterController   characterController;
 
+    [Header("Animator del personaje")]
+    public Animator playerAnimator;
+
     // ─── Inventario de baterías ───────────────────────────────────────────────
 
     [Header("Inventario — Baterías")]
     public int startingBatteries = 2;
     public int maxBatteries      = 5;
-    [Header("Inventario — Baterías (en tiempo real)")]
     [SerializeField] private int _batteryCount;
     public int BatteryCount => _batteryCount;
+
     // ─── Vida ────────────────────────────────────────────────────────────────
 
     [Header("Vida")]
     public float maxHealth     = 100f;
     public float currentHealth = 100f;
-    [Tooltip("Velocidad de regeneración (por segundo) si no recibe daño durante un tiempo")]
-    public float healthRegenRate    = 2f;
-    [Tooltip("Segundos sin recibir daño antes de empezar a regenerar")]
-    public float healthRegenDelay   = 5f;
+    public float healthRegenRate  = 2f;
+    public float healthRegenDelay = 5f;
     private float _lastDamageTime = -999f;
 
     // ─── Stamina ─────────────────────────────────────────────────────────────
@@ -63,21 +63,42 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("Stamina")]
     public float maxStamina     = 100f;
     public float currentStamina = 100f;
-    [Tooltip("Consumo por segundo al correr")]
-    public float staminaDrainRate  = 15f;
-    [Tooltip("Regeneración por segundo cuando no corre")]
-    public float staminaRegenRate  = 10f;
-    [Tooltip("Stamina mínima necesaria para empezar a correr")]
+    public float staminaDrainRate    = 15f;
+    public float staminaRegenRate    = 10f;
     public float staminaRunThreshold = 10f;
     private bool _staminaExhausted = false;
+
+    // ─── Agacharse ───────────────────────────────────────────────────────────
+
+    [Header("Agacharse")]
+    public KeyCode crouchKey       = KeyCode.C;
+    public float   crouchMoveSpeed = 1.5f;
+    public float   standMoveSpeed  = 2.0f;
+    public float   standSprintSpeed = 5.335f;
+    [Tooltip("Altura del CharacterController al estar de pie")]
+    public float   standHeight    = 1.8f;
+    [Tooltip("Altura del CharacterController al estar agachado")]
+    public float   crouchHeight   = 1f;
+    public float   crouchCenterY  = 0.5f;
+    public float   standCenterY   = 0.9f;
+
+    private bool _isCrouched = false;
+    public bool IsCrouched => _isCrouched;
 
     // ─── Eventos ─────────────────────────────────────────────────────────────
 
     public System.Action<PlayerState> OnStateChanged;
     public System.Action<int>         OnBatteryCountChanged;
-    public System.Action<float>       OnHealthChanged;     // 0-1 (porcentaje)
-    public System.Action<float>       OnStaminaChanged;    // 0-1 (porcentaje)
+    public System.Action<float>       OnHealthChanged;
+    public System.Action<float>       OnStaminaChanged;
+    public System.Action<bool>        OnCrouchChanged;
     public System.Action              OnPlayerDied;
+
+    // ─── Hashes del Animator ─────────────────────────────────────────────────
+
+    private static readonly int HashIsCrouched  = Animator.StringToHash("IsCrouched");
+    private static readonly int HashCrouchSpeed = Animator.StringToHash("CrouchSpeed");
+    private static readonly int HashTakeDamage  = Animator.StringToHash("TakeDamage");
 
     // ─── Estado interno ───────────────────────────────────────────────────────
 
@@ -96,6 +117,7 @@ public class PlayerStateMachine : MonoBehaviour
         if (lockerSystem        == null) lockerSystem        = GetComponent<LockerSystem>();
         if (equipmentManager    == null) equipmentManager    = GetComponent<PlayerEquipmentManager>();
         if (flashlightSystem    == null) flashlightSystem    = GetComponentInChildren<FlashlightSystem>();
+        if (playerAnimator      == null) playerAnimator      = GetComponentInChildren<Animator>();
     }
 
     private void Start()
@@ -117,18 +139,91 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (CurrentState == PlayerState.Dead) return;
 
+        HandleCrouchInput();
         EvaluateState();
         ApplyStateRules();
         UpdateStamina();
         UpdateHealthRegen();
+        UpdateCrouchAnimation();
+    }
+
+    // ─── Agacharse ───────────────────────────────────────────────────────────
+
+    private void HandleCrouchInput()
+    {
+        if (Input.GetKeyDown(crouchKey))
+            ToggleCrouch();
+    }
+
+    public void ToggleCrouch()
+    {
+        // No se puede agachar si está apuntando, escondido o muerto
+        if (IsAiming || IsHiding || CurrentState == PlayerState.Dead) return;
+
+        _isCrouched = !_isCrouched;
+        ApplyCrouchState();
+        OnCrouchChanged?.Invoke(_isCrouched);
+    }
+
+    private void ApplyCrouchState()
+    {
+        if (playerAnimator != null)
+            playerAnimator.SetBool(HashIsCrouched, _isCrouched);
+
+        if (tpController != null)
+        {
+            if (_isCrouched)
+            {
+                tpController.MoveSpeed   = crouchMoveSpeed;
+                tpController.SprintSpeed = crouchMoveSpeed;
+            }
+            else
+            {
+                tpController.MoveSpeed   = standMoveSpeed;
+                tpController.SprintSpeed = standSprintSpeed;
+                _originalRunSpeed = standSprintSpeed;
+            }
+        }
+
+        if (characterController != null)
+        {
+            if (_isCrouched)
+            {
+                characterController.height = crouchHeight;
+                characterController.center = new Vector3(0f, crouchCenterY, 0f);
+            }
+            else
+            {
+                characterController.height = standHeight;
+                characterController.center = new Vector3(0f, standCenterY, 0f);
+            }
+        }
+
+        Debug.Log($"[State] {(_isCrouched ? "Agachado" : "De pie")}");
+    }
+
+    private void UpdateCrouchAnimation()
+    {
+        if (!_isCrouched || playerAnimator == null || inputs == null) return;
+
+        float moveMagnitude = new Vector2(inputs.move.x, inputs.move.y).magnitude;
+        playerAnimator.SetFloat(HashCrouchSpeed, moveMagnitude, 0.1f, Time.deltaTime);
+    }
+
+    public void ForceStand()
+    {
+        if (_isCrouched)
+        {
+            _isCrouched = false;
+            ApplyCrouchState();
+            OnCrouchChanged?.Invoke(false);
+        }
     }
 
     // ─── Evaluación de estado ─────────────────────────────────────────────────
 
     private void EvaluateState()
     {
-        // Prioridad: Dead > Hiding > Aiming > HoldingObject > movimiento
-
         if (lockerSystem != null && lockerSystem.IsHiding)
         {
             ChangeState(PlayerState.Hiding);
@@ -142,12 +237,16 @@ public class PlayerStateMachine : MonoBehaviour
             if (equipmentManager.IsHoldingThrowable) { ChangeState(PlayerState.HoldingObject);    return; }
         }
 
-        // Movimiento
+        if (_isCrouched)
+        {
+            ChangeState(PlayerState.Crouched);
+            return;
+        }
+
         if (inputs != null)
         {
             float speed = new Vector2(inputs.move.x, inputs.move.y).magnitude;
 
-            // Solo puede correr si tiene stamina
             bool wantsToRun = speed > 0.1f && inputs.sprint;
             bool canRun     = !_staminaExhausted && currentStamina > 0f;
 
@@ -160,8 +259,6 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
 
-    // ─── Reglas por estado ────────────────────────────────────────────────────
-
     private void ApplyStateRules()
     {
         switch (CurrentState)
@@ -172,17 +269,21 @@ public class PlayerStateMachine : MonoBehaviour
                 break;
 
             case PlayerState.HoldingObject:
-                if (tpController != null)
+                if (tpController != null && !_isCrouched)
                     tpController.SprintSpeed = _originalRunSpeed * 0.7f;
                 break;
 
             case PlayerState.Hiding:
                 break;
 
+            case PlayerState.Crouched:
+                // Las reglas de velocidad ya están aplicadas en ApplyCrouchState
+                break;
+
             case PlayerState.Running:
             case PlayerState.Walking:
             case PlayerState.Idle:
-                RestoreSprint();
+                if (!_isCrouched) RestoreSprint();
                 break;
         }
     }
@@ -207,7 +308,6 @@ public class PlayerStateMachine : MonoBehaviour
             currentStamina -= staminaDrainRate * Time.deltaTime;
             currentStamina  = Mathf.Max(currentStamina, 0f);
 
-            // Si se agota → bloquear sprint hasta llegar al umbral mínimo
             if (currentStamina <= 0f)
             {
                 _staminaExhausted = true;
@@ -216,11 +316,9 @@ public class PlayerStateMachine : MonoBehaviour
         }
         else
         {
-            // Regenerar mientras no corre
             currentStamina += staminaRegenRate * Time.deltaTime;
             currentStamina  = Mathf.Min(currentStamina, maxStamina);
 
-            // Cuando vuelve a tener stamina suficiente, deja correr otra vez
             if (_staminaExhausted && currentStamina >= staminaRunThreshold)
                 _staminaExhausted = false;
         }
@@ -233,7 +331,6 @@ public class PlayerStateMachine : MonoBehaviour
     private void UpdateHealthRegen()
     {
         if (currentHealth >= maxHealth) return;
-
         if (Time.time - _lastDamageTime < healthRegenDelay) return;
 
         currentHealth += healthRegenRate * Time.deltaTime;
@@ -241,9 +338,6 @@ public class PlayerStateMachine : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
     }
 
-    /// <summary>
-    /// Llamado cuando el jugador recibe daño (del enemigo, caída, etc.)
-    /// </summary>
     public void TakeDamage(float amount)
     {
         if (CurrentState == PlayerState.Dead) return;
@@ -255,11 +349,14 @@ public class PlayerStateMachine : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         Debug.Log($"[Health] -{amount}. Vida: {currentHealth:F0}/{maxHealth}");
 
+        // Animación de daño (solo si no muere)
+        if (currentHealth > 0f && playerAnimator != null)
+            playerAnimator.SetTrigger(HashTakeDamage);
+
         if (currentHealth <= 0f)
             Die();
     }
 
-    /// <summary>Cura al jugador (botiquines, checkpoints, etc.)</summary>
     public void Heal(float amount)
     {
         currentHealth += amount;
@@ -274,17 +371,23 @@ public class PlayerStateMachine : MonoBehaviour
         if (_batteryCount >= maxBatteries) return false;
         _batteryCount = Mathf.Min(_batteryCount + amount, maxBatteries);
         OnBatteryCountChanged?.Invoke(_batteryCount);
+        Debug.Log($"[Inventory] +{amount} batería. Total: {_batteryCount}/{maxBatteries}");
         return true;
     }
 
     public bool TryReloadFlashlight()
     {
-        if (_batteryCount <= 0) return false;
+        if (_batteryCount <= 0)
+        {
+            Debug.Log("[Inventory] Sin baterías para recargar.");
+            return false;
+        }
         if (flashlightSystem == null) return false;
 
         _batteryCount--;
         flashlightSystem.Reload();
         OnBatteryCountChanged?.Invoke(_batteryCount);
+        Debug.Log($"[Inventory] Batería usada. Quedan: {_batteryCount}/{maxBatteries}");
         return true;
     }
 
@@ -332,6 +435,6 @@ public class PlayerStateMachine : MonoBehaviour
     public bool  IsAimingMegaphone  => CurrentState == PlayerState.AimingMegaphone;
     public bool  IsAiming           => IsAimingFlashlight || IsAimingMegaphone;
     public bool  IsHoldingObject    => CurrentState == PlayerState.HoldingObject;
-    public bool  CanRun             => !IsAiming && !IsHiding && !_staminaExhausted;
+    public bool  CanRun             => !IsAiming && !IsHiding && !_staminaExhausted && !_isCrouched;
     public bool  HasBattery         => _batteryCount > 0;
 }
