@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems; 
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
 {
@@ -37,7 +38,7 @@ public class MenuManager : MonoBehaviour
     public void Jugar()
     {
         //GraphicsSettings.renderPipelineAsset = Resources.Load<RenderPipelineAsset>("UniversalRenderPipelineAsset");
-        //SceneManager.LoadScene("SceneRaul"); 
+        SceneManager.LoadScene("Mapa"); 
         Time.timeScale = 1;
     }
 

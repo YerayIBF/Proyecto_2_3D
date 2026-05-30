@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 525cf8abe949ec44996440e3d772ded2
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282962
+  packageName: Blur Shaders Pro for URP, HDRP & Built-in
+  packageVersion: 1.0.2
+  assetPath: Assets/Blur Shaders Pro/Built-in Pipeline/Resources/Shaders/RadialBlur.shader
+  uploadId: 903116

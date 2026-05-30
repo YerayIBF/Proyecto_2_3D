@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f0eb3c07771536e469bc2a2541f2a3ee
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282962
+  packageName: Blur Shaders Pro for URP, HDRP & Built-in
+  packageVersion: 1.0.2
+  assetPath: Assets/Blur Shaders Pro/Built-in Pipeline/Demo/Materials/Pink.mat
+  uploadId: 903116
