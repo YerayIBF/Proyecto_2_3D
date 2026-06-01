@@ -38,6 +38,10 @@ public class EmitirSonido : MonoBehaviour
             {
                 ciego.DetectarSonido(posicion);
             }
+            EnemyBehaviourTree enemigo = collider.GetComponent<EnemyBehaviourTree>();
+    if (enemigo != null)
+        enemigo.OnHeardNoise(posicion);
+        
         }
     }
 }

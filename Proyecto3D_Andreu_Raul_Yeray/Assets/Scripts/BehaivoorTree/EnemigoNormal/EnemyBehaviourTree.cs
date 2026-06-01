@@ -5,19 +5,14 @@ using UnityEngine.AI;
 
 public class EnemyBehaviourTree : MonoBehaviour
 {
-    // ─── Referencias ─────────────────────────────────────────────────────────
-
     [Header("Referencias")]
     public Transform    player;
     public LockerSystem lockerSystem;
     public Transform    eyes;
 
     [Header("GHOST — Modelo visual de Mixamo")]
-    [Tooltip("El modelo visual con el Animator. Sigue al agent suavizado para movimiento fluido.")]
     public Transform ghostModel;
-    [Tooltip("Suavizado de posición (más bajo = más pegado al agent, más alto = más fluido pero con retraso)")]
     public float ghostPositionSmooth = 0.08f;
-    [Tooltip("Velocidad de rotación del ghost hacia la dirección de movimiento")]
     public float ghostRotationSpeed = 12f;
 
     [Header("Patrulla")]
@@ -28,23 +23,33 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float     detectionRange = 12f;
     public float     detectionAngle = 90f;
     public LayerMask visionBlockMask;
+    [Tooltip("Tiempo de 'memoria' tras perder la visión: sigue persiguiendo aunque no lo vea por un momento")]
+    public float visionMemoryDuration = 2f;
+    private float _visionMemoryTimer = 0f;
 
     [Header("Combate")]
     public float attackRange        = 1.5f;
     public float chaseRange         = 15f;
     public float attackCooldownTime = 1.5f;
-    public float attackDamage       = 100f;
+    public float attackDamage       = 30f;
+    public float lockerKillDelay    = 0.8f;
 
     [Header("Aturdimiento")]
     public float stunDuration = 3f;
+    [Tooltip("Tiempo mínimo entre stuns. Mientras esté activo, no se puede volver a aturdir.")]
+    public float stunCooldown = 5f;
+    private float _stunCooldownTimer = 0f;
 
     [Header("Investigación")]
     public float investigateWaitTime    = 4f;
     public float approximateNoiseOffset = 2f;
+    public float investigateCooldown    = 3f;
+    private float _investigateCooldownTimer = 0f;
 
     [Header("Taquillas")]
     public float lockerCheckRange = 8f;
     public float lockerOpenWait   = 2f;
+    public float lockerApproachDistance = 1.2f;
 
     private float _lockerMoveTimer = 0f;
     private const float _MAX_LOCKER_MOVE_TIME = 5f;
@@ -54,42 +59,34 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float chaseSpeed       = 4.5f;
     public float investigateSpeed = 3f;
 
-    // ─── Componentes ─────────────────────────────────────────────────────────
-
     private NavMeshAgent _agent;
-    private Animator     _anim;   // está en el ghostModel
-
-    // ─── Estado principal ─────────────────────────────────────────────────────
+    private Animator     _anim;
 
     private enum State { Wander, Chase, Attack, Stunned, Investigate, CheckLocker }
     private State _state = State.Wander;
 
-    // Aturdimiento
     private bool  _isStunned = false;
     private float _stunTimer = 0f;
 
-    // Investigación
     private bool    _reachedInvestigation = false;
     private float   _investigateWaitTimer = 0f;
     private Vector3 _investigateTarget    = Vector3.zero;
+    private bool    _hasPendingNoise      = false;
+    private Vector3 _pendingNoisePos      = Vector3.zero;
 
-    // Taquillas
     private LockerInteractable[] _allLockers    = null;
     private LockerInteractable   _targetLocker  = null;
     private bool  _lockerOpened    = false;
     private float _lockerWaitTimer = 0f;
+    private bool  _lockerKillTriggered = false;
+    private bool  _frozenAtLocker = false;
 
-    // Combate
     private bool _attackOnCooldown = false;
 
-    // Vio al jugador esconderse
     public LockerInteractable _knownLockerWithPlayer = null;
     private bool _playerWasHiding = false;
 
-    // Ghost
     private Vector3 _ghostVelocity = Vector3.zero;
-
-    // ─── Hashes de Animator (rendimiento) ────────────────────────────────────
 
     private static readonly int HashSpeed   = Animator.StringToHash("Speed");
     private static readonly int HashState   = Animator.StringToHash("State");
@@ -97,18 +94,11 @@ public class EnemyBehaviourTree : MonoBehaviour
     private static readonly int HashStunned = Animator.StringToHash("Stunned");
     private static readonly int HashOpen    = Animator.StringToHash("Open");
 
-    // ─── Init ─────────────────────────────────────────────────────────────────
-
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
+        if (ghostModel != null) _anim = ghostModel.GetComponent<Animator>();
 
-        // El Animator está en el ghost, no aquí
-        if (ghostModel != null)
-            _anim = ghostModel.GetComponent<Animator>();
-
-        // CLAVE del sistema ghost: el agent NO rota el transform visual.
-        // El ghost se encarga de rotar suave.
         if (_agent != null)
         {
             _agent.updateRotation = false;
@@ -121,53 +111,87 @@ public class EnemyBehaviourTree : MonoBehaviour
         _allLockers = Object.FindObjectsByType<LockerInteractable>(FindObjectsSortMode.None);
         Debug.Log($"[BT] Taquillas en escena: {_allLockers.Length}");
 
-        // Desparentar el ghost para que no herede los saltos del agent
-        if (ghostModel != null)
-            ghostModel.SetParent(null);
+        if (ghostModel != null) ghostModel.SetParent(null);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  GHOST — el modelo visual sigue al agent suavemente
-    // ═══════════════════════════════════════════════════════════════════════════
+    public void OnHeardNoise(Vector3 noisePosition)
+    {
+        if (_isStunned) return;
+        if (_state == State.Chase || _state == State.Attack) return;
+        if (_state == State.CheckLocker) return;
+        if (_investigateCooldownTimer > 0f) return;
+
+        _hasPendingNoise = true;
+        _pendingNoisePos = noisePosition;
+        Debug.Log($"[BT] Ruido oído en {noisePosition}");
+    }
 
     private void LateUpdate()
     {
         if (ghostModel == null) return;
 
-        // Posición: el ghost persigue la posición del agent con suavizado
-        ghostModel.position = Vector3.SmoothDamp(
-            ghostModel.position,
-            transform.position,
-            ref _ghostVelocity,
-            ghostPositionSmooth);
+        if (_frozenAtLocker)
+        {
+            ghostModel.position = transform.position;
+        }
+        else
+        {
+            ghostModel.position = Vector3.SmoothDamp(
+                ghostModel.position, transform.position,
+                ref _ghostVelocity, ghostPositionSmooth);
+        }
 
-        // Rotación: el ghost mira hacia donde se mueve el agent
         Vector3 moveDir = _agent.velocity;
         moveDir.y = 0f;
 
-        if (moveDir.sqrMagnitude > 0.05f)
+        if (!_frozenAtLocker && moveDir.sqrMagnitude > 0.05f)
         {
             Quaternion targetRot = Quaternion.LookRotation(moveDir);
             ghostModel.rotation = Quaternion.Slerp(
-                ghostModel.rotation,
-                targetRot,
+                ghostModel.rotation, targetRot,
                 Time.deltaTime * ghostRotationSpeed);
         }
 
-        // Animator: velocidad normalizada para el blend tree Idle→Walk→Run
         if (_anim != null)
         {
-            float normalizedSpeed = _agent.velocity.magnitude / chaseSpeed;
+            float normalizedSpeed = 0f;
+
+            if (!_frozenAtLocker)
+            {
+                float realSpeed = _agent.velocity.magnitude;
+                if (realSpeed > 0.1f)
+                {
+                    if (realSpeed <= patrolSpeed)
+                        normalizedSpeed = Mathf.Lerp(0.3f, 0.5f, realSpeed / patrolSpeed);
+                    else
+                        normalizedSpeed = Mathf.Lerp(0.5f, 1f, (realSpeed - patrolSpeed) / (chaseSpeed - patrolSpeed));
+                }
+            }
+
             _anim.SetFloat(HashSpeed, normalizedSpeed, 0.1f, Time.deltaTime);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  UPDATE — el árbol evalúa el estado actual cada frame
-    // ═══════════════════════════════════════════════════════════════════════════
-
     private void Update()
     {
+        if (_investigateCooldownTimer > 0f)
+            _investigateCooldownTimer -= Time.deltaTime;
+
+        // Cooldown de stun
+        if (_stunCooldownTimer > 0f)
+            _stunCooldownTimer -= Time.deltaTime;
+
+        // Memoria de visión (sigue persiguiendo aunque no vea por un momento)
+        if (_visionMemoryTimer > 0f)
+            _visionMemoryTimer -= Time.deltaTime;
+
+        if (_frozenAtLocker)
+        {
+            _agent.isStopped = true;
+            _agent.velocity = Vector3.zero;
+            _agent.ResetPath();
+        }
+
         TrackPlayerHiding();
 
         switch (_state)
@@ -183,21 +207,18 @@ public class EnemyBehaviourTree : MonoBehaviour
         EvaluateTransitions();
     }
 
-    // ─── Transiciones ────────────────────────────────────────────────────────
-
     private void EvaluateTransitions()
     {
         if (_state == State.Attack) return;
         if (_state == State.CheckLocker) return;
+        if (_state == State.Stunned) return;  // mientras esté aturdido NO transiciona a nada
 
-        // 1. Aturdido
         if (_isStunned)
         {
             ChangeState(State.Stunned);
             return;
         }
 
-        // 2. Sabe en qué taquilla está el jugador → ir directo
         if (_knownLockerWithPlayer != null)
         {
             if (_state != State.CheckLocker)
@@ -205,33 +226,44 @@ public class EnemyBehaviourTree : MonoBehaviour
                 _targetLocker  = _knownLockerWithPlayer;
                 _lockerOpened  = false;
                 _lockerWaitTimer = 0f;
+                _lockerKillTriggered = false;
+                _frozenAtLocker = false;
                 ChangeState(State.CheckLocker);
             }
             return;
         }
 
-        // 3. Ve al jugador → Chase
-        if (CanSeePlayer())
+        // ── VE AL JUGADOR (o lo vio recientemente) → Chase ──
+        bool seesPlayer = CanSeePlayer();
+        if (seesPlayer)
         {
+            _visionMemoryTimer = visionMemoryDuration; // Reset memoria
             ChangeState(State.Chase);
             return;
         }
 
-        // 5. Sin estímulos y no está en medio de algo → Wander
+        // Si todavía tiene memoria reciente y está en Chase, mantener Chase
+        if (_state == State.Chase && _visionMemoryTimer > 0f)
+        {
+            return;
+        }
+
+        if (_hasPendingNoise && _state != State.Investigate)
+        {
+            _hasPendingNoise = false;
+            StartInvestigation(_pendingNoisePos);
+            return;
+        }
+
         if (_state != State.Investigate && _state != State.CheckLocker)
         {
             ChangeState(State.Wander);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  COMPORTAMIENTOS POR ESTADO
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    // ── WANDER ───────────────────────────────────────────────────────────────
-
     private void UpdateWander()
     {
+        _agent.isStopped = false;
         _agent.speed = patrolSpeed;
         if (patrolPoints.Length == 0) return;
         if (!_agent.pathPending && _agent.remainingDistance < 0.5f)
@@ -241,50 +273,45 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
     }
 
-    // ── CHASE ────────────────────────────────────────────────────────────────
-
     private void UpdateChase()
     {
+        _agent.isStopped = false;
         _agent.speed = chaseSpeed;
         _agent.SetDestination(player.position);
 
         float dist = Vector3.Distance(transform.position, player.position);
 
         if (dist <= attackRange && !_attackOnCooldown)
-        {
             ChangeState(State.Attack);
-        }
-        else if (dist > chaseRange && !CanSeePlayer())
-        {
+        else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f)
             ChangeState(State.Wander);
-        }
     }
 
-    // ── ATTACK ───────────────────────────────────────────────────────────────
+    // ── ATAQUE: ya NO vuelve a Wander, vuelve a Chase para seguir persiguiendo ──
 
     private void UpdateAttack()
     {
         _agent.ResetPath();
 
-        // Disparar animación de ataque en el ghost
         if (_anim != null) _anim.SetTrigger(HashAttack);
 
         bool playerHiding = lockerSystem != null && lockerSystem.IsHiding;
         if (!playerHiding)
-            KillPlayer();
+            DamagePlayer(attackDamage);
 
         _attackOnCooldown = true;
         Invoke(nameof(ResetAttack), attackCooldownTime);
 
+        // CLAVE: tras atacar, FORZAR Chase (resetea memoria de visión también)
+        _visionMemoryTimer = visionMemoryDuration;
         ChangeState(State.Chase);
     }
 
     private void ResetAttack() => _attackOnCooldown = false;
 
-    // ── STUNNED ──────────────────────────────────────────────────────────────
-
     private void UpdateStunned()
     {
+        _agent.isStopped = true;
         _agent.ResetPath();
 
         if (_anim != null) _anim.SetBool(HashStunned, true);
@@ -295,18 +322,32 @@ public class EnemyBehaviourTree : MonoBehaviour
             _isStunned = false;
             _stunTimer = 0f;
             if (_anim != null) _anim.SetBool(HashStunned, false);
+
+            // Cuando termina el stun, empieza el cooldown
+            _stunCooldownTimer = stunCooldown;
+
             ChangeState(State.Wander);
-            Debug.Log("[BT] Recuperado.");
+            Debug.Log($"[BT] Recuperado. Cooldown de stun: {stunCooldown}s");
         }
     }
 
+    // ── STUN: ahora con cooldown ──
+
     public void Stun()
     {
+        if (_stunCooldownTimer > 0f)
+        {
+            Debug.Log($"[BT] Stun en cooldown. Quedan {_stunCooldownTimer:F1}s");
+            return;
+        }
+
         _isStunned = true;
         _stunTimer = 0f;
+        Debug.Log("[BT] ¡Aturdido por la linterna!");
     }
 
-    // ── INVESTIGATE ──────────────────────────────────────────────────────────
+    /// <summary>Propiedad pública para que el FlashlightSystem sepa si puede stunear.</summary>
+    public bool CanBeStunned => _stunCooldownTimer <= 0f && !_isStunned;
 
     private void StartInvestigation(Vector3 noisePos)
     {
@@ -318,6 +359,10 @@ public class EnemyBehaviourTree : MonoBehaviour
         Vector2 offset = Random.insideUnitCircle * approximateNoiseOffset;
         _investigateTarget = noisePos + new Vector3(offset.x, 0f, offset.y);
 
+        if (NavMesh.SamplePosition(_investigateTarget, out NavMeshHit hit, 5f, NavMesh.AllAreas))
+            _investigateTarget = hit.position;
+
+        _agent.isStopped = false;
         _agent.speed = investigateSpeed;
         _agent.SetDestination(_investigateTarget);
 
@@ -329,10 +374,13 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         if (!_reachedInvestigation)
         {
+            _agent.isStopped = false;
+
             if (!_agent.pathPending && _agent.remainingDistance < 0.6f)
             {
                 _reachedInvestigation = true;
                 _agent.ResetPath();
+                _agent.isStopped = true;
                 Debug.Log("[BT] Llegó al punto investigado.");
 
                 LockerInteractable locker = FindRandomNearbyLocker();
@@ -341,15 +389,16 @@ public class EnemyBehaviourTree : MonoBehaviour
                     _targetLocker    = locker;
                     _lockerOpened    = false;
                     _lockerWaitTimer = 0f;
+                    _lockerKillTriggered = false;
+                    _frozenAtLocker  = false;
+                    _agent.isStopped = false;
                     _agent.speed     = investigateSpeed;
-                    _agent.SetDestination(_targetLocker.transform.position);
+
+                    Vector3 frontPos = GetFrontOfLockerPosition(_targetLocker);
+                    _agent.SetDestination(frontPos);
+
                     ChangeState(State.CheckLocker);
-                    Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
                     return;
-                }
-                else
-                {
-                    Debug.Log("[BT] No hay taquillas cercanas. Esperando...");
                 }
             }
         }
@@ -358,107 +407,126 @@ public class EnemyBehaviourTree : MonoBehaviour
             _investigateWaitTimer += Time.deltaTime;
             if (_investigateWaitTimer >= investigateWaitTime)
             {
-                Debug.Log("[BT] Investigación terminada → Wander.");
+                _investigateCooldownTimer = investigateCooldown;
                 ChangeState(State.Wander);
             }
         }
     }
 
-    // ── CHECK LOCKER ─────────────────────────────────────────────────────────
+    private Vector3 GetFrontOfLockerPosition(LockerInteractable locker)
+    {
+        if (locker == null) return transform.position;
+
+        Vector3 frontDir = locker.transform.forward;
+        Vector3 frontPos = locker.transform.position + frontDir * lockerApproachDistance;
+
+        if (NavMesh.SamplePosition(frontPos, out NavMeshHit hit, 2f, NavMesh.AllAreas))
+            return hit.position;
+
+        return frontPos;
+    }
 
     private void UpdateCheckLocker()
     {
         if (_targetLocker == null)
         {
+            _frozenAtLocker = false;
             ChangeState(State.Wander);
             return;
         }
 
-        if (_knownLockerWithPlayer == null && !_lockerOpened)
-        {
-            Debug.Log("[BT] Jugador salió de la taquilla, cancelando inspección.");
-            _targetLocker = null;
-            ChangeState(State.Wander);
-            return;
-        }
-
-        float dist = Vector3.Distance(transform.position, _targetLocker.transform.position);
+        Vector3 frontPos = GetFrontOfLockerPosition(_targetLocker);
+        float distToFront = Vector3.Distance(transform.position, frontPos);
 
         if (!_lockerOpened)
         {
-            _agent.SetDestination(_targetLocker.transform.position);
+            _agent.isStopped = false;
+            _frozenAtLocker = false;
+            _agent.SetDestination(frontPos);
             _lockerMoveTimer += Time.deltaTime;
 
             if (_lockerMoveTimer > _MAX_LOCKER_MOVE_TIME || _agent.pathStatus == NavMeshPathStatus.PathInvalid)
             {
-                Debug.LogWarning("[BT] No se pudo alcanzar la taquilla. Abortando.");
+                Debug.LogWarning("[BT] No se pudo alcanzar la taquilla.");
                 _knownLockerWithPlayer = null;
                 _targetLocker = null;
                 ChangeState(State.Wander);
                 return;
             }
 
-            if (dist < 1.5f)
+            if (distToFront < 0.5f)
             {
                 _lockerOpened = true;
                 _lockerWaitTimer = 0f;
                 _lockerMoveTimer = 0f;
-                _agent.ResetPath();
 
-                Vector3 dir = (_targetLocker.transform.position - transform.position).normalized;
-                dir.y = 0f;
-                if (dir != Vector3.zero)
+                _frozenAtLocker = true;
+                _agent.ResetPath();
+                _agent.isStopped = true;
+                _agent.velocity = Vector3.zero;
+
+                Vector3 snapPos = frontPos;
+                snapPos.y = transform.position.y;
+                _agent.Warp(snapPos);
+
+                Vector3 dirToLocker = (_targetLocker.transform.position - transform.position).normalized;
+                dirToLocker.y = 0f;
+                if (dirToLocker != Vector3.zero)
                 {
-                    // Rotar el ghost también hacia la taquilla
-                    if (ghostModel != null)
-                        ghostModel.rotation = Quaternion.LookRotation(dir);
-                    transform.rotation = Quaternion.LookRotation(dir);
+                    Quaternion lookRot = Quaternion.LookRotation(dirToLocker);
+                    if (ghostModel != null) ghostModel.rotation = lookRot;
+                    transform.rotation = lookRot;
                 }
 
-                // Disparar animación de abrir taquilla
                 if (_anim != null) _anim.SetTrigger(HashOpen);
-
                 _targetLocker.OpenDoor();
-                Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
             }
         }
         else
         {
-            if (_targetLocker == null)
-            {
-                ChangeState(State.Wander);
-                return;
-            }
-
             _lockerWaitTimer += Time.deltaTime;
+
             if (_lockerWaitTimer >= lockerOpenWait)
             {
                 bool playerInside = lockerSystem != null
                                  && lockerSystem.IsHiding
                                  && lockerSystem.CurrentLocker == _targetLocker;
 
-                if (playerInside)
+                if (playerInside && !_lockerKillTriggered)
                 {
-                    Debug.Log("[BT] ¡Jugador encontrado!");
-                    KillPlayer();
-                }
-                else
-                {
-                    Debug.Log("[BT] Taquilla vacía.");
-                    _targetLocker.CloseDoor();
+                    _lockerKillTriggered = true;
+                    if (_anim != null) _anim.SetTrigger(HashAttack);
+                    Invoke(nameof(KillPlayerInLocker), lockerKillDelay);
+                    return;
                 }
 
-                _knownLockerWithPlayer = null;
-                _targetLocker = null;
-                _lockerOpened = false;
-                ChangeState(State.Wander);
+                if (!playerInside && !_lockerKillTriggered)
+                {
+                    _targetLocker.CloseDoor();
+
+                    _frozenAtLocker = false;
+                    _knownLockerWithPlayer = null;
+                    _targetLocker = null;
+                    _lockerOpened = false;
+                    _investigateCooldownTimer = investigateCooldown;
+                    ChangeState(State.Wander);
+                }
             }
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  DETECCIÓN
-    // ═══════════════════════════════════════════════════════════════════════════
+    private void KillPlayerInLocker()
+    {
+        if (PlayerStateMachine.Instance != null)
+            PlayerStateMachine.Instance.TakeDamage(99999f);
+
+        _frozenAtLocker = false;
+        _knownLockerWithPlayer = null;
+        _targetLocker = null;
+        _lockerOpened = false;
+        _investigateCooldownTimer = investigateCooldown;
+        ChangeState(State.Wander);
+    }
 
     private void TrackPlayerHiding()
     {
@@ -478,7 +546,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (!hidingNow && _playerWasHiding)
         {
             _knownLockerWithPlayer = null;
-            Debug.Log("[BT] Jugador salió de la taquilla.");
         }
 
         _playerWasHiding = hidingNow;
@@ -491,24 +558,49 @@ public class EnemyBehaviourTree : MonoBehaviour
         return CanSeePlayerRaw();
     }
 
+    // ── DETECCIÓN VISUAL MEJORADA: prueba varios puntos del jugador ──
     private bool CanSeePlayerRaw()
     {
         if (player == null) return false;
-        float dist = Vector3.Distance(eyes.position, player.position);
-        if (dist > detectionRange) return false;
-        Vector3 dir = (player.position - eyes.position).normalized;
-        if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) return false;
-        if (Physics.Raycast(eyes.position, dir, dist, visionBlockMask)) return false;
-        return true;
+        if (eyes == null) return false;
+
+        // Probar tres alturas: pies, pecho, cabeza
+        // Así no se "pierde" al jugador al saltar
+        Vector3[] testPoints = new Vector3[]
+        {
+            player.position + Vector3.up * 0.3f,  // pies (cerca del suelo)
+            player.position + Vector3.up * 1.0f,  // pecho
+            player.position + Vector3.up * 1.7f   // cabeza
+        };
+
+        foreach (Vector3 targetPoint in testPoints)
+        {
+            float dist = Vector3.Distance(eyes.position, targetPoint);
+            if (dist > detectionRange) continue;
+
+            Vector3 dir = (targetPoint - eyes.position).normalized;
+
+            // Ángulo de visión
+            if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) continue;
+
+            // Raycast: si algo bloquea la visión a este punto, prueba el siguiente
+            if (Physics.Raycast(eyes.position, dir, out RaycastHit hit, dist, visionBlockMask))
+            {
+                if (!hit.collider.transform.IsChildOf(player) && hit.collider.transform != player)
+                    continue;
+            }
+
+            // Si llegamos aquí, este punto es visible → ve al jugador
+            return true;
+        }
+
+        return false;
     }
 
-    private void KillPlayer()
+    private void DamagePlayer(float damage)
     {
-        Debug.Log("[BT] GAME OVER.");
-
-        // Conectar con el sistema de vida del jugador
         if (PlayerStateMachine.Instance != null)
-            PlayerStateMachine.Instance.TakeDamage(attackDamage);
+            PlayerStateMachine.Instance.TakeDamage(damage);
     }
 
     private LockerInteractable FindRandomNearbyLocker()
@@ -529,12 +621,9 @@ public class EnemyBehaviourTree : MonoBehaviour
         _state = newState;
         Debug.Log($"[BT] → {newState}");
 
-        // Notificar el estado al Animator (por si usas un parámetro Int State)
         if (_anim != null)
             _anim.SetInteger(HashState, (int)newState);
     }
-
-    // ─── Gizmos ──────────────────────────────────────────────────────────────
 
     private void OnDrawGizmos()
     {
@@ -554,32 +643,24 @@ public class EnemyBehaviourTree : MonoBehaviour
             Gizmos.DrawSphere(_investigateTarget, 0.3f);
             Gizmos.DrawLine(transform.position, _investigateTarget);
         }
-        if (_knownLockerWithPlayer != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, _knownLockerWithPlayer.transform.position);
-        }
-        else if (_targetLocker != null)
+
+        if (_targetLocker != null)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawLine(transform.position, _targetLocker.transform.position);
+            Vector3 frontPos = _targetLocker.transform.position + _targetLocker.transform.forward * lockerApproachDistance;
+            Gizmos.DrawSphere(frontPos, 0.2f);
+            Gizmos.DrawLine(transform.position, frontPos);
         }
     }
-
-    // ─── Propiedades para Debug UI ──────────────────────────────────────────
 
     public string CurrentStateName => _state.ToString();
-    public float DistanceToPlayer
-    {
-        get
-        {
-            if (player == null) return -1f;
-            return Vector3.Distance(transform.position, player.position);
-        }
-    }
+    public float DistanceToPlayer => player == null ? -1f : Vector3.Distance(transform.position, player.position);
     public bool IsSeeingPlayer => CanSeePlayer();
     public bool IsCurrentlyStunned => _isStunned;
     public bool HasKnownLockerWithPlayer => _knownLockerWithPlayer != null;
+    public float AgentRemainingDistance => _agent != null && _agent.hasPath ? _agent.remainingDistance : -1f;
+    public float AgentSpeed => _agent != null ? _agent.speed : 0f;
+
     public string CurrentTargetInfo
     {
         get
@@ -588,23 +669,15 @@ public class EnemyBehaviourTree : MonoBehaviour
             {
                 case State.Wander:
                     return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length
-                        ? $"Punto {_patrolIndex}: {patrolPoints[_patrolIndex].position}"
+                        ? $"Punto {_patrolIndex}"
                         : "Sin puntos";
-                case State.Chase:
-                    return "Jugador";
-                case State.Attack:
-                    return "Atacando";
-                case State.Stunned:
-                    return "Aturdido";
-                case State.Investigate:
-                    return _reachedInvestigation ? "Esperando en punto" : $"Investigando: {_investigateTarget}";
-                case State.CheckLocker:
-                    return _targetLocker != null ? _targetLocker.name : "Ninguna";
-                default:
-                    return "";
+                case State.Chase:       return "Jugador";
+                case State.Attack:      return "Atacando";
+                case State.Stunned:     return "Aturdido";
+                case State.Investigate: return _reachedInvestigation ? "Esperando" : "Yendo a investigar";
+                case State.CheckLocker: return _targetLocker != null ? _targetLocker.name : "Ninguna";
+                default:                return "";
             }
         }
     }
-    public float AgentRemainingDistance => _agent != null && _agent.hasPath ? _agent.remainingDistance : -1f;
-    public float AgentSpeed => _agent != null ? _agent.speed : 0f;
 }

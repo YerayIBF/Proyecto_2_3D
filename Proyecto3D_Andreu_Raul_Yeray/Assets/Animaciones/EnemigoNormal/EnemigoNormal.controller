@@ -90,7 +90,7 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: -6774074528522708791}
-    m_Position: {x: 340, y: 220, z: 0}
+    m_Position: {x: 310, y: 210, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 5743725628153212917}
     m_Position: {x: 630, y: 390, z: 0}
@@ -99,10 +99,10 @@ AnimatorStateMachine:
     m_Position: {x: 660, y: 250, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 2845262566281961399}
-    m_Position: {x: 450, y: 440, z: 0}
+    m_Position: {x: 380, y: 430, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -6664193266161699671}
-    m_Position: {x: 150, y: 370, z: 0}
+    m_Position: {x: 110, y: 360, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []
@@ -130,16 +130,16 @@ BlendTree:
     m_DirectBlendParameter: Speed
     m_Mirror: 0
   - serializedVersion: 2
-    m_Motion: {fileID: -203655887218126122, guid: 311e3478fadd62b448549848ff5a8b4a, type: 3}
-    m_Threshold: 0.5
+    m_Motion: {fileID: -203655887218126122, guid: f7385e3df05e1cf47a0cb227ca3ba2ef, type: 3}
+    m_Threshold: 0.4
     m_Position: {x: 0, y: 0}
-    m_TimeScale: 1
+    m_TimeScale: 0.5
     m_CycleOffset: 0
     m_DirectBlendParameter: Speed
     m_Mirror: 0
   - serializedVersion: 2
     m_Motion: {fileID: -203655887218126122, guid: 6264bdb4f97d0b94fa250499b03d5c20, type: 3}
-    m_Threshold: 1
+    m_Threshold: 0.8
     m_Position: {x: 0, y: 0}
     m_TimeScale: 1
     m_CycleOffset: 0
@@ -148,8 +148,8 @@ BlendTree:
   m_BlendParameter: Speed
   m_BlendParameterY: Speed
   m_MinThreshold: 0
-  m_MaxThreshold: 1
-  m_UseAutomaticThresholds: 1
+  m_MaxThreshold: 0.8
+  m_UseAutomaticThresholds: 0
   m_NormalizedBlendValues: 0
   m_BlendType: 0
 --- !u!1101 &-4712739061955752351
@@ -257,7 +257,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: AtaqueEnemigoNormal2
-  m_Speed: 1
+  m_Speed: 1.5
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -8029530039719638827}

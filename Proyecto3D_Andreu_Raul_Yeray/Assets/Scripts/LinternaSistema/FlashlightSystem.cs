@@ -7,8 +7,10 @@ using System.Collections;
 /// - El jugador no puede usar la linterna hasta recogerla con E
 /// - Si startPickedUp = true, ya la tiene equipada al inicio (test/tutorial saltado)
 /// - F = encender/apagar
-/// - Click izquierdo = apuntar (zoom + más intensa)
+/// - Click DERECHO = apuntar (zoom + más intensa)
 /// - R = recargar
+///
+/// Para el stun: detecta colliders con el tag "EnemyEyes".
 /// </summary>
 public class FlashlightSystem : MonoBehaviour
 {
@@ -49,8 +51,9 @@ public class FlashlightSystem : MonoBehaviour
     [Header("Parpadeo natural")]
     public float flickerThreshold = 0.15f;
 
-    [Header("Detección de ojos")]
-    public LayerMask eyesLayerMask;
+    [Header("Detección de ojos (por TAG)")]
+    [Tooltip("Tag de los colliders de ojos de los enemigos. Por defecto 'EnemyEyes'.")]
+    public string eyesTag = "EnemyEyes";
     public int      coneRayCount    = 8;
     public float    coneAngle       = 15f;
     public float    stunDetectRange = 10f;
@@ -94,39 +97,29 @@ public class FlashlightSystem : MonoBehaviour
         GameObject p = GameObject.FindGameObjectWithTag("Player");
         if (p != null) _player = p.transform;
 
-        // ── IMPORTANTE: empezar con la luz apagada y sin estado de pickup ──
         if (flashlightLight != null) flashlightLight.enabled = false;
     }
 
     private void Start()
     {
-        // Si empieza ya recogida (modo testing / saltar tutorial)
         if (startPickedUp)
         {
             _hasFlashlight = true;
-            // NO desactivamos el GameObject — está en la mano
-            // El equipment manager lo posiciona en su Start()
         }
         else
         {
-            // No recogida: está en el suelo, esperando E
             _hasFlashlight = false;
-            // NO desactivamos el GameObject — el jugador tiene que verlo en el suelo
         }
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────
-
     private void Update()
     {
-        // Si aún no la ha recogido → solo gestionar pickup
         if (!_hasFlashlight)
         {
             HandlePickup();
             return;
         }
 
-        // Linterna en uso
         HandleInput();
 
         if (_isOn)
@@ -163,20 +156,15 @@ public class FlashlightSystem : MonoBehaviour
         _hasFlashlight = true;
         if (pickupIcon != null) pickupIcon.SetActive(false);
 
-        // Avisar al equipment manager
         if (PlayerEquipmentManager.Instance != null)
             PlayerEquipmentManager.Instance.PickupFlashlight(gameObject);
 
-        // Compatibilidad con GameManager de tu compañero
         if (GameManager.instance != null)
             GameManager.instance.tieneLinterna = true;
 
         Debug.Log("[Flashlight] Linterna recogida.");
     }
 
-    /// <summary>
-    /// Llamado por el equipment manager cuando ya está equipada.
-    /// </summary>
     public void PickupFlashlight()
     {
         _hasFlashlight = true;
@@ -187,11 +175,9 @@ public class FlashlightSystem : MonoBehaviour
 
     private void HandleInput()
     {
-        // F → encender/apagar
         if (Input.GetKeyDown(KeyCode.F) && currentBattery > 0f)
             ToggleFlashlight();
 
-        // R → recargar
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (PlayerStateMachine.Instance != null)
@@ -200,7 +186,6 @@ public class FlashlightSystem : MonoBehaviour
                 Reload();
         }
 
-        // Click izquierdo → apuntar (con bloqueos del equipment manager)
         bool canAim = _isOn;
         if (PlayerEquipmentManager.Instance != null)
             canAim = canAim && PlayerEquipmentManager.Instance.CanAimFlashlight;
@@ -303,6 +288,8 @@ public class FlashlightSystem : MonoBehaviour
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
 
+    // ─── DETECCIÓN OJOS POR TAG ──────────────────────────────────────────────
+
     private void DetectEyesStun()
     {
         if (!_isAiming || mainCamera == null) return;
@@ -334,11 +321,39 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Lanza un raycast y comprueba si lo que golpea tiene el tag eyesTag.
+    /// Si sí, busca el EnemyBehaviourTree en la escena (porque puede estar en
+    /// otro GameObject — el EnemyLogic, separado del Ghost donde están los ojos).
+    /// </summary>
     private EnemyBehaviourTree TryRaycastEyes(Vector3 origin, Vector3 direction)
     {
-        if (Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange, eyesLayerMask))
-            return hit.collider.GetComponentInParent<EnemyBehaviourTree>();
+       if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
+        ~0, QueryTriggerInteraction.Collide))
         return null;
+
+        // Comprobar tag
+        if (!hit.collider.CompareTag(eyesTag))
+            return null;
+
+        // Buscar el BehaviourTree en padres O en toda la escena
+        EnemyBehaviourTree bt = hit.collider.GetComponentInParent<EnemyBehaviourTree>();
+        if (bt != null) return bt;
+
+        // Si los ojos están en el Ghost (separado del Logic), buscamos al más cercano
+        EnemyBehaviourTree[] allEnemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
+        EnemyBehaviourTree nearest = null;
+        float minDist = float.MaxValue;
+        foreach (var enemy in allEnemies)
+        {
+            float d = Vector3.Distance(enemy.transform.position, hit.point);
+            if (d < minDist)
+            {
+                minDist = d;
+                nearest = enemy;
+            }
+        }
+        return nearest;
     }
 
     public void Reload()
