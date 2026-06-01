@@ -25,6 +25,7 @@ public class enemigoaire : MonoBehaviour
     [Header("Tiempo para Stunearlo")]
     public float tiempoParaStunearlo = 2.0f;
     private Coroutine cuentaAtrasStun;
+    public GameObject Eyes;
 
     [Header("Ataque por Proyectil")]
     public GameObject prefabProyectil;   // Arrastra aquí el Prefab de tu bola
@@ -127,6 +128,11 @@ public float anguloDeVision = 90f;
         // 2. Detección de linterna (Cuerpo)
 
         if (other.CompareTag("ZonaOscura")) cannotSee = true;
+
+        if (Eyes.CompareTag("Flashlight"))
+        {
+            //StartCoroutine(cuentaAtrasStun);
+        }
     }
 
     private void OnTriggerExit(Collider other)
@@ -136,7 +142,7 @@ public float anguloDeVision = 90f;
             JugadorDentroRango = false;
         }
 
-        if (other.CompareTag("Flashlight"))
+        if (Eyes.CompareTag("Flashlight"))
         {
             if (cuentaAtrasStun != null)
             {
