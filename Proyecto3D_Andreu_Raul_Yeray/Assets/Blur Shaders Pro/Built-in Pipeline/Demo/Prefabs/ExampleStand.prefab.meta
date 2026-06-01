@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e28f8d651063dc14a93d33ca966ceaf8
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282962
+  packageName: Blur Shaders Pro for URP, HDRP & Built-in
+  packageVersion: 1.0.2
+  assetPath: Assets/Blur Shaders Pro/Built-in Pipeline/Demo/Prefabs/ExampleStand.prefab
+  uploadId: 903116

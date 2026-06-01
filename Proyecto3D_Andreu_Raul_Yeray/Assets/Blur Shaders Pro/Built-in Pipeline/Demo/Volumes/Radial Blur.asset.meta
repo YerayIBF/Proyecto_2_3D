@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 963e1bc45e72ae947afdafa3d71146f3
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282962
+  packageName: Blur Shaders Pro for URP, HDRP & Built-in
+  packageVersion: 1.0.2
+  assetPath: Assets/Blur Shaders Pro/Built-in Pipeline/Demo/Volumes/Radial Blur.asset
+  uploadId: 903116

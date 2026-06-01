@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.Playables;
+using StarterAssets;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -14,6 +16,10 @@ public class GameManager : MonoBehaviour
     public Image megafonoImg;
     public Sprite iconoBateria;
     public Sprite iconoSinBateria;
+    public bool zonaActivacion = false;
+    public ThirdPersonController scriptJugador;
+
+    public PlayableDirector timelineInicial;
 
     void Awake()
     {
@@ -30,8 +36,16 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        scriptJugador.enabled = false;
+        timelineInicial.stopped += OnTimelineFinished;
+        timelineInicial.Play();
         megafono = GameObject.FindGameObjectWithTag("Megafono");
         megafonoImg.sprite = iconoBateria;
+    }
+
+    private void OnTimelineFinished(PlayableDirector director)
+    {
+        scriptJugador.enabled = true;
     }
 
     // Update is called once per frame
@@ -95,5 +109,10 @@ public class GameManager : MonoBehaviour
                 bateriaRayas[i].SetActive(false);
             }
         }
+    }
+
+    public void ReproducirTimelineInicial()
+    {
+        timelineInicial.Play();
     }
 }

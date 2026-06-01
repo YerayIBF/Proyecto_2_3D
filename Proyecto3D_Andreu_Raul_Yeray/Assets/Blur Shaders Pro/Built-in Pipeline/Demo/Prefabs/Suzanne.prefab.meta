@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5292657727ec458419e86d48d1922cb0
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 282962
+  packageName: Blur Shaders Pro for URP, HDRP & Built-in
+  packageVersion: 1.0.2
+  assetPath: Assets/Blur Shaders Pro/Built-in Pipeline/Demo/Prefabs/Suzanne.prefab
+  uploadId: 903116
