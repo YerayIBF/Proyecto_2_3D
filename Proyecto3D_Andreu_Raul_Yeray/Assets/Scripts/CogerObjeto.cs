@@ -1,27 +1,13 @@
 using UnityEngine;
 
-/// <summary>
-/// CogerObjeto — versión integrada con PlayerEquipmentManager.
-///
-/// Cambios respecto a tu versión:
-/// - Detección por distancia (más fiable que triggers)
-/// - Bloquea animación "Coger" si no hay objeto cerca
-/// - Bloquea recoger lanzable si el equipment manager dice que no
-/// - Mantiene toda tu lógica: HandlePoint, rotaciones, trayectoria, apuntado megáfono
-/// </summary>
 public class CogerObjeto : MonoBehaviour
 {
-    [Header("Animator")]
     public Animator animator;
-
-    [Header("Manos")]
-    public GameObject handPoint;        // mano derecha (megáfono/linterna)
-    public GameObject handPointLeft;    // mano izquierda (lanzables)
-
-    [Header("Lanzamiento")]
+    public GameObject handPoint;
+    private GameObject objetoCogido;
     public float throwForce = 10f;
 
-    [Header("Trayectoria")]
+    private Camera cam;
     public LineRenderer lineRenderer;
     public int predictionSteps = 30;
     public float timeStep = 0.1f;
@@ -50,71 +36,8 @@ public class CogerObjeto : MonoBehaviour
         handPointRotation = handPoint.transform.localEulerAngles;
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────
-
+    // Update is called once per frame
     void Update()
-    {
-        // Detectar el objeto más cercano por distancia (más fiable que triggers)
-        DetectarObjetoCercano();
-
-        // Mostrar/ocultar iconos según cercanía
-        ActualizarIconos();
-
-        // Soltar (R) — solo lanzables
-        if (objetoCogido != null && Input.GetKey("r"))
-        {
-            if (objetoCogido.CompareTag("objetoCogible"))
-                SoltarLanzable();
-        }
-
-        // Apuntado + lanzar (solo si tenemos un lanzable)
-        if (objetoCogido != null && objetoCogido.CompareTag("objetoCogible"))
-            HandleAimAndThrow();
-
-        // Apuntado megáfono (si está equipado en mano dcha)
-        if (PlayerEquipmentManager.Instance != null
-            && PlayerEquipmentManager.Instance.IsMegaphoneInHand)
-        {
-            HandleMegaphoneAim();
-        }
-        else if (apuntando)
-        {
-            apuntando = false;
-            if (animator != null) animator.SetBool("isAiming", false);
-            if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
-        }
-
-        // Recoger con E (SOLO si hay objeto cerca y bloqueos permiten)
-        if (Input.GetKeyDown(KeyCode.E) && objetoCogido == null)
-        {
-            if (objeto == null)
-            {
-                Debug.Log("[CogerObjeto] No hay nada cerca para recoger.");
-                return;
-            }
-
-            // Comprobar bloqueos según tipo
-            if (objeto.CompareTag("objetoCogible"))
-            {
-                if (PlayerEquipmentManager.Instance != null
-                    && !PlayerEquipmentManager.Instance.CanPickupThrowable)
-                {
-                    Debug.Log("[CogerObjeto] No puedes recoger lanzables ahora.");
-                    return;
-                }
-            }
-
-            // OK, dispara animación (al final llama a AnimatorCogerObjeto)
-            if (animator != null)
-                animator.SetTrigger("Coger");
-            else
-                AnimatorCogerObjeto();
-        }
-    }
-
-    // ─── Detección por distancia ─────────────────────────────────────────────
-
-    private void DetectarObjetoCercano()
     {
         if (objetoCogido != null)
         {
@@ -133,21 +56,48 @@ public class CogerObjeto : MonoBehaviour
             }
         }
 
-        GameObject masCercano = null;
-        float minDist = pickupRange;
-
-        string[] tags = { "objetoCogible", "Megafono", "Linterna" };
-        foreach (string tag in tags)
+        if (objetoCogido != null)
         {
-            GameObject[] candidatos = GameObject.FindGameObjectsWithTag(tag);
-            foreach (var go in candidatos)
+            if (GameManager.instance.tieneMegafono)
             {
-                if (go == null) continue;
-                float d = Vector3.Distance(transform.position, go.transform.position);
-                if (d < minDist)
+                if (Input.GetMouseButton(1))
                 {
-                    minDist = d;
-                    masCercano = go;
+                    Debug.Log("Apuntando con el megafono");
+                    apuntando = true;
+                    animator.SetBool("isAiming", true);
+                    GameManager.instance.MostrarCanvasMegafono(true);
+                }
+                else
+                {
+                    //se quita la animacion de apuntar
+                    apuntando = false;
+                    animator.SetBool("isAiming", false);
+                    GameManager.instance.MostrarCanvasMegafono(false);
+                }
+
+                lineRenderer.enabled = false;
+            }
+            else
+            {
+                //Lanzar al pulsar el botón izquierdo del ratón
+                if (Input.GetMouseButton(1))
+                {
+                    throwForce += 10f * Time.deltaTime;
+                    throwForce = Mathf.Clamp(throwForce, 5f, 30f);
+
+                    lineRenderer.enabled = true;
+                    //activar el LineRenderer de trayectoria
+                    DibujarTrayectoria();
+                }
+                else
+                {
+                    lineRenderer.enabled = false;
+                    throwForce = 10f;
+                }
+                
+                if (Input.GetMouseButtonDown(0))
+                {
+                    LanzarObjeto();
                 }
             }
         }
@@ -167,17 +117,12 @@ public class CogerObjeto : MonoBehaviour
                 megafonoObject.GetComponent<ThrowObject>().MostrarIcono(false);
             }   
         }
-
-        if (Input.GetMouseButtonDown(0))
-            LanzarObjeto();
+        
     }
 
     public void LanzarObjeto()
     {
-        if (objetoCogido == null) return;
-
-        if (lineRenderer != null) lineRenderer.enabled = false;
-
+        lineRenderer.enabled = false;
         Rigidbody rb = objetoCogido.GetComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.useGravity = true;
@@ -187,7 +132,10 @@ public class CogerObjeto : MonoBehaviour
         rb.AddForce(force, ForceMode.VelocityChange);
 
         ThrowObject throwable = objetoCogido.GetComponent<ThrowObject>();
-        if (throwable != null) throwable.Lanzado();
+        if (throwable != null)
+        {
+            throwable.Lanzado();
+        }
 
         objetoCogido.transform.SetParent(null);
         objetoCogido = null;
@@ -195,33 +143,8 @@ public class CogerObjeto : MonoBehaviour
         handPoint.transform.localEulerAngles = handPointRotation;
     }
 
-    private void SoltarLanzable()
-    {
-        if (objetoCogido == null) return;
-
-        Rigidbody rb = objetoCogido.GetComponent<Rigidbody>();
-        rb.useGravity = true;
-        rb.isKinematic = false;
-
-        if (EmitirSonido.instance != null)
-            EmitirSonido.instance.EmitirRuido(objetoCogido.transform.position, 15f);
-
-        objetoCogido.transform.SetParent(null);
-        objetoCogido = null;
-
-        if (handPointLeft != null)
-            handPointLeft.transform.localEulerAngles = handPointLeftRotation;
-
-        PlayerEquipmentManager.Instance?.ReleaseThrowable();
-    }
-
-    // ─── Iconos ──────────────────────────────────────────────────────────────
-
-    private void ActualizarIconos()
-    {
-        // Oculta el icono de todos los items que NO son el más cercano
-        string[] tags = { "objetoCogible", "Megafono", "Linterna" };
-        foreach (string tag in tags)
+    private void OnTriggerStay(Collider other) {
+        if (other.gameObject.CompareTag("objetoCogible"))
         {
             if (objetoCogido == null){
                 other.GetComponent<ThrowObject>().MostrarIcono(false);
@@ -238,36 +161,20 @@ public class CogerObjeto : MonoBehaviour
         }
     }
 
-    // ─── AnimatorCogerObjeto — Animation Event ───────────────────────────────
-
     public void AnimatorCogerObjeto()
     {
-        if (objeto == null) return;
-
-        // LANZABLES → mano izquierda
-        if (objeto.CompareTag("objetoCogible"))
+        if (objeto != null)
         {
-            GameObject handTarget = handPointLeft != null ? handPointLeft : handPoint;
-
-            Rigidbody rb = objeto.GetComponent<Rigidbody>();
-            if (rb != null) { rb.useGravity = false; rb.isKinematic = true; }
-
+            objeto.GetComponent<Rigidbody>().useGravity = false;
+            objeto.GetComponent<Rigidbody>().isKinematic = true;
             Transform handlePoint = objeto.transform.Find("HandlePoint");
-            objeto.transform.SetParent(handTarget.transform);
+            objeto.transform.SetParent(handPoint.gameObject.transform);
 
             if (handlePoint != null)
             {
                 objeto.transform.localPosition = -handlePoint.localPosition;
                 objeto.transform.localRotation = Quaternion.Inverse(handlePoint.localRotation);
             }
-            else
-            {
-                objeto.transform.localPosition = Vector3.zero;
-                objeto.transform.localRotation = Quaternion.identity;
-            }
-
-            Vector3 rotacion = handTarget.transform.localEulerAngles;
-            handTarget.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
 
             if (objeto.CompareTag("objetoCogible"))
             {
@@ -281,25 +188,16 @@ public class CogerObjeto : MonoBehaviour
             }
 
             objetoCogido = objeto;
-            PlayerEquipmentManager.Instance?.PickupThrowable(objetoCogido);
-        }
-        // MEGÁFONO → mano derecha
-        else if (objeto.CompareTag("Megafono"))
-        {
-            PlayerEquipmentManager.Instance?.PickupMegaphone(objeto);
-            if (GameManager.instance != null) GameManager.instance.RecogerMegafono();
-        }
-        // LINTERNA → mano derecha
-        else if (objeto.CompareTag("Linterna"))
-        {
-            PlayerEquipmentManager.Instance?.PickupFlashlight(objeto);
-            if (GameManager.instance != null) GameManager.instance.tieneLinterna = true;
-        }
+            objeto = null;
 
-        objeto = null;
+            if (objetoCogido.CompareTag("Megafono"))
+            {
+                GameManager.instance.RecogerMegafono();
+            }
+        }
     }
 
-    // ─── Trayectoria ─────────────────────────────────────────────────────────
+    
 
     void DibujarTrayectoria()
     {
@@ -311,7 +209,7 @@ public class CogerObjeto : MonoBehaviour
         for (int i = 0; i < predictionSteps; i++)
         {
             float t = i * timeStep;
-            Vector3 point = startPoint + startVel * t + 0.5f * Physics.gravity * t * t;
+            Vector3 point = startPoint + startVelocity * t + 0.5f * Physics.gravity * t * t;
             lineRenderer.SetPosition(i, point);
         }
     }
