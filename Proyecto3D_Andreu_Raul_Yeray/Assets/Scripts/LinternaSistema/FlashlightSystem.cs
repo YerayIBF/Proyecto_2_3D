@@ -290,36 +290,55 @@ public class FlashlightSystem : MonoBehaviour
 
     // ─── DETECCIÓN OJOS POR TAG ──────────────────────────────────────────────
 
-    private void DetectEyesStun()
+   private void DetectEyesStun()
+{
+    if (!_isAiming || mainCamera == null) return;
+
+    Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+    EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
+    enemigoaire hitAire = TryRaycastEyesAire(ray.origin, ray.direction);
+
+    if (hitEnemy == null && hitAire == null)
     {
-        if (!_isAiming || mainCamera == null) return;
-
-        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-        EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
-
-        if (hitEnemy == null)
+        for (int i = 0; i < coneRayCount; i++)
         {
-            for (int i = 0; i < coneRayCount; i++)
-            {
-                float angle = (360f / coneRayCount) * i;
-                Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
-                            * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
-                hitEnemy = TryRaycastEyes(ray.origin, dir);
-                if (hitEnemy != null) break;
-            }
+            float angle = (360f / coneRayCount) * i;
+            Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
+                        * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
+
+            if (hitEnemy == null) hitEnemy = TryRaycastEyes(ray.origin, dir);
+            if (hitAire  == null) hitAire  = TryRaycastEyesAire(ray.origin, dir);
+
+            if (hitEnemy != null && hitAire != null) break;
         }
+    }
 
-        if (hitEnemy != null && !_stunDetected)
+    bool anyHit = hitEnemy != null || hitAire != null;
+
+    if (anyHit && !_stunDetected)
+    {
+        _stunDetected = true;
+
+        if (hitEnemy != null)
         {
-            _stunDetected = true;
             hitEnemy.Stun();
             Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
         }
-        else if (hitEnemy == null)
+
+        if (hitAire != null)
         {
-            _stunDetected = false;
+            hitAire.AplicarStun(hitAire.duracionDelStun);
+            Debug.Log($"[Flashlight] ¡Stun! → {hitAire.gameObject.name}");
         }
     }
+    else if (!anyHit)
+    {
+        _stunDetected = false;
+    }
+}
+
+    
 
     /// <summary>
     /// Lanza un raycast y comprueba si lo que golpea tiene el tag eyesTag.
@@ -343,6 +362,36 @@ public class FlashlightSystem : MonoBehaviour
         // Si los ojos están en el Ghost (separado del Logic), buscamos al más cercano
         EnemyBehaviourTree[] allEnemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
         EnemyBehaviourTree nearest = null;
+        float minDist = float.MaxValue;
+        foreach (var enemy in allEnemies)
+        {
+            float d = Vector3.Distance(enemy.transform.position, hit.point);
+            if (d < minDist)
+            {
+                minDist = d;
+                nearest = enemy;
+            }
+        }
+        return nearest;
+    }
+
+    private enemigoaire TryRaycastEyesAire(Vector3 origin, Vector3 direction)
+    {
+       if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
+        ~0, QueryTriggerInteraction.Collide))
+        return null;
+
+        // Comprobar tag
+        if (!hit.collider.CompareTag(eyesTag))
+            return null;
+
+        // Buscar el BehaviourTree en padres O en toda la escena
+        enemigoaire bt = hit.collider.GetComponentInParent<enemigoaire>();
+        if (bt != null) return bt;
+
+        // Si los ojos están en el Ghost (separado del Logic), buscamos al más cercano
+        enemigoaire[] allEnemies = Object.FindObjectsByType<enemigoaire>(FindObjectsSortMode.None);
+        enemigoaire nearest = null;
         float minDist = float.MaxValue;
         foreach (var enemy in allEnemies)
         {
