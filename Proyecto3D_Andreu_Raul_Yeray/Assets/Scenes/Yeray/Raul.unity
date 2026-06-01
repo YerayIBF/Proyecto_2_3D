@@ -1377,11 +1377,6 @@ Transform:
   - {fileID: 1098445447}
   m_Father: {fileID: 562121252}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!4 &445233137 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4710124261309175710, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-  m_PrefabInstance: {fileID: 1136859479}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &472114893
 GameObject:
   m_ObjectHideFlags: 0
@@ -2023,6 +2018,9 @@ MonoBehaviour:
   megafonoImg: {fileID: 0}
   iconoBateria: {fileID: 21300000, guid: cca7f3419c7ad4f44bc020d9f9078382, type: 3}
   iconoSinBateria: {fileID: 21300000, guid: c5bb6cd2eb5f80f40af7293ca33e0384, type: 3}
+  zonaActivacion: 0
+  scriptJugador: {fileID: 0}
+  timelineInicial: {fileID: 0}
 --- !u!114 &653106876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3021,12 +3019,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 1130712128}
   handPoint: {fileID: 1864652227}
-  handPointLeft: {fileID: 1321184354}
   throwForce: 10
   lineRenderer: {fileID: 1130712127}
   predictionSteps: 30
   timeStep: 0.1
-  pickupRange: 2
+  objeto: {fileID: 0}
   apuntando: 0
 --- !u!1 &918333939
 GameObject:
@@ -4551,6 +4548,8 @@ MonoBehaviour:
   LockCameraPosition: 0
   RotateTowardsMovement: 1
   soundCooldownTime: 0.5
+  puertaAnim: {fileID: 0}
+  cogerObjetoScript: {fileID: 0}
 --- !u!143 &1130712135
 CharacterController:
   m_ObjectHideFlags: 0
@@ -4691,6 +4690,7 @@ MonoBehaviour:
   tpController: {fileID: 1130712134}
   inputs: {fileID: 1130712132}
   characterController: {fileID: 1130712135}
+  playerAnimator: {fileID: 0}
   startingBatteries: 2
   maxBatteries: 5
   _batteryCount: 0
@@ -4703,6 +4703,14 @@ MonoBehaviour:
   staminaDrainRate: 15
   staminaRegenRate: 10
   staminaRunThreshold: 10
+  crouchKey: 99
+  crouchMoveSpeed: 1.5
+  standMoveSpeed: 2
+  standSprintSpeed: 5.335
+  standHeight: 1.8
+  crouchHeight: 1
+  crouchCenterY: 0.5
+  standCenterY: 0.9
 --- !u!136 &1130712142
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -4739,22 +4747,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4097444492855445486, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: m_Radius
-      value: 0.14602977
-      objectReference: {fileID: 0}
-    - target: {fileID: 4097444492855445486, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: m_Center.x
-      value: 0.00048728895
-      objectReference: {fileID: 0}
-    - target: {fileID: 4097444492855445486, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: m_Center.y
-      value: -0.0014372689
-      objectReference: {fileID: 0}
-    - target: {fileID: 4097444492855445486, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: m_Center.z
-      value: 0.016141629
-      objectReference: {fileID: 0}
     - target: {fileID: 4710124261309175710, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
       propertyPath: m_LocalPosition.x
       value: -3.9649758
@@ -4807,24 +4799,9 @@ PrefabInstance:
       propertyPath: PlayerState
       value: 
       objectReference: {fileID: 1130712141}
-    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: puntoDisparo
-      value: 
-      objectReference: {fileID: 2043296516}
-    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: prefabProyectil
-      value: 
-      objectReference: {fileID: 6638208836457653635, guid: eb2e8f6c6b986974c9e889fc1a6f2d7d, type: 3}
-    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: tiempoEntreAtaques
-      value: 3
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 4710124261309175710, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2043296516}
+    m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
 --- !u!1 &1160283258
@@ -6624,12 +6601,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
   handPoint: {fileID: 618037016}
-  handPointLeft: {fileID: 0}
   throwForce: 10
   lineRenderer: {fileID: 1130712127}
   predictionSteps: 30
   timeStep: 0.1
-  pickupRange: 2
+  objeto: {fileID: 0}
   apuntando: 0
 --- !u!1 &1535657931
 GameObject:
@@ -7577,15 +7553,20 @@ MonoBehaviour:
   visionBlockMask:
     serializedVersion: 2
     m_Bits: 131072
+  visionMemoryDuration: 2
   attackRange: 1.5
   chaseRange: 15
   attackCooldownTime: 1.5
   attackDamage: 100
+  lockerKillDelay: 0.8
   stunDuration: 3
+  stunCooldown: 5
   investigateWaitTime: 4
   approximateNoiseOffset: 2
+  investigateCooldown: 3
   lockerCheckRange: 5
   lockerOpenWait: 2
+  lockerApproachDistance: 1.2
   patrolSpeed: 2
   chaseSpeed: 4.5
   investigateSpeed: 3
@@ -8967,37 +8948,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!1 &2043296515
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2043296516}
-  m_Layer: 0
-  m_Name: spawnShoot
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2043296516
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2043296515}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0031, z: 0.0251}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 445233137}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2044240268
 GameObject:
   m_ObjectHideFlags: 0

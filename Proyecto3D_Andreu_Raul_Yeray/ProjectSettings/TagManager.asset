@@ -14,6 +14,7 @@ TagManager:
   - Linterna
   - ZonaOscura
   - Flashlight
+  - EnemyEyes
   layers:
   - Default
   - TransparentFX
