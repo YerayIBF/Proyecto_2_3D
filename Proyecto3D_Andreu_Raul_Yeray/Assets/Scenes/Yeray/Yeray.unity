@@ -2087,34 +2087,6 @@ Transform:
   - {fileID: 1644330962}
   m_Father: {fileID: 1162380694}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &573475904 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a7711bfa18984d740adf2a483876d337, type: 3}
-  m_PrefabInstance: {fileID: 708448022}
-  m_PrefabAsset: {fileID: 0}
---- !u!136 &573475906
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 573475904}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &575109220
 GameObject:
   m_ObjectHideFlags: 0
@@ -2544,10 +2516,7 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8700783698680967558, guid: a7711bfa18984d740adf2a483876d337, type: 3}
       insertIndex: -1
       addedObject: {fileID: 827948239}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a7711bfa18984d740adf2a483876d337, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 573475906}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a7711bfa18984d740adf2a483876d337, type: 3}
 --- !u!1 &740295721
 GameObject:
@@ -4797,6 +4766,7 @@ GameObject:
   - component: {fileID: 1130712140}
   - component: {fileID: 1130712141}
   - component: {fileID: 1130712142}
+  - component: {fileID: 1130712143}
   m_Layer: 6
   m_Name: PlayerArmature (1)
   m_TagString: Player
@@ -5353,6 +5323,23 @@ MonoBehaviour:
   ragdollColliders: []
   deathForce: 2
   pelvisRigidbody: {fileID: 409736652}
+--- !u!114 &1130712143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130712125}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0b919cade5a1f24d9d5011684feaefd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  walkRadius: 8
+  runMultiplier: 2.5
+  walkInterval: 0.4
+  runInterval: 0.2
+  drawGizmos: 1
 --- !u!1 &1150194406 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3086436065929644917, guid: 532ee2c5fadb4774dae873b9c856b172, type: 3}
@@ -5608,11 +5595,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: coneAngle
-      value: 80
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
+      propertyPath: aimParticles
+      value: 
+      objectReference: {fileID: 5938957054340923161, guid: 10e15a32c56d7e04cb62dab544ce11b4, type: 3}
+    - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: coneRayCount
-      value: 12
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: startPickedUp
@@ -7229,12 +7220,14 @@ MonoBehaviour:
   visionBlockMask:
     serializedVersion: 2
     m_Bits: 0
+  visionMemoryDuration: 2
   attackRange: 1.5
   chaseRange: 15
   attackCooldownTime: 1.5
-  attackDamage: 100
+  attackDamage: 20
   lockerKillDelay: 0.8
   stunDuration: 3
+  stunCooldown: 5
   investigateWaitTime: 4
   approximateNoiseOffset: 2
   investigateCooldown: 3

@@ -23,6 +23,9 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float     detectionRange = 12f;
     public float     detectionAngle = 90f;
     public LayerMask visionBlockMask;
+    [Tooltip("Tiempo de 'memoria' tras perder la visión: sigue persiguiendo aunque no lo vea por un momento")]
+    public float visionMemoryDuration = 2f;
+    private float _visionMemoryTimer = 0f;
 
     [Header("Combate")]
     public float attackRange        = 1.5f;
@@ -33,6 +36,9 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     [Header("Aturdimiento")]
     public float stunDuration = 3f;
+    [Tooltip("Tiempo mínimo entre stuns. Mientras esté activo, no se puede volver a aturdir.")]
+    public float stunCooldown = 5f;
+    private float _stunCooldownTimer = 0f;
 
     [Header("Investigación")]
     public float investigateWaitTime    = 4f;
@@ -73,7 +79,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     private bool  _lockerOpened    = false;
     private float _lockerWaitTimer = 0f;
     private bool  _lockerKillTriggered = false;
-    private bool  _frozenAtLocker = false; // NUEVO: bloqueo total
+    private bool  _frozenAtLocker = false;
 
     private bool _attackOnCooldown = false;
 
@@ -124,7 +130,6 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         if (ghostModel == null) return;
 
-        // Si está congelado en la taquilla, NO suavizar — pegar el ghost al agent
         if (_frozenAtLocker)
         {
             ghostModel.position = transform.position;
@@ -139,7 +144,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         Vector3 moveDir = _agent.velocity;
         moveDir.y = 0f;
 
-        // Solo rotar el ghost por velocidad si NO está congelado
         if (!_frozenAtLocker && moveDir.sqrMagnitude > 0.05f)
         {
             Quaternion targetRot = Quaternion.LookRotation(moveDir);
@@ -150,7 +154,6 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         if (_anim != null)
         {
-            // Si está congelado, Speed = 0 (no anima walk)
             float normalizedSpeed = 0f;
 
             if (!_frozenAtLocker)
@@ -174,7 +177,14 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (_investigateCooldownTimer > 0f)
             _investigateCooldownTimer -= Time.deltaTime;
 
-        // FORZAR QUIETUD si está congelado en taquilla — antes que nada
+        // Cooldown de stun
+        if (_stunCooldownTimer > 0f)
+            _stunCooldownTimer -= Time.deltaTime;
+
+        // Memoria de visión (sigue persiguiendo aunque no vea por un momento)
+        if (_visionMemoryTimer > 0f)
+            _visionMemoryTimer -= Time.deltaTime;
+
         if (_frozenAtLocker)
         {
             _agent.isStopped = true;
@@ -201,6 +211,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         if (_state == State.Attack) return;
         if (_state == State.CheckLocker) return;
+        if (_state == State.Stunned) return;  // mientras esté aturdido NO transiciona a nada
 
         if (_isStunned)
         {
@@ -222,9 +233,18 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
-        if (CanSeePlayer())
+        // ── VE AL JUGADOR (o lo vio recientemente) → Chase ──
+        bool seesPlayer = CanSeePlayer();
+        if (seesPlayer)
         {
+            _visionMemoryTimer = visionMemoryDuration; // Reset memoria
             ChangeState(State.Chase);
+            return;
+        }
+
+        // Si todavía tiene memoria reciente y está en Chase, mantener Chase
+        if (_state == State.Chase && _visionMemoryTimer > 0f)
+        {
             return;
         }
 
@@ -263,9 +283,11 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         if (dist <= attackRange && !_attackOnCooldown)
             ChangeState(State.Attack);
-        else if (dist > chaseRange && !CanSeePlayer())
+        else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f)
             ChangeState(State.Wander);
     }
+
+    // ── ATAQUE: ya NO vuelve a Wander, vuelve a Chase para seguir persiguiendo ──
 
     private void UpdateAttack()
     {
@@ -280,6 +302,8 @@ public class EnemyBehaviourTree : MonoBehaviour
         _attackOnCooldown = true;
         Invoke(nameof(ResetAttack), attackCooldownTime);
 
+        // CLAVE: tras atacar, FORZAR Chase (resetea memoria de visión también)
+        _visionMemoryTimer = visionMemoryDuration;
         ChangeState(State.Chase);
     }
 
@@ -298,17 +322,32 @@ public class EnemyBehaviourTree : MonoBehaviour
             _isStunned = false;
             _stunTimer = 0f;
             if (_anim != null) _anim.SetBool(HashStunned, false);
+
+            // Cuando termina el stun, empieza el cooldown
+            _stunCooldownTimer = stunCooldown;
+
             ChangeState(State.Wander);
-            Debug.Log("[BT] Recuperado.");
+            Debug.Log($"[BT] Recuperado. Cooldown de stun: {stunCooldown}s");
         }
     }
 
+    // ── STUN: ahora con cooldown ──
+
     public void Stun()
     {
+        if (_stunCooldownTimer > 0f)
+        {
+            Debug.Log($"[BT] Stun en cooldown. Quedan {_stunCooldownTimer:F1}s");
+            return;
+        }
+
         _isStunned = true;
         _stunTimer = 0f;
         Debug.Log("[BT] ¡Aturdido por la linterna!");
     }
+
+    /// <summary>Propiedad pública para que el FlashlightSystem sepa si puede stunear.</summary>
+    public bool CanBeStunned => _stunCooldownTimer <= 0f && !_isStunned;
 
     private void StartInvestigation(Vector3 noisePos)
     {
@@ -359,12 +398,7 @@ public class EnemyBehaviourTree : MonoBehaviour
                     _agent.SetDestination(frontPos);
 
                     ChangeState(State.CheckLocker);
-                    Debug.Log($"[BT] Taquilla cercana → {_targetLocker.name}");
                     return;
-                }
-                else
-                {
-                    Debug.Log("[BT] No hay taquillas. Buscando...");
                 }
             }
         }
@@ -373,7 +407,6 @@ public class EnemyBehaviourTree : MonoBehaviour
             _investigateWaitTimer += Time.deltaTime;
             if (_investigateWaitTimer >= investigateWaitTime)
             {
-                Debug.Log("[BT] Investigación terminada → Wander.");
                 _investigateCooldownTimer = investigateCooldown;
                 ChangeState(State.Wander);
             }
@@ -414,7 +447,7 @@ public class EnemyBehaviourTree : MonoBehaviour
 
             if (_lockerMoveTimer > _MAX_LOCKER_MOVE_TIME || _agent.pathStatus == NavMeshPathStatus.PathInvalid)
             {
-                Debug.LogWarning("[BT] No se pudo alcanzar la taquilla. Abortando.");
+                Debug.LogWarning("[BT] No se pudo alcanzar la taquilla.");
                 _knownLockerWithPlayer = null;
                 _targetLocker = null;
                 ChangeState(State.Wander);
@@ -427,37 +460,30 @@ public class EnemyBehaviourTree : MonoBehaviour
                 _lockerWaitTimer = 0f;
                 _lockerMoveTimer = 0f;
 
-                // ── BLOQUEO TOTAL desde este momento hasta que termine ──
                 _frozenAtLocker = true;
                 _agent.ResetPath();
                 _agent.isStopped = true;
                 _agent.velocity = Vector3.zero;
 
-                // Snap al punto exacto delante de la taquilla
                 Vector3 snapPos = frontPos;
                 snapPos.y = transform.position.y;
                 _agent.Warp(snapPos);
 
-                // Orientar mirando a la taquilla
                 Vector3 dirToLocker = (_targetLocker.transform.position - transform.position).normalized;
                 dirToLocker.y = 0f;
                 if (dirToLocker != Vector3.zero)
                 {
                     Quaternion lookRot = Quaternion.LookRotation(dirToLocker);
-                    if (ghostModel != null)
-                        ghostModel.rotation = lookRot;
+                    if (ghostModel != null) ghostModel.rotation = lookRot;
                     transform.rotation = lookRot;
                 }
 
                 if (_anim != null) _anim.SetTrigger(HashOpen);
-
                 _targetLocker.OpenDoor();
-                Debug.Log($"[BT] Abriendo: {_targetLocker.name}");
             }
         }
         else
         {
-            // El bloqueo total ya está activo desde arriba (frozenAtLocker)
             _lockerWaitTimer += Time.deltaTime;
 
             if (_lockerWaitTimer >= lockerOpenWait)
@@ -469,18 +495,13 @@ public class EnemyBehaviourTree : MonoBehaviour
                 if (playerInside && !_lockerKillTriggered)
                 {
                     _lockerKillTriggered = true;
-
-                    // QUIETO durante el ataque (frozenAtLocker sigue true)
                     if (_anim != null) _anim.SetTrigger(HashAttack);
-                    Debug.Log("[BT] ¡Jugador encontrado! Atacando...");
-
                     Invoke(nameof(KillPlayerInLocker), lockerKillDelay);
                     return;
                 }
 
                 if (!playerInside && !_lockerKillTriggered)
                 {
-                    Debug.Log("[BT] Taquilla vacía.");
                     _targetLocker.CloseDoor();
 
                     _frozenAtLocker = false;
@@ -496,8 +517,6 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     private void KillPlayerInLocker()
     {
-        Debug.Log("[BT] GAME OVER — Muerto en taquilla.");
-
         if (PlayerStateMachine.Instance != null)
             PlayerStateMachine.Instance.TakeDamage(99999f);
 
@@ -527,7 +546,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (!hidingNow && _playerWasHiding)
         {
             _knownLockerWithPlayer = null;
-            Debug.Log("[BT] Jugador salió de la taquilla.");
         }
 
         _playerWasHiding = hidingNow;
@@ -540,26 +558,43 @@ public class EnemyBehaviourTree : MonoBehaviour
         return CanSeePlayerRaw();
     }
 
+    // ── DETECCIÓN VISUAL MEJORADA: prueba varios puntos del jugador ──
     private bool CanSeePlayerRaw()
     {
         if (player == null) return false;
         if (eyes == null) return false;
 
-        float dist = Vector3.Distance(eyes.position, player.position);
-        if (dist > detectionRange) return false;
-
-        Vector3 targetPoint = player.position + Vector3.up * 1f;
-        Vector3 dir = (targetPoint - eyes.position).normalized;
-
-        if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) return false;
-
-        if (Physics.Raycast(eyes.position, dir, out RaycastHit hit, dist, visionBlockMask))
+        // Probar tres alturas: pies, pecho, cabeza
+        // Así no se "pierde" al jugador al saltar
+        Vector3[] testPoints = new Vector3[]
         {
-            if (!hit.collider.transform.IsChildOf(player) && hit.collider.transform != player)
-                return false;
+            player.position + Vector3.up * 0.3f,  // pies (cerca del suelo)
+            player.position + Vector3.up * 1.0f,  // pecho
+            player.position + Vector3.up * 1.7f   // cabeza
+        };
+
+        foreach (Vector3 targetPoint in testPoints)
+        {
+            float dist = Vector3.Distance(eyes.position, targetPoint);
+            if (dist > detectionRange) continue;
+
+            Vector3 dir = (targetPoint - eyes.position).normalized;
+
+            // Ángulo de visión
+            if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) continue;
+
+            // Raycast: si algo bloquea la visión a este punto, prueba el siguiente
+            if (Physics.Raycast(eyes.position, dir, out RaycastHit hit, dist, visionBlockMask))
+            {
+                if (!hit.collider.transform.IsChildOf(player) && hit.collider.transform != player)
+                    continue;
+            }
+
+            // Si llegamos aquí, este punto es visible → ve al jugador
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private void DamagePlayer(float damage)
