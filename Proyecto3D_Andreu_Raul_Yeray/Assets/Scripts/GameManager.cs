@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.Playables;
 using StarterAssets;
+using TMPro;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -20,6 +21,7 @@ public class GameManager : MonoBehaviour
     public ThirdPersonController scriptJugador;
 
     public PlayableDirector timelineInicial;
+    public TextMeshProUGUI textoTimelineInicial;
 
     void Awake()
     {
@@ -43,9 +45,11 @@ public class GameManager : MonoBehaviour
         megafonoImg.sprite = iconoBateria;
     }
 
+    //Al finalizar la cinematica el personaje puede moverse y el texto desaparece
     private void OnTimelineFinished(PlayableDirector director)
     {
         scriptJugador.enabled = true;
+        textoTimelineInicial.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
@@ -71,6 +75,7 @@ public class GameManager : MonoBehaviour
         } 
     }
 
+    //Actualizar energia del megafono de forma visual
     public void ActualizarEnergia(float energiaActual, float maxEnergia)
     {
         //textoEnergia.text = Mathf.RoundToInt(energiaActual) + " / " + Mathf.RoundToInt(maxEnergia);
@@ -111,6 +116,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    //Reproducir cinematica inicial
     public void ReproducirTimelineInicial()
     {
         timelineInicial.Play();
