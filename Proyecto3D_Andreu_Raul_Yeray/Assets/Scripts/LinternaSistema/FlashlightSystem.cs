@@ -377,13 +377,15 @@ public class FlashlightSystem : MonoBehaviour
 
     private enemigoaire TryRaycastEyesAire(Vector3 origin, Vector3 direction)
     {
+        int layerMask = ~LayerMask.GetMask("EnemyRange"); // ignora el collider grande
+
        if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
-        ~0, QueryTriggerInteraction.Collide))
+        layerMask, QueryTriggerInteraction.Collide))
         return null;
 
         // Comprobar tag
         if (!hit.collider.CompareTag(eyesTag))
-            return null;
+        return null;
 
         // Buscar el BehaviourTree en padres O en toda la escena
         enemigoaire bt = hit.collider.GetComponentInParent<enemigoaire>();

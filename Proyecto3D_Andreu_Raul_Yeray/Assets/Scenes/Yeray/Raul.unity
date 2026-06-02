@@ -2080,6 +2080,32 @@ Transform:
   - {fileID: 1234132174}
   m_Father: {fileID: 613815522}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &694360031 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 851797845063303509, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+  m_PrefabInstance: {fileID: 1136859479}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &694360033
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 694360031}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.015162435, y: 0.006682082, z: 0.009172734}
+  m_Center: {x: -0.00037014452, y: 0.016100116, z: -0.0061299955}
 --- !u!1 &740295721
 GameObject:
   m_ObjectHideFlags: 0
@@ -4791,6 +4817,26 @@ PrefabInstance:
       propertyPath: m_Name
       value: MonstruoParedBola
       objectReference: {fileID: 0}
+    - target: {fileID: 5338570561020235044, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 5338570561020235044, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_TagString
+      value: Untagged
+      objectReference: {fileID: 0}
+    - target: {fileID: 5364494673761421513, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_Radius
+      value: 0.006748184
+      objectReference: {fileID: 0}
+    - target: {fileID: 5364494673761421513, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_Center.x
+      value: -0.00046128198
+      objectReference: {fileID: 0}
+    - target: {fileID: 5364494673761421513, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_Center.y
+      value: 0.016390258
+      objectReference: {fileID: 0}
     - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
       propertyPath: jugador
       value: 
@@ -4799,10 +4845,22 @@ PrefabInstance:
       propertyPath: PlayerState
       value: 
       objectReference: {fileID: 1130712141}
-    m_RemovedComponents: []
+    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: fuerzaDisparo
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 9093149226794739708, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.0013
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5364494673761421513, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 851797845063303509, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 694360033}
   m_SourcePrefab: {fileID: 100100000, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
 --- !u!1 &1160283258
 GameObject:
