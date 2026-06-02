@@ -239,6 +239,7 @@ public class CiegoBehaviour : MonoBehaviour
                 {
                     //Atacar al jugador, funcion script jugador take damage
                     Debug.Log("Estoy recibiendo daño");
+                    //instanciar player states machine para quitar daño al jugador
                 }
             }
         }
