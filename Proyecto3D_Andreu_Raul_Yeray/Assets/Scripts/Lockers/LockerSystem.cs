@@ -3,14 +3,6 @@ using Unity.Cinemachine;
 using StarterAssets;
 using UnityEngine.InputSystem;
 
-/// <summary>
-/// Sistema de gestión de casillas para esconderse en armarios. 
-/// Controla la transición entre cámara 3ª persona y 1ª persona, 
-/// oculta el mesh del personaje y bloquea el movimiento mientras está escondido. 
-/// Diseñado para integrarse con el sistema de interacción 
-/// LockerInteractable y ser fácilmente extendible 
-/// 
-/// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class LockerSystem : MonoBehaviour
 {
@@ -20,26 +12,25 @@ public class LockerSystem : MonoBehaviour
     public Transform headTransform;
 
     [Header("Mesh a ocultar al esconderse")]
-    [Tooltip("Arrastra aquí todos los SkinnedMeshRenderer del personaje (cuerpo, ropa, etc.)")]
     public SkinnedMeshRenderer[] characterMeshes;
 
     [Header("Prioridades Cinemachine")]
     public int priorityHigh = 20;
     public int priorityLow  = 10;
 
-    // Guardamos el target original de la cam 3P
+    [Header("UI feedback (opcional)")]
+    public GameObject blockedExitWarning;
+    public float blockedWarningDuration = 1.5f;
+    private float _blockedWarningTimer = 0f;
+
     private Transform _originalThirdPersonTarget;
 
-    // Componentes Starter Assets
     private ThirdPersonController _tpController;
     private StarterAssetsInputs   _inputs;
     private CharacterController   _charController;
 
-    // Estado público para LockerInteractable y futuro Behaviour Tree
     public bool IsHiding { get; private set; } = false;
     public LockerInteractable CurrentLocker { get; private set; } = null;
-
-    // ─── Awake ───────────────────────────────────────────────────────────────
 
     private void Awake()
     {
@@ -53,56 +44,139 @@ public class LockerSystem : MonoBehaviour
         if (firstPersonCamera != null)
             firstPersonCamera.Priority = priorityLow;
 
-        // Auto-buscar meshes si no están asignados en el Inspector
         if (characterMeshes == null || characterMeshes.Length == 0)
             characterMeshes = GetComponentsInChildren<SkinnedMeshRenderer>();
+
+        if (blockedExitWarning != null)
+            blockedExitWarning.SetActive(false);
     }
 
-    // ─── API pública ─────────────────────────────────────────────────────────
+    private void Update()
+    {
+        if (_blockedWarningTimer > 0f)
+        {
+            _blockedWarningTimer -= Time.deltaTime;
+            if (_blockedWarningTimer <= 0f && blockedExitWarning != null)
+                blockedExitWarning.SetActive(false);
+        }
+    }
 
     public void EnterLocker(LockerInteractable locker, Transform hidePoint)
     {
         if (IsHiding) return;
+
+        // ── ANTES de teletransportar al jugador, comprobar quién lo está viendo ──
+        // Si lo notificamos DESPUÉS, ya está dentro y el enemigo no ve nada
+        NotifyEnemiesOfHidingBeforeTeleport(locker);
 
         IsHiding      = true;
         CurrentLocker = locker;
 
         DisablePlayerMovement();
 
-        // Mover al jugador al HidePoint
         _charController.enabled = false;
         transform.SetPositionAndRotation(hidePoint.position, hidePoint.rotation);
         _charController.enabled = true;
 
-        // Ocultar mesh DESPUÉS de teletransportar (evita flash)
         SetMeshVisible(false);
-
         SwitchToFirstPerson();
     }
 
-    public void ExitLocker()
+    /// <summary>
+    /// Notifica a los enemigos ANTES de que el jugador se teletransporte a la taquilla.
+    /// SOLO lo saben los enemigos que están VIENDO DIRECTAMENTE al jugador en ese momento
+    /// (raycast sin obstáculos). Si has roto la línea de visión (esquina, pared, columna),
+    /// aunque te esté persiguiendo, NO sabe en qué taquilla te metiste.
+    /// </summary>
+    private void NotifyEnemiesOfHidingBeforeTeleport(LockerInteractable locker)
+    {
+        EnemyBehaviourTree[] enemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            // ÚNICA condición: el enemigo te ve LITERALMENTE en este momento
+            if (enemy.IsSeeingPlayer)
+            {
+                enemy._knownLockerWithPlayer = locker;
+                Debug.Log($"[Locker] Enemigo {enemy.name} vio al jugador esconderse en {locker.name}");
+            }
+            else
+            {
+                Debug.Log($"[Locker] Enemigo {enemy.name} NO te vio entrar — investigará por su cuenta");
+            }
+        }
+    }
+
+    public bool ExitLocker()
+    {
+        if (!IsHiding) return false;
+
+        if (IsBlockedByEnemy())
+        {
+            Debug.Log("[Locker] ¡No puedes salir! El enemigo viene a por ti.");
+
+            if (blockedExitWarning != null)
+            {
+                blockedExitWarning.SetActive(true);
+                _blockedWarningTimer = blockedWarningDuration;
+            }
+
+            return false;
+        }
+
+        IsHiding      = false;
+        CurrentLocker = null;
+
+        SetMeshVisible(true);
+        SwitchToThirdPerson();
+        Invoke(nameof(EnablePlayerMovement), 0.05f);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Salida forzada por muerte. No comprueba bloqueos, no restaura el movimiento.
+    /// Solo saca al jugador visualmente para que el ragdoll/death screen funcione.
+    /// </summary>
+    public void ForceExitOnDeath()
     {
         if (!IsHiding) return;
 
         IsHiding      = false;
         CurrentLocker = null;
 
-        // Restaurar mesh antes de cambiar cámara
         SetMeshVisible(true);
-
         SwitchToThirdPerson();
-        Invoke(nameof(EnablePlayerMovement), 0.05f);
+
+        // NO restauramos el movimiento — está muerto
+        Debug.Log("[Locker] Salida forzada por muerte.");
     }
 
-    // ─── Mesh ────────────────────────────────────────────────────────────────
+    private bool IsBlockedByEnemy()
+    {
+        EnemyBehaviourTree[] enemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
+
+        foreach (var enemy in enemies)
+        {
+            if (enemy == null) continue;
+
+            if (enemy.HasKnownLockerWithPlayer
+                && enemy._knownLockerWithPlayer == CurrentLocker)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private void SetMeshVisible(bool visible)
     {
         foreach (var mesh in characterMeshes)
             if (mesh != null) mesh.enabled = visible;
     }
-
-    // ─── Cámara ──────────────────────────────────────────────────────────────
 
     private void SwitchToFirstPerson()
     {
@@ -126,8 +200,6 @@ public class LockerSystem : MonoBehaviour
             firstPersonCamera.Priority = priorityLow;
     }
 
-    // ─── Movimiento ──────────────────────────────────────────────────────────
-
     private void DisablePlayerMovement()
     {
         if (_tpController != null) _tpController.enabled = false;
@@ -144,8 +216,6 @@ public class LockerSystem : MonoBehaviour
     {
         if (_tpController != null) _tpController.enabled = true;
     }
-
-    // ─── Gizmos ──────────────────────────────────────────────────────────────
 
     private void OnDrawGizmos()
     {

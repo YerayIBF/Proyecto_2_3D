@@ -23,7 +23,6 @@ public class EnemyBehaviourTree : MonoBehaviour
     public float     detectionRange = 12f;
     public float     detectionAngle = 90f;
     public LayerMask visionBlockMask;
-    [Tooltip("Tiempo de 'memoria' tras perder la visión: sigue persiguiendo aunque no lo vea por un momento")]
     public float visionMemoryDuration = 2f;
     private float _visionMemoryTimer = 0f;
 
@@ -36,7 +35,6 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     [Header("Aturdimiento")]
     public float stunDuration = 3f;
-    [Tooltip("Tiempo mínimo entre stuns. Mientras esté activo, no se puede volver a aturdir.")]
     public float stunCooldown = 5f;
     private float _stunCooldownTimer = 0f;
 
@@ -131,15 +129,11 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (ghostModel == null) return;
 
         if (_frozenAtLocker)
-        {
             ghostModel.position = transform.position;
-        }
         else
-        {
             ghostModel.position = Vector3.SmoothDamp(
                 ghostModel.position, transform.position,
                 ref _ghostVelocity, ghostPositionSmooth);
-        }
 
         Vector3 moveDir = _agent.velocity;
         moveDir.y = 0f;
@@ -174,16 +168,9 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     private void Update()
     {
-        if (_investigateCooldownTimer > 0f)
-            _investigateCooldownTimer -= Time.deltaTime;
-
-        // Cooldown de stun
-        if (_stunCooldownTimer > 0f)
-            _stunCooldownTimer -= Time.deltaTime;
-
-        // Memoria de visión (sigue persiguiendo aunque no vea por un momento)
-        if (_visionMemoryTimer > 0f)
-            _visionMemoryTimer -= Time.deltaTime;
+        if (_investigateCooldownTimer > 0f) _investigateCooldownTimer -= Time.deltaTime;
+        if (_stunCooldownTimer > 0f) _stunCooldownTimer -= Time.deltaTime;
+        if (_visionMemoryTimer > 0f) _visionMemoryTimer -= Time.deltaTime;
 
         if (_frozenAtLocker)
         {
@@ -211,7 +198,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         if (_state == State.Attack) return;
         if (_state == State.CheckLocker) return;
-        if (_state == State.Stunned) return;  // mientras esté aturdido NO transiciona a nada
+        if (_state == State.Stunned) return;
 
         if (_isStunned)
         {
@@ -219,6 +206,8 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
+        // ── PRIORIDAD MÁXIMA: si sabemos que está en una taquilla → CheckLocker ──
+        // (interrumpe Chase, Attack, Investigate, lo que sea)
         if (_knownLockerWithPlayer != null)
         {
             if (_state != State.CheckLocker)
@@ -228,25 +217,24 @@ public class EnemyBehaviourTree : MonoBehaviour
                 _lockerWaitTimer = 0f;
                 _lockerKillTriggered = false;
                 _frozenAtLocker = false;
+                _lockerMoveTimer = 0f;
+                _attackOnCooldown = false; // reset por si estaba atacando
                 ChangeState(State.CheckLocker);
+                Debug.Log($"[BT] Cambio a CheckLocker porque el jugador está escondido en {_knownLockerWithPlayer.name}");
             }
             return;
         }
 
-        // ── VE AL JUGADOR (o lo vio recientemente) → Chase ──
         bool seesPlayer = CanSeePlayer();
         if (seesPlayer)
         {
-            _visionMemoryTimer = visionMemoryDuration; // Reset memoria
+            _visionMemoryTimer = visionMemoryDuration;
             ChangeState(State.Chase);
             return;
         }
 
-        // Si todavía tiene memoria reciente y está en Chase, mantener Chase
         if (_state == State.Chase && _visionMemoryTimer > 0f)
-        {
             return;
-        }
 
         if (_hasPendingNoise && _state != State.Investigate)
         {
@@ -256,9 +244,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
 
         if (_state != State.Investigate && _state != State.CheckLocker)
-        {
             ChangeState(State.Wander);
-        }
     }
 
     private void UpdateWander()
@@ -273,21 +259,30 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
     }
 
+    // ── CHASE: usa NavMesh.SamplePosition para perseguir aunque el jugador esté en el aire ──
+
     private void UpdateChase()
     {
         _agent.isStopped = false;
         _agent.speed = chaseSpeed;
-        _agent.SetDestination(player.position);
 
-        float dist = Vector3.Distance(transform.position, player.position);
+        // Obtener un punto del NavMesh cerca del jugador (por si está saltando)
+        Vector3 targetPos = player.position;
+        if (NavMesh.SamplePosition(player.position, out NavMeshHit navHit, 5f, NavMesh.AllAreas))
+            targetPos = navHit.position;
+
+        _agent.SetDestination(targetPos);
+
+        // Distancia HORIZONTAL al jugador (ignora altura para que pueda atacar aunque salte)
+        Vector3 enemyFlat  = new Vector3(transform.position.x, 0f, transform.position.z);
+        Vector3 playerFlat = new Vector3(player.position.x, 0f, player.position.z);
+        float dist = Vector3.Distance(enemyFlat, playerFlat);
 
         if (dist <= attackRange && !_attackOnCooldown)
             ChangeState(State.Attack);
         else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f)
             ChangeState(State.Wander);
     }
-
-    // ── ATAQUE: ya NO vuelve a Wander, vuelve a Chase para seguir persiguiendo ──
 
     private void UpdateAttack()
     {
@@ -302,7 +297,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         _attackOnCooldown = true;
         Invoke(nameof(ResetAttack), attackCooldownTime);
 
-        // CLAVE: tras atacar, FORZAR Chase (resetea memoria de visión también)
         _visionMemoryTimer = visionMemoryDuration;
         ChangeState(State.Chase);
     }
@@ -322,16 +316,11 @@ public class EnemyBehaviourTree : MonoBehaviour
             _isStunned = false;
             _stunTimer = 0f;
             if (_anim != null) _anim.SetBool(HashStunned, false);
-
-            // Cuando termina el stun, empieza el cooldown
             _stunCooldownTimer = stunCooldown;
-
             ChangeState(State.Wander);
             Debug.Log($"[BT] Recuperado. Cooldown de stun: {stunCooldown}s");
         }
     }
-
-    // ── STUN: ahora con cooldown ──
 
     public void Stun()
     {
@@ -346,7 +335,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         Debug.Log("[BT] ¡Aturdido por la linterna!");
     }
 
-    /// <summary>Propiedad pública para que el FlashlightSystem sepa si puede stunear.</summary>
     public bool CanBeStunned => _stunCooldownTimer <= 0f && !_isStunned;
 
     private void StartInvestigation(Vector3 noisePos)
@@ -381,7 +369,6 @@ public class EnemyBehaviourTree : MonoBehaviour
                 _reachedInvestigation = true;
                 _agent.ResetPath();
                 _agent.isStopped = true;
-                Debug.Log("[BT] Llegó al punto investigado.");
 
                 LockerInteractable locker = FindRandomNearbyLocker();
                 if (locker != null)
@@ -528,6 +515,8 @@ public class EnemyBehaviourTree : MonoBehaviour
         ChangeState(State.Wander);
     }
 
+    // ── TRACK PLAYER HIDING: ahora también detecta si está cerca aunque no lo vea ──
+
     private void TrackPlayerHiding()
     {
         if (lockerSystem == null) return;
@@ -536,10 +525,14 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         if (hidingNow && !_playerWasHiding)
         {
-            if (CanSeePlayerRaw())
+            // Si el enemigo está persiguiendo o muy cerca, sabe que el jugador está ahí
+            // (no necesita verlo directamente — lo intuye)
+            bool nearby = Vector3.Distance(transform.position, player.position) < detectionRange * 0.6f;
+
+            if (CanSeePlayerRaw() || _state == State.Chase || nearby)
             {
                 _knownLockerWithPlayer = lockerSystem.CurrentLocker;
-                Debug.Log($"[BT] Vi entrar al jugador en: {_knownLockerWithPlayer?.name}");
+                Debug.Log($"[BT] Vi/intuí entrar al jugador en: {_knownLockerWithPlayer?.name}");
             }
         }
 
@@ -558,19 +551,16 @@ public class EnemyBehaviourTree : MonoBehaviour
         return CanSeePlayerRaw();
     }
 
-    // ── DETECCIÓN VISUAL MEJORADA: prueba varios puntos del jugador ──
     private bool CanSeePlayerRaw()
     {
         if (player == null) return false;
         if (eyes == null) return false;
 
-        // Probar tres alturas: pies, pecho, cabeza
-        // Así no se "pierde" al jugador al saltar
         Vector3[] testPoints = new Vector3[]
         {
-            player.position + Vector3.up * 0.3f,  // pies (cerca del suelo)
-            player.position + Vector3.up * 1.0f,  // pecho
-            player.position + Vector3.up * 1.7f   // cabeza
+            player.position + Vector3.up * 0.3f,
+            player.position + Vector3.up * 1.0f,
+            player.position + Vector3.up * 1.7f
         };
 
         foreach (Vector3 targetPoint in testPoints)
@@ -579,18 +569,14 @@ public class EnemyBehaviourTree : MonoBehaviour
             if (dist > detectionRange) continue;
 
             Vector3 dir = (targetPoint - eyes.position).normalized;
-
-            // Ángulo de visión
             if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) continue;
 
-            // Raycast: si algo bloquea la visión a este punto, prueba el siguiente
             if (Physics.Raycast(eyes.position, dir, out RaycastHit hit, dist, visionBlockMask))
             {
                 if (!hit.collider.transform.IsChildOf(player) && hit.collider.transform != player)
                     continue;
             }
 
-            // Si llegamos aquí, este punto es visible → ve al jugador
             return true;
         }
 

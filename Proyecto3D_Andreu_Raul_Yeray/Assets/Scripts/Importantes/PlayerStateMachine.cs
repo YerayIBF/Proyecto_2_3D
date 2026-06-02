@@ -99,6 +99,7 @@ public class PlayerStateMachine : MonoBehaviour
     private static readonly int HashIsCrouched  = Animator.StringToHash("IsCrouched");
     private static readonly int HashCrouchSpeed = Animator.StringToHash("CrouchSpeed");
     private static readonly int HashTakeDamage  = Animator.StringToHash("TakeDamage");
+    private static readonly int HashIsDead      = Animator.StringToHash("IsDead");
 
     // ─── Estado interno ───────────────────────────────────────────────────────
 
@@ -401,14 +402,40 @@ public class PlayerStateMachine : MonoBehaviour
 
         ChangeState(PlayerState.Dead);
 
+        // Si estaba escondido en una taquilla, sacarlo forzosamente
+        if (lockerSystem != null && lockerSystem.IsHiding)
+        {
+            lockerSystem.ForceExitOnDeath();
+        }
+
+        // Desactivar control del jugador
         if (tpController != null) tpController.enabled = false;
         if (inputs != null)
         {
             inputs.move   = Vector2.zero;
             inputs.look   = Vector2.zero;
             inputs.sprint = false;
+            inputs.jump   = false;
         }
 
+        // Si estaba agachado, restaurar la altura del CharacterController
+        if (_isCrouched)
+        {
+            _isCrouched = false;
+            if (characterController != null)
+            {
+                characterController.height = standHeight;
+                characterController.center = new Vector3(0f, standCenterY, 0f);
+            }
+        }
+
+        // Disparar animación de muerte en el Animator (si existe)
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetBool(HashIsDead, true);
+        }
+
+        // Apagar linterna si está encendida
         if (flashlightSystem != null && flashlightSystem.IsOn)
             flashlightSystem.ToggleFlashlight();
 
