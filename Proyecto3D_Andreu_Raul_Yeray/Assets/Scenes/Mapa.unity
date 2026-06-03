@@ -5317,6 +5317,7 @@ MonoBehaviour:
   BottomClamp: -30
   CameraAngleOverride: 0
   LockCameraPosition: 0
+  RotateTowardsMovement: 1
   soundCooldownTime: 0.5
   puertaAnim: {fileID: 1881202550}
   cogerObjetoScript: {fileID: 2111777984}
