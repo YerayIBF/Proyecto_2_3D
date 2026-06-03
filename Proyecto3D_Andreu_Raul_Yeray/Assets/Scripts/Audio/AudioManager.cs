@@ -10,7 +10,7 @@ public class AudioManager : MonoBehaviour
     public AudioMixer mainMixer;
     public static AudioManager Instance;
     public Sound[] musicSounds,sfxSounds;
-    public AudioSource musicSource,sfxSource;
+    public AudioSource musicSource,sfxSource, sfxLoopSource;
 
     private void Awake()
     {
@@ -80,12 +80,39 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public void PlaySFXLoop(string name)
+    {
+        Sound sfx = Array.Find(sfxSounds, s => s.soundName == name);
+        if (sfx == null) 
+        { 
+            Debug.Log("No se ha encontrado sfx"); return; 
+        }
+
+        if (sfxLoopSource.clip == sfx.clip && sfxLoopSource.isPlaying)
+        {
+            return;
+        }
+
+        sfxLoopSource.clip = sfx.clip;
+        sfxLoopSource.loop = true;
+        sfxLoopSource.Play();
+    }
+
+    public void PlaySFXAtPoint(string name, Vector3 position)
+    {
+        Sound sfx = Array.Find(sfxSounds, s => s.soundName == name);
+        if (sfx == null) return;
+
+        AudioSource.PlayClipAtPoint(sfx.clip, position, 0.5f);
+    }
+
 
     
     public void Stop()
     {
         musicSource.Stop();
         sfxSource.Stop();
+        sfxLoopSource.Stop();
     }
 
         public void SetMusicVolume(float volume)

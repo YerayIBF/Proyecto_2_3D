@@ -284,6 +284,7 @@ public class CiegoBehaviour : MonoBehaviour
         {
             animator.SetTrigger("atacar");
             ataqueActivado = true;
+            AudioManager.Instance.PlaySFX("AtaqueCiego");
         }
 
         /*Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);
@@ -360,6 +361,13 @@ public class CiegoBehaviour : MonoBehaviour
     public void DetenerPatrullaje()
     {
         patrullajeScript.DesactivarPatrullaje();
+    }
+
+    //Sonido de pasos que se llamara desde el animation event de la animacion walk del enemigo
+    public void SonidoPaso()
+    {
+        //AudioManager.Instance.PlaySFX("PasosCiego");
+        AudioManager.Instance.PlaySFXAtPoint("PasosCiego", transform.position);
     }
 
     public void Aturdido()
