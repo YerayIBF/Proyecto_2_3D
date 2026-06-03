@@ -46,9 +46,9 @@ public class AudioManager : MonoBehaviour
         {
             PlayMusic("Menu");
         }
-        else if (scene.name == "nombreEscenaJuego")
+        else if (scene.name == "Mapa")
         {
-            PlayMusic("nombreEscenaJuego");
+            PlayMusic("Game");
         }
     }
     public void PlayMusic(string name)

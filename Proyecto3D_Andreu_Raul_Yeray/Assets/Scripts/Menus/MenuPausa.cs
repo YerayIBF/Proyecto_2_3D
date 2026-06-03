@@ -114,7 +114,12 @@ public class MenuPausa : MonoBehaviour
         
         if (isPaused && EventSystem.current != null)
         {
-            EventSystem.current.SetSelectedGameObject(pauseMenu.transform.GetChild(0).gameObject);
+            Selectable primerElemento = pauseMenu.GetComponentInChildren<Selectable>();
+            if (primerElemento != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(primerElemento.gameObject);
+            }
         }
     }
 
