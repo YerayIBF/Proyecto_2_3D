@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 613ef7601df24f84982e66a6f93bc77d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Prefabs/High Poly
+    Teapot.prefab
+  uploadId: 608692

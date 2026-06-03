@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: abee0f75ddcd9b14e8652c696889af8e
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Scripts/OccaSoftware.Buto.Demo.asmdef
+  uploadId: 608692

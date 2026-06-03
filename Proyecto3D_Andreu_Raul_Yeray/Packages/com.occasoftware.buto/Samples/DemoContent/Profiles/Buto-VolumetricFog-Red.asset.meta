@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 2714ac260d931804e8ed17d6b1fc49b9
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 213497
+  packageName: Buto | Volumetric Fog, Volumetric Lighting, Height Fog (URP)
+  packageVersion: 6.1.6
+  assetPath: Packages/com.occasoftware.buto/Samples/DemoContent/Profiles/Buto-VolumetricFog-Red.asset
+  uploadId: 608692
