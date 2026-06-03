@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9093149226794739708}
-  - component: {fileID: 5364494673761421513}
+  - component: {fileID: 1583764618051175489}
   m_Layer: 0
   m_Name: StunCollider
   m_TagString: EnemyEyes
@@ -26,14 +26,14 @@ Transform:
   m_GameObject: {fileID: 851797845063303509}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0031000003, z: 0.025100019}
+  m_LocalPosition: {x: 0, y: -0.0013, z: 0.025100019}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4710124261309175710}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &5364494673761421513
-SphereCollider:
+--- !u!65 &1583764618051175489
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -51,8 +51,8 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.008212529
-  m_Center: {x: -4.8104e-17, y: 0.01466756, z: -0.0061895424}
+  m_Size: {x: 0.015162435, y: 0.01238761, z: 0.009172734}
+  m_Center: {x: -0.00037014452, y: 0.016034214, z: -0.0061299955}
 --- !u!1 &5338570561020235044
 GameObject:
   m_ObjectHideFlags: 0
@@ -64,12 +64,11 @@ GameObject:
   - component: {fileID: 4710124261309175710}
   - component: {fileID: 8571021455297828923}
   - component: {fileID: 5843022303777500401}
-  - component: {fileID: 4097444492855445486}
   - component: {fileID: 7581603944756228492}
   - component: {fileID: 3605409276926342650}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: MonstruoParedBola
-  m_TagString: EnemyEyes
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -83,7 +82,7 @@ Transform:
   m_GameObject: {fileID: 5338570561020235044}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -3.9649758, y: 2.27, z: 16.25}
+  m_LocalPosition: {x: -4.201, y: 2.27, z: 16.25}
   m_LocalScale: {x: 36.27, y: 36.27, z: 36.27}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -144,27 +143,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &4097444492855445486
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5338570561020235044}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.14602977
-  m_Center: {x: 0.00048728895, y: -0.0014372689, z: 0.016141629}
 --- !u!114 &7581603944756228492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,19 +156,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentState: 0
-  capasQueBloqueanVista:
-    serializedVersion: 2
-    m_Bits: 65
   jugador: {fileID: 0}
-  cannotSee: 0
-  JugadorDentroRango: 0
+  eyes: {fileID: 9093149226794739708}
   PlayerState: {fileID: 0}
+  detectionRange: 12
+  detectionAngle: 90
+  visionBlockMask:
+    serializedVersion: 2
+    m_Bits: 131073
+  visionMemoryDuration: 2
+  radioDeAudicion: 10
+  cannotSee: 0
   prefabProyectil: {fileID: 6638208836457653635, guid: eb2e8f6c6b986974c9e889fc1a6f2d7d, type: 3}
   puntoDisparo: {fileID: 7414028087344581418}
-  fuerzaDisparo: 20
+  fuerzaDisparo: 30
   tiempoEntreAtaques: 3
-  radioDeAudicion: 10
-  anguloDeVision: 90
   duracionDelStun: 10
 --- !u!54 &3605409276926342650
 Rigidbody:
