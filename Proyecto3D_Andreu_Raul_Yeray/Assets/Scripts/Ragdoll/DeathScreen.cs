@@ -6,14 +6,7 @@ using System.Collections;
 
 /// <summary>
 /// Pantalla de muerte. Se suscribe al evento OnPlayerDied del PlayerStateMachine
-/// y muestra una transición de fade a negro, mensaje y botón reintentar.
-///
-/// Setup:
-/// - Coloca este script en un GameObject (puede ser un Canvas hijo, o en el PlayerArmature)
-/// - Crea un Canvas con un Image negro a pantalla completa (alpha = 0)
-/// - Añade un TextMeshProUGUI con "HAS MUERTO" (oculto al inicio)
-/// - Añade un Button con texto "Reintentar" (oculto al inicio)
-/// - Asigna todo en el Inspector
+/// y muestra una transición de fade a negro, mensaje y botones de reintentar / menú.
 /// </summary>
 public class DeathScreen : MonoBehaviour
 {
@@ -22,29 +15,31 @@ public class DeathScreen : MonoBehaviour
     public Image fadeImage;
     [Tooltip("Texto 'HAS MUERTO'")]
     public TextMeshProUGUI deathText;
-    [Tooltip("Botón de reintentar")]
+    [Tooltip("Botón de reintentar (recarga escena actual)")]
     public Button retryButton;
-    [Tooltip("CanvasGroup que contiene el texto y el botón (para fade in)")]
+    [Tooltip("Botón para ir al menú principal")]
+    public Button menuButton;
+    [Tooltip("CanvasGroup que contiene el texto y los botones (para fade in)")]
     public CanvasGroup deathUIGroup;
 
+    [Header("Escenas")]
+    [Tooltip("Nombre de la escena del menú principal")]
+    public string menuSceneName = "Menu";
+
     [Header("Tiempos")]
-    [Tooltip("Tiempo que tarda en oscurecerse la pantalla")]
     public float fadeDuration = 2.5f;
-    [Tooltip("Delay antes de mostrar el mensaje y botón")]
     public float showUIDelay = 0.5f;
-    [Tooltip("Tiempo del fade in del texto/botón")]
     public float uiFadeDuration = 1f;
 
     private void Awake()
     {
-        // Ocultar todo al inicio
         if (fadeImage != null)
         {
             Color c = fadeImage.color;
             c.a = 0f;
             fadeImage.color = c;
             fadeImage.gameObject.SetActive(true);
-            fadeImage.raycastTarget = false; // no bloquea clicks al inicio
+            fadeImage.raycastTarget = false;
         }
 
         if (deathUIGroup != null)
@@ -56,11 +51,13 @@ public class DeathScreen : MonoBehaviour
 
         if (retryButton != null)
             retryButton.onClick.AddListener(OnRetryClicked);
+
+        if (menuButton != null)
+            menuButton.onClick.AddListener(OnMenuClicked);
     }
 
     private void Start()
     {
-        // Suscribirse al evento de muerte del PlayerStateMachine
         if (PlayerStateMachine.Instance != null)
             PlayerStateMachine.Instance.OnPlayerDied += ShowDeathScreen;
     }
@@ -72,6 +69,9 @@ public class DeathScreen : MonoBehaviour
 
         if (retryButton != null)
             retryButton.onClick.RemoveListener(OnRetryClicked);
+
+        if (menuButton != null)
+            menuButton.onClick.RemoveListener(OnMenuClicked);
     }
 
     // ─── Mostrar pantalla de muerte ──────────────────────────────────────────
@@ -83,18 +83,16 @@ public class DeathScreen : MonoBehaviour
 
     private IEnumerator FadeAndShow()
     {
-        // Liberar el cursor para poder pulsar el botón
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Fase 1: oscurecer la pantalla
         float t = 0f;
         Color startColor = fadeImage != null ? fadeImage.color : Color.black;
         Color endColor   = new Color(0f, 0f, 0f, 1f);
 
         while (t < fadeDuration)
         {
-            t += Time.unscaledDeltaTime; // unscaled por si Time.timeScale = 0
+            t += Time.unscaledDeltaTime;
             float progress = Mathf.Clamp01(t / fadeDuration);
             if (fadeImage != null)
                 fadeImage.color = Color.Lerp(startColor, endColor, progress);
@@ -107,10 +105,8 @@ public class DeathScreen : MonoBehaviour
             fadeImage.raycastTarget = true;
         }
 
-        // Fase 2: esperar un momento antes de mostrar UI
         yield return new WaitForSecondsRealtime(showUIDelay);
 
-        // Fase 3: fade in del texto y botón
         if (deathUIGroup != null)
         {
             t = 0f;
@@ -126,16 +122,19 @@ public class DeathScreen : MonoBehaviour
         }
     }
 
-    // ─── Botón Reintentar ────────────────────────────────────────────────────
+    // ─── Botones ─────────────────────────────────────────────────────────────
 
     private void OnRetryClicked()
     {
         Debug.Log("[DeathScreen] Reintentar — recargando escena.");
-
-        // Restaurar timeScale por si lo paramos
         Time.timeScale = 1f;
-
-        // Recargar la escena actual
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void OnMenuClicked()
+    {
+        Debug.Log($"[DeathScreen] Volviendo al menú: {menuSceneName}");
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(menuSceneName);
     }
 }
