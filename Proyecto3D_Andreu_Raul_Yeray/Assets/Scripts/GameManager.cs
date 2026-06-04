@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using UnityEngine.Playables;
 using StarterAssets;
 using TMPro;
+using System.Collections;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -26,6 +27,9 @@ public class GameManager : MonoBehaviour
     //public GameObject canvasPapel;
     //public TextMeshProUGUI textoPapel;
     private bool leyendoPapel = false;
+
+    public TextMeshProUGUI textoSubtitulo;
+    public GameObject canvasSubtitulo;
 
     void Awake()
     {
@@ -140,4 +144,35 @@ public class GameManager : MonoBehaviour
         leyendoPapel = false;
         Time.timeScale = 1f; 
     }*/
+
+    public void MostrarSubtitulo(string texto)
+    {
+        textoSubtitulo.text = texto;
+        canvasSubtitulo.SetActive(true);
+    }
+
+    public void OcultarSubtitulo()
+    {
+        canvasSubtitulo.SetActive(false);
+    }
+
+    public void ReproducirVoz(string nombreAudio, string subtitulo, float duracion)
+    {
+        if (nombreAudio != "")
+        {
+            AudioManager.Instance.PlaySFX(nombreAudio);
+        }
+
+        if (subtitulo != "")
+        {
+            StartCoroutine(MostrarSubtituloCoroutine(subtitulo, duracion));   
+        }
+    }
+
+    IEnumerator MostrarSubtituloCoroutine(string texto, float duracion)
+    {
+        MostrarSubtitulo(texto);
+        yield return new WaitForSeconds(duracion);
+        OcultarSubtitulo();
+    }
 }

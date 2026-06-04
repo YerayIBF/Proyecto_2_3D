@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem; 
 
 public class CogerObjeto : MonoBehaviour
 {
@@ -17,6 +18,25 @@ public class CogerObjeto : MonoBehaviour
     public GameObject objeto;
     public bool apuntando = false;
     private Vector3 handPointRotation;
+
+    public InputActionReference apuntarAction;
+    public InputActionReference lanzarAction;
+    public InputActionReference soltarAction;
+
+    private void OnEnable()
+    {
+        if (apuntarAction != null) apuntarAction.action.Enable();
+        if (lanzarAction != null) lanzarAction.action.Enable();
+        if (soltarAction != null) soltarAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (apuntarAction != null) apuntarAction.action.Disable();
+        if (lanzarAction != null) lanzarAction.action.Disable();
+        if (soltarAction != null) soltarAction.action.Disable();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -39,9 +59,13 @@ public class CogerObjeto : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        bool inputApuntar = apuntarAction != null && apuntarAction.action.IsPressed();
+        bool inputLanzarDown = lanzarAction != null && lanzarAction.action.WasPressedThisFrame();
+        bool inputSoltarDown = soltarAction != null && soltarAction.action.WasPressedThisFrame();
+
         if (objetoCogido != null)
         {
-            if (Input.GetKey("r"))
+            if (Input.GetKey("r") || inputSoltarDown)
             {
                 objetoCogido.GetComponent<Rigidbody>().useGravity = true;
                 objetoCogido.GetComponent<Rigidbody>().isKinematic = false;
@@ -60,7 +84,7 @@ public class CogerObjeto : MonoBehaviour
         {
             if (GameManager.instance.tieneMegafono)
             {
-                if (Input.GetMouseButton(1))
+                if (Input.GetMouseButton(1) || inputApuntar)
                 {
                     Debug.Log("Apuntando con el megafono");
                     apuntando = true;
@@ -80,7 +104,7 @@ public class CogerObjeto : MonoBehaviour
             else
             {
                 //Lanzar al pulsar el botón izquierdo del ratón
-                if (Input.GetMouseButton(1))
+                if (Input.GetMouseButton(1) || inputApuntar)
                 {
                     throwForce += 10f * Time.deltaTime;
                     throwForce = Mathf.Clamp(throwForce, 5f, 30f);
@@ -95,7 +119,7 @@ public class CogerObjeto : MonoBehaviour
                     throwForce = 10f;
                 }
                 
-                if (Input.GetMouseButtonDown(0))
+                if (Input.GetMouseButtonDown(0) || inputLanzarDown)
                 {
                     LanzarObjeto();
                 }
