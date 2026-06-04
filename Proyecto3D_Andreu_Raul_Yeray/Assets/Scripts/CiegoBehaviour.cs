@@ -153,6 +153,11 @@ public class CiegoBehaviour : MonoBehaviour
             sonidos.RemoveAt(0);
         }*/
 
+        if (!investigando)
+        {
+            AudioManager.Instance.PlaySFX("CiegoAlerta");
+        }
+
         sonidos.Clear();
 
         sonidos.Add(posicionSonido);

@@ -18728,6 +18728,10 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 213d7f0c31c6cb649845808d01e4e1c2, type: 3}
   - soundName: AtaqueCiego
     clip: {fileID: 8300000, guid: 403add55aac1a1a49a422e588468d52f, type: 3}
+  - soundName: CiegoAlerta
+    clip: {fileID: 8300000, guid: 55f7998f3fe156245954808a1cef60f7, type: 3}
+  - soundName: RomperCristal
+    clip: {fileID: 8300000, guid: 8d41ae24addd94a4eab3b8b451c0751d, type: 3}
   musicSource: {fileID: 2104890405}
   sfxSource: {fileID: 1910421993}
   sfxLoopSource: {fileID: 1911846659}
