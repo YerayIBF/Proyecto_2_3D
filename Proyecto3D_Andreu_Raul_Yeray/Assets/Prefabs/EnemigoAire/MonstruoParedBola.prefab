@@ -82,7 +82,7 @@ Transform:
   m_GameObject: {fileID: 5338570561020235044}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -4.201, y: 2.27, z: 16.25}
+  m_LocalPosition: {x: -5.054, y: 2.27, z: 16.25}
   m_LocalScale: {x: 36.27, y: 36.27, z: 36.27}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -159,6 +159,7 @@ MonoBehaviour:
   jugador: {fileID: 0}
   eyes: {fileID: 9093149226794739708}
   PlayerState: {fileID: 0}
+  linternaJugador: {fileID: 0}
   detectionRange: 12
   detectionAngle: 90
   visionBlockMask:
@@ -166,7 +167,8 @@ MonoBehaviour:
     m_Bits: 131073
   visionMemoryDuration: 2
   radioDeAudicion: 10
-  cannotSee: 0
+  cannotSee: 1
+  disparosCiegos: 2
   prefabProyectil: {fileID: 6638208836457653635, guid: eb2e8f6c6b986974c9e889fc1a6f2d7d, type: 3}
   puntoDisparo: {fileID: 7414028087344581418}
   fuerzaDisparo: 30

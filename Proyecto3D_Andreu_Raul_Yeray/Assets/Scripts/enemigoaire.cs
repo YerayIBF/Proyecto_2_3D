@@ -24,7 +24,9 @@ public class enemigoaire : MonoBehaviour
     [Header("Zona Oscura")]
     public bool cannotSee;
     private Vector3 _ultimaPosicionSonido;
+    public int      disparosCiegos = 2;
     private bool    _tieneObjetivoSonido = false;
+    private int     _disparosCiegosRestantes = 0;
  
     [Header("Ataque por Proyectil")]
     public GameObject prefabProyectil;
@@ -109,6 +111,17 @@ public class enemigoaire : MonoBehaviour
             {
                 LanzarBola(direccion.normalized);
                 tiempoSiguienteAtaque = Time.time + tiempoEntreAtaques;
+ 
+                // Contar disparos ciegos: cuando se agoten, dejar de atacar a ciegas
+                if (cannotSee && !PuedeVerLinterna())
+                {
+                    _disparosCiegosRestantes--;
+                    if (_disparosCiegosRestantes <= 0)
+                    {
+                        _tieneObjetivoSonido = false;
+                        currentState = EnemyState.Wander;
+                    }
+                }
             }
         }
     }
@@ -170,7 +183,7 @@ public class enemigoaire : MonoBehaviour
         if (jugador == null) return false;
  
         Vector3 origen = puntoDisparo != null ? puntoDisparo.position : transform.position;
-        Vector3 dir    = (jugador.position + Vector3.up) - origen;
+        Vector3 dir = (jugador.position + Vector3.up) - origen;
  
         if (Physics.Raycast(origen, dir.normalized, out RaycastHit hit, dir.magnitude, visionBlockMask))
             return hit.collider.transform.IsChildOf(jugador) || hit.collider.transform == jugador;
@@ -186,7 +199,8 @@ public class enemigoaire : MonoBehaviour
         if (distancia > radioDeAudicion) return;
  
         _ultimaPosicionSonido = noisePosition;
-        _tieneObjetivoSonido  = true;
+        _tieneObjetivoSonido = true;
+        _disparosCiegosRestantes = disparosCiegos; // resetea el contador cada vez que escucha
  
         OrientarseHacia(noisePosition - transform.position);
         _visionMemoryTimer = visionMemoryDuration;
@@ -208,15 +222,15 @@ public class enemigoaire : MonoBehaviour
         Vector3 spawn = puntoDisparo != null
             ? puntoDisparo.position
             : transform.position + transform.forward;
- 
+
         GameObject bola = Instantiate(prefabProyectil, spawn, Quaternion.identity);
-        Rigidbody rb = bola.GetComponent<Rigidbody>();
-        if (rb != null)
-            rb.AddForce(direccionHaciaJugador * fuerzaDisparo, ForceMode.Impulse);
- 
+        
+        Proyectil proyectil = bola.GetComponent<Proyectil>();
+        if (proyectil != null)
+            proyectil.Init(direccionHaciaJugador);
+
         Destroy(bola, 4f);
     }
- 
     // ─── Linterna ─────────────────────────────────────────────────────────────
  
     public void AplicarStun(float duracion)

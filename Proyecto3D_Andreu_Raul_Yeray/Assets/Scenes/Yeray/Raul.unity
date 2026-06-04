@@ -5032,6 +5032,10 @@ PrefabInstance:
       propertyPath: PlayerState
       value: 
       objectReference: {fileID: 1415432619}
+    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
+      propertyPath: linternaJugador
+      value: 
+      objectReference: {fileID: 1202189290}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5459,6 +5463,17 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1202189290 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
+  m_PrefabInstance: {fileID: 1202189286}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1202189287}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fc750de80fd6cb479da2392946b4c9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1221041499
 PrefabInstance:
   m_ObjectHideFlags: 0
