@@ -5025,10 +5025,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1415432614}
     - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
-      propertyPath: cannotSee
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7581603944756228492, guid: f13e28c03d3014d46b77ea3ce6ebc4f1, type: 3}
       propertyPath: PlayerState
       value: 
       objectReference: {fileID: 1415432619}
@@ -6983,6 +6979,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  interact: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
