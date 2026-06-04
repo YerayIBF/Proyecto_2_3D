@@ -23,6 +23,10 @@ public class GameManager : MonoBehaviour
     public PlayableDirector timelineInicial;
     public TextMeshProUGUI textoTimelineInicial;
 
+    //public GameObject canvasPapel;
+    //public TextMeshProUGUI textoPapel;
+    private bool leyendoPapel = false;
+
     void Awake()
     {
         if (instance == null)
@@ -121,4 +125,19 @@ public class GameManager : MonoBehaviour
     {
         timelineInicial.Play();
     }
+
+    /*public void MostrarPapel(string texto)
+    {
+        textoPapel.text = texto;
+        canvasPapel.SetActive(true);
+        leyendoPapel = true;
+        Time.timeScale = 0f; 
+    }
+
+    public void CerrarPapel()
+    {
+        canvasPapel.SetActive(false);
+        leyendoPapel = false;
+        Time.timeScale = 1f; 
+    }*/
 }
