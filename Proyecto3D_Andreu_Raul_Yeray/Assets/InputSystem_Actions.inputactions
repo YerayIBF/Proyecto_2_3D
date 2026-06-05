@@ -37,7 +37,7 @@
                     "name": "Interact",
                     "type": "Button",
                     "id": "852140f2-7766-474d-8707-702459ba45f3",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "Hold",
                     "initialStateCheck": false
@@ -91,6 +91,33 @@
                     "name": "Pause",
                     "type": "Button",
                     "id": "ad773260-c472-4304-b858-227f09431932",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Apuntar",
+                    "type": "Button",
+                    "id": "ea6fd6c3-d4d6-42f6-9deb-3027e5ebab65",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Lanzar",
+                    "type": "Button",
+                    "id": "c6eb9a45-f1ec-4127-bde2-9933cf6c0966",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Soltar",
+                    "type": "Button",
+                    "id": "488671c1-d9a0-4579-b9bf-a51264555f55",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -502,6 +529,39 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2ea629e6-d8a8-45e6-a3d9-e7fb114f2f32",
+                    "path": "<Gamepad>/rightShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Apuntar",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "133fa38b-0d9d-425f-8b63-9064ca1ae89a",
+                    "path": "<Gamepad>/buttonSouth",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Lanzar",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ef467cd8-0bd5-4e6d-bf3c-50e5c6c74037",
+                    "path": "<Gamepad>/buttonEast",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Soltar",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
