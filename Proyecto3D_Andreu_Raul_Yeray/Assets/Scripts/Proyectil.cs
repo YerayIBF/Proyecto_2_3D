@@ -2,31 +2,35 @@ using UnityEngine;
 
 public class Proyectil : MonoBehaviour
 {
-    public int damage;
-    private bool hit;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public float damage = 10f;
+    public float velocidad = 20f;
+    public LayerMask capasColision; // selecciona Default, Player, etc en el Inspector
+
+    private bool _yaGolpeo = false;
+    private Vector3 _direccion;
+
+    public void Init(Vector3 direccion)
     {
-        
+        _direccion = direccion.normalized;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
-    }
+        if (_yaGolpeo) return;
 
-    private void OnTriggerEnter(Collider other)
-    {
-        
-        if (!hit) {
-            if(other.CompareTag("Player"))
-            {
+        float distanciaFrame = velocidad * Time.deltaTime;
+
+        if (Physics.Raycast(transform.position, _direccion, out RaycastHit hit, distanciaFrame, capasColision))
+        {
+            _yaGolpeo = true;
+
+            if (hit.collider.CompareTag("Player"))
                 PlayerStateMachine.Instance.TakeDamage(damage);
-                Destroy(gameObject);
-                hit = true;
-            }
+
+            Destroy(gameObject);
+            return;
         }
-        
+
+        transform.position += _direccion * distanciaFrame;
     }
 }
