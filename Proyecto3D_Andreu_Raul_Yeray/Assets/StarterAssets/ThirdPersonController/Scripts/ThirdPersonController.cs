@@ -148,6 +148,7 @@ namespace StarterAssets
 
         private void Start()
         {
+            transform.Find("ColliderDeteccion").GetComponent<BoxCollider>().enabled = true;
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
 
             _hasAnimator = TryGetComponent(out _animator);

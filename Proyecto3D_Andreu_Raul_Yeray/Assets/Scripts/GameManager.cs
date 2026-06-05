@@ -5,6 +5,7 @@ using UnityEngine.Playables;
 using StarterAssets;
 using TMPro;
 using System.Collections;
+using UnityEngine.InputSystem;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -24,12 +25,34 @@ public class GameManager : MonoBehaviour
     public PlayableDirector timelineInicial;
     public TextMeshProUGUI textoTimelineInicial;
 
-    //public GameObject canvasPapel;
-    //public TextMeshProUGUI textoPapel;
+    public GameObject canvasPapel;
+    public TextMeshProUGUI textoPapel;
     private bool leyendoPapel = false;
 
     public TextMeshProUGUI textoSubtitulo;
     public GameObject canvasSubtitulo;
+
+    public InputActionReference interactAction;
+
+    private void OnEnable()
+    {
+        interactAction.action.Enable();
+        interactAction.action.performed += OnInteract;
+    }
+
+    private void OnDisable()
+    {
+        interactAction.action.performed -= OnInteract;
+        interactAction.action.Disable();
+    } 
+
+    private void OnInteract(InputAction.CallbackContext context)
+    {
+        if (leyendoPapel)
+        {
+            CerrarPapel();
+        }
+    }
 
     void Awake()
     {
@@ -130,7 +153,7 @@ public class GameManager : MonoBehaviour
         timelineInicial.Play();
     }
 
-    /*public void MostrarPapel(string texto)
+    public void MostrarPapel(string texto)
     {
         textoPapel.text = texto;
         canvasPapel.SetActive(true);
@@ -143,7 +166,7 @@ public class GameManager : MonoBehaviour
         canvasPapel.SetActive(false);
         leyendoPapel = false;
         Time.timeScale = 1f; 
-    }*/
+    }
 
     public void MostrarSubtitulo(string texto)
     {

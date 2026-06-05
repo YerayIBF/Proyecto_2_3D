@@ -2447,10 +2447,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
   handPoint: {fileID: 1631036070}
+  handPointLeft: {fileID: 0}
   throwForce: 10
   lineRenderer: {fileID: 1685082732}
   predictionSteps: 30
   timeStep: 0.1
+  pickupRange: 2
+  apuntarAction: {fileID: 0}
+  lanzarAction: {fileID: 0}
+  soltarAction: {fileID: 0}
+  interactAction: {fileID: 0}
   objeto: {fileID: 0}
   apuntando: 0
 --- !u!1 &182527428
@@ -18732,6 +18738,10 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 55f7998f3fe156245954808a1cef60f7, type: 3}
   - soundName: RomperCristal
     clip: {fileID: 8300000, guid: 8d41ae24addd94a4eab3b8b451c0751d, type: 3}
+  - soundName: Subtitulo1
+    clip: {fileID: 8300000, guid: e918c194d234a464bac0df1fd63c724e, type: 3}
+  - soundName: Subtitulo2
+    clip: {fileID: 8300000, guid: 682c08af0f956fb45a7332a791ceff2b, type: 3}
   musicSource: {fileID: 2104890405}
   sfxSource: {fileID: 1910421993}
   sfxLoopSource: {fileID: 1911846659}
@@ -19128,6 +19138,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  interact: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -25874,10 +25885,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 1685082733}
   handPoint: {fileID: 742374655}
+  handPointLeft: {fileID: 0}
   throwForce: 10
   lineRenderer: {fileID: 1685082732}
   predictionSteps: 30
   timeStep: 0.1
+  pickupRange: 2
+  apuntarAction: {fileID: 0}
+  lanzarAction: {fileID: 0}
+  soltarAction: {fileID: 0}
+  interactAction: {fileID: 0}
   objeto: {fileID: 0}
   apuntando: 0
 --- !u!1001 &2141409512
