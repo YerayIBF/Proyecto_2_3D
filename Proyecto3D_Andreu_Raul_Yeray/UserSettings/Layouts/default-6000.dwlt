@@ -19,15 +19,7 @@ MonoBehaviour:
     width: 2560
     height: 1349
   m_ShowMode: 4
-<<<<<<< HEAD
-<<<<<<< HEAD
   m_Title: Scene
-=======
-  m_Title: Inspector
->>>>>>> Raul
-=======
-  m_Title: Game
->>>>>>> Andreu
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -126,15 +118,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 1
-<<<<<<< HEAD
-<<<<<<< HEAD
-  controlID: 37853
-=======
-  controlID: 62
->>>>>>> Raul
-=======
-  controlID: 80
->>>>>>> Andreu
+  controlID: 84901
   draggingID: 0
 --- !u!114 &6
 MonoBehaviour:
@@ -160,15 +144,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 100}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-<<<<<<< HEAD
-<<<<<<< HEAD
-  controlID: 37854
-=======
-  controlID: 63
->>>>>>> Raul
-=======
-  controlID: 81
->>>>>>> Andreu
+  controlID: 84902
   draggingID: 0
 --- !u!114 &7
 MonoBehaviour:
@@ -189,25 +165,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-<<<<<<< HEAD
     width: 2020
     height: 1293
   m_MinSize: {x: 200, y: 100}
   m_MaxSize: {x: 16192, y: 16192}
   vertical: 1
-  controlID: 37776
-=======
-    width: 1149.6
-    height: 716.8
-  m_MinSize: {x: 200, y: 100}
-  m_MaxSize: {x: 16192, y: 16192}
-  vertical: 1
-<<<<<<< HEAD
-  controlID: 64
->>>>>>> Raul
-=======
-  controlID: 82
->>>>>>> Andreu
+  controlID: 84784
   draggingID: 0
 --- !u!114 &8
 MonoBehaviour:
@@ -228,25 +191,12 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-<<<<<<< HEAD
     width: 2020
-    height: 831
+    height: 959
   m_MinSize: {x: 200, y: 50}
   m_MaxSize: {x: 16192, y: 8096}
   vertical: 0
-  controlID: 37777
-=======
-    width: 1149.6
-    height: 484.8
-  m_MinSize: {x: 200, y: 50}
-  m_MaxSize: {x: 16192, y: 8096}
-  vertical: 0
-<<<<<<< HEAD
-  controlID: 54
->>>>>>> Raul
-=======
-  controlID: 83
->>>>>>> Andreu
+  controlID: 84785
   draggingID: 0
 --- !u!114 &9
 MonoBehaviour:
@@ -265,19 +215,11 @@ MonoBehaviour:
     serializedVersion: 2
     x: 0
     y: 0
-<<<<<<< HEAD
     width: 729
-    height: 831
+    height: 959
   m_MinSize: {x: 201, y: 226}
   m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 16}
-=======
-    width: 416
-    height: 484.8
-  m_MinSize: {x: 201, y: 226}
-  m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 14}
->>>>>>> Raul
   m_Panes:
   - {fileID: 16}
   m_Selected: 0
@@ -297,17 +239,10 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-<<<<<<< HEAD
     x: 729
     y: 0
     width: 1291
-    height: 831
-=======
-    x: 416
-    y: 0
-    width: 733.6
-    height: 484.8
->>>>>>> Raul
+    height: 959
   m_MinSize: {x: 202, y: 226}
   m_MaxSize: {x: 4002, y: 4026}
   m_ActualView: {fileID: 17}
@@ -333,15 +268,9 @@ MonoBehaviour:
   m_Position:
     serializedVersion: 2
     x: 0
-<<<<<<< HEAD
-    y: 831
+    y: 959
     width: 2020
-    height: 462
-=======
-    y: 484.8
-    width: 1149.6
-    height: 232
->>>>>>> Raul
+    height: 334
   m_MinSize: {x: 231, y: 276}
   m_MaxSize: {x: 10001, y: 10026}
   m_ActualView: {fileID: 20}
@@ -377,7 +306,7 @@ MonoBehaviour:
   m_MinSize: {x: 100, y: 100}
   m_MaxSize: {x: 8096, y: 16192}
   vertical: 1
-  controlID: 37855
+  controlID: 84903
   draggingID: 0
 --- !u!114 &13
 MonoBehaviour:
@@ -394,7 +323,6 @@ MonoBehaviour:
   m_Children: []
   m_Position:
     serializedVersion: 2
-<<<<<<< HEAD
     x: 0
     y: 0
     width: 540
@@ -402,15 +330,6 @@ MonoBehaviour:
   m_MinSize: {x: 276, y: 76}
   m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 25}
-=======
-    x: 1149.6
-    y: 0
-    width: 386.40002
-    height: 716.8
-  m_MinSize: {x: 276, y: 76}
-  m_MaxSize: {x: 4001, y: 4026}
-  m_ActualView: {fileID: 23}
->>>>>>> Raul
   m_Panes:
   - {fileID: 25}
   m_Selected: 0
@@ -462,17 +381,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Game\u200B"
   m_Pos:
     serializedVersion: 2
-<<<<<<< HEAD
     x: 2020
     y: 941
     width: 539
     height: 405
-=======
-    x: 416
-    y: 79.200005
-    width: 731.6
-    height: 458.8
->>>>>>> Raul
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -528,24 +440,16 @@ MonoBehaviour:
       serializedVersion: 2
       x: 0
       y: 21
-<<<<<<< HEAD
       width: 539
       height: 384
     m_Scale: {x: 0.28072917, y: 0.28072917}
     m_Translation: {x: 269.5, y: 192}
-=======
-      width: 731.6
-      height: 437.8
-    m_Scale: {x: 0.47630206, y: 0.47630206}
-    m_Translation: {x: 365.8, y: 218.9}
->>>>>>> Raul
     m_MarginLeft: 0
     m_MarginRight: 0
     m_MarginTop: 0
     m_MarginBottom: 0
     m_LastShownAreaInsideMargins:
       serializedVersion: 2
-<<<<<<< HEAD
       x: -960
       y: -683.93317
       width: 1920
@@ -553,15 +457,6 @@ MonoBehaviour:
     m_MinimalGUI: 1
   m_defaultScale: 0.28072917
   m_LastWindowPixelSize: {x: 539, y: 405}
-=======
-      x: -768
-      y: -459.5823
-      width: 1536
-      height: 919.1646
-    m_MinimalGUI: 1
-  m_defaultScale: 0.47630206
-  m_LastWindowPixelSize: {x: 914.5, y: 573.5}
->>>>>>> Raul
   m_ClearInEditMode: 1
   m_NoCameraWarning: 1
   m_LowResolutionForAspectRatios: 00000000000000000000
@@ -590,15 +485,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-<<<<<<< HEAD
     y: 79
     width: 728
-    height: 805
-=======
-    y: 79.200005
-    width: 415
-    height: 458.8
->>>>>>> Raul
+    height: 933
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -612,37 +501,24 @@ MonoBehaviour:
     m_OverlaysVisible: 1
   m_SceneHierarchy:
     m_TreeViewState:
-<<<<<<< HEAD
-      scrollPos: {x: 0, y: 112}
-      m_SelectedIDs: 02f9fcff
-      m_LastClickedID: -198398
-      m_ExpandedIDs: 0af9fcff4afafcff0afbfcff22fbfcff50fbfcff526cfdff7693fdff5a99fdff88a1fdffc8ecfdff94f2fdffc0fafdffc253feffae54feffaaadfeffd21dffff7825ffff4c6bffff3a91ffffa2ebffffa8f2ffff26d2000080d20000b2d200004c7d010098800100648d0100ae930100829b0100c0ad0200
-=======
       scrollPos: {x: 0, y: 0}
-<<<<<<< HEAD
-      m_SelectedIDs: a0af0200
-      m_LastClickedID: 176032
-      m_ExpandedIDs: 5898fcffecbdfcff3e11fdffb224fdffe883fdff6c97fdff9ef4fdff4209feffd862feff7476feff82f8feff20fffeff1859ffff4262ffff0a68fffff66fffff44e3ffffe6faffff40da0000b423020058ac020024b00200
->>>>>>> Raul
-=======
-      m_SelectedIDs: 0a92ffff
-      m_LastClickedID: -28150
-      m_ExpandedIDs: f494ffffe6fafffff4ffffff86080100
->>>>>>> Andreu
+      m_SelectedIDs: b25bf6ff
+      m_LastClickedID: -631886
+      m_ExpandedIDs: 505bf6ff7c5bf6ff845bf6ff8a5bf6ff8c5bf6ffb25bf6ff62aef6ffbab6f6ff58c1f6ffe2c3f6ff4239f7ff4a39f7ff5039f7ff5239f7ff7839f7ff0443f7ff9246f7ff9c46f7ffa646f7ffaa46f7ffb446f7ffb846f7ffbc46f7ff0447f7ff0a47f7ffc648f7ffd448f7ff244df7fffc9af7ffee9cf7fff09cf7ff44b8f7fff4b9f7ffb6c5f7ff7e22f8ff022bf8ffec39f8ff503df8ffa6c5f8ffa8c5f8ffd4c5f8ffd8c5f8fffcf0f8ffe6f9f8ff8e6cf9ff906cf9ff946cf9ffd46cf9ffd86cf9ffdc6cf9ff086df9ff0c6df9ff807af9ff008df9fff6a7f9ff00a8f9ff0aa8f9ff0ea8f9ff18a8f9ff1ca8f9ff20a8f9ff68a8f9ff6ea8f9ff2aaaf9ff38aaf9ffdaaaf9ffdeaaf9ffe2aaf9ff46abf9ff4aabf9ff4eabf9ff7aabf9ff84abf9ff48fff9ff062bfaff0034faffd236faff689ffaffd001fbffd401fbffd801fbff1802fbff1c02fbff2002fbff4c02fbff5002fbffc610fbff6415fbff6a16fbff2618fbff3418fbffe419fbffa01cfbff0c44fbff1044fbff1444fbff5444fbff5844fbff5c44fbff8844fbff8c44fbff2a86fbffda8afbffe88afbff368ffbff3e9cfbff72f8fbffb600fcff9409fcff9a09fcffd609fcffe009fcffea09fcffee09fcff4a0afcff4e0afcff520afcff9a0afcffa00afcff5c0cfcff6a0cfcffa610fcffba9bfcff6ca7fcff28a9fcff36a9fcff38a9fcff94b2fcff8c14fdff7c19fdff8a19fdff7c1dfdff5622fdffa88bfdff5a94fdff6894fdff7c94fdff5c00feff660bfeff740bfeffce0dfeffb47bfeff2090feff5c93feff2698feff2c9afeff1603ffff520cffffea1fffff7a4cffff7083ffff048dffff8eddffff66deffff70deffff72d50000cad50000ced50000e4d50000f8e8000098da0200b2da02002c3b03001e260400bc88040066160500781c0800407d08009a960800aca9080024970900aca3090090b009007ab10a00d6b40a0006be0a00eaca0a005c500d00ce690d00e27c0d00243c0f0008490f00e8de1200bcf3120020f712005800130042021300fc151300ce1b1300b6502300b0512300c064230052702300f2742300bca92400b6aa240020ad240080ae2400d0b02400c6bd24004ec124005cc92400b0c9240028cc240086cd2400fccd2400fcd12400
       m_RenameOverlay:
         m_UserAcceptedRename: 0
-        m_Name: ciego_def_t-Pose
-        m_OriginalName: ciego_def_t-Pose
+        m_Name: 
+        m_OriginalName: 
         m_EditFieldRect:
           serializedVersion: 2
           x: 0
           y: 0
           width: 0
           height: 0
-        m_UserData: -28150
+        m_UserData: 0
         m_IsWaitingForDelay: 0
         m_IsRenaming: 0
-        m_OriginalEventType: 0
+        m_OriginalEventType: 11
         m_IsRenamingFilename: 0
         m_TrimLeadingAndTrailingWhitespace: 0
         m_ClientGUIView: {fileID: 9}
@@ -674,17 +550,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Scene\u200B"
   m_Pos:
     serializedVersion: 2
-<<<<<<< HEAD
     x: 729
     y: 79
     width: 1289
-    height: 805
-=======
-    x: 416
-    y: 79.200005
-    width: 731.6
-    height: 458.8
->>>>>>> Raul
+    height: 933
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1060,7 +929,7 @@ MonoBehaviour:
       sizeOverridden: 0
     - dockPosition: 0
       containerId: Floating
-      displayed: 1
+      displayed: 0
       id: Scene View/Particles
       index: 0
       contents: '{"m_Layout":4,"m_Collapsed":false,"m_Floating":true,"m_FloatingSnapOffset":{"x":-288.79998779296877,"y":209.5999755859375},"m_SnapOffsetDelta":{"x":0.0,"y":0.0},"m_FloatingSnapCorner":1,"m_Size":{"x":0.0,"y":0.0},"m_SizeOverridden":false}'
@@ -1128,17 +997,17 @@ MonoBehaviour:
       layout: 4
       size: {x: 0, y: 0}
       sizeOverridden: 0
-    - dockPosition: 1
-      containerId: overlay-container--right
-      displayed: 0
+    - dockPosition: 0
+      containerId: Floating
+      displayed: 1
       id: Scene View/Animation Rigging
-      index: 12
-      contents: '{"m_Layout":4,"m_Collapsed":false,"m_Floating":false,"m_FloatingSnapOffset":{"x":24.0,"y":0.0},"m_SnapOffsetDelta":{"x":0.0,"y":0.0},"m_FloatingSnapCorner":0,"m_Size":{"x":0.0,"y":0.0},"m_SizeOverridden":false}'
-      floating: 0
+      index: 1
+      contents: '{"m_Layout":4,"m_Collapsed":false,"m_Floating":true,"m_FloatingSnapOffset":{"x":-221.0,"y":-44.0},"m_SnapOffsetDelta":{"x":0.0,"y":0.0},"m_FloatingSnapCorner":3,"m_Size":{"x":0.0,"y":0.0},"m_SizeOverridden":false}'
+      floating: 1
       collapsed: 0
-      snapOffset: {x: 24, y: 0}
+      snapOffset: {x: -221, y: -44}
       snapOffsetDelta: {x: 0, y: 0}
-      snapCorner: 0
+      snapCorner: 3
       layout: 4
       size: {x: 0, y: 0}
       sizeOverridden: 0
@@ -1169,21 +1038,9 @@ MonoBehaviour:
   m_AudioPlay: 0
   m_DebugDrawModesUseInteractiveLightBakingData: 0
   m_Position:
-<<<<<<< HEAD
-<<<<<<< HEAD
-    m_Target: {x: 54.855537, y: 0.83313465, z: 24.54926}
+    m_Target: {x: 6.312432, y: 1.4744244, z: 12.268007}
     speed: 2
-    m_Value: {x: 54.855537, y: 0.83313465, z: 24.54926}
-=======
-    m_Target: {x: 35.282722, y: -55.85867, z: 30.0329}
-    speed: 2
-    m_Value: {x: 35.282722, y: -55.85867, z: 30.0329}
->>>>>>> Raul
-=======
-    m_Target: {x: -43.965942, y: -2.4873471, z: 66.158936}
-    speed: 2
-    m_Value: {x: -44.562904, y: -3.311033, z: 65.610374}
->>>>>>> Andreu
+    m_Value: {x: 6.312432, y: 1.4744244, z: 12.268007}
   m_RenderMode: 0
   m_CameraMode:
     drawMode: 0
@@ -1229,38 +1086,20 @@ MonoBehaviour:
     m_GridAxis: 1
     m_gridOpacity: 0.5
   m_Rotation:
-<<<<<<< HEAD
-<<<<<<< HEAD
-    m_Target: {x: 0.0070249015, y: 0.83774346, z: -0.54625666, w: 0.012269666}
+    m_Target: {x: 0.42095828, y: 0.50621736, z: -0.31108144, w: 0.6855411}
     speed: 2
-    m_Value: {x: 0.007842669, y: 0.8375523, z: -0.54613346, w: 0.013523493}
+    m_Value: {x: 0.42095828, y: 0.50621736, z: -0.31108144, w: 0.6855411}
   m_Size:
-    m_Target: 1.6250963
+    m_Target: 0.37155086
     speed: 2
-    m_Value: 1.7016716
-=======
-    m_Target: {x: 0.3916354, y: 0.4243616, z: -0.17376895, w: 0.80541486}
-=======
-    m_Target: {x: 0.17242269, y: 0.71038485, z: -0.13825269, w: 0.67739403}
->>>>>>> Andreu
-    speed: 2
-    m_Value: {x: 0.17136751, y: 0.7060375, z: -0.13740662, w: 0.6732486}
-  m_Size:
-    m_Target: 0.8660254
-    speed: 2
-<<<<<<< HEAD
-    m_Value: 81.70987
->>>>>>> Raul
-=======
-    m_Value: 6.1488657
->>>>>>> Andreu
+    m_Value: 0.37155086
   m_Ortho:
     m_Target: 0
     speed: 2
     m_Value: 0
   m_CameraSettings:
-    m_Speed: 0.96051997
-    m_SpeedNormalized: 0.48
+    m_Speed: 0.24087995
+    m_SpeedNormalized: 0.119999975
     m_SpeedMin: 0.001
     m_SpeedMax: 2
     m_EasingEnabled: 1
@@ -1586,7 +1425,7 @@ MonoBehaviour:
     true,\n    \"m_DismissedVersion\": 0,\n    \"m_PreviewMode\": 0,\n    \"m_CustomColors\":
     {\n        \"m_SerializableColors\": []\n    },\n    \"m_SerializedDescriptor\":
     \"SurfaceDescription.BaseColor\"\n}\n\n"
-  m_AssetMaybeChangedOnDisk: 1
+  m_AssetMaybeChangedOnDisk: 0
   m_AssetMaybeDeleted: 0
 --- !u!114 &19
 MonoBehaviour:
@@ -1609,21 +1448,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Animator\u200B"
   m_Pos:
     serializedVersion: 2
-<<<<<<< HEAD
-<<<<<<< HEAD
     x: 729
     y: 79
     width: 1289
     height: 805
-=======
-    x: 415.2
-=======
-    x: 416
->>>>>>> Andreu
-    y: 79.200005
-    width: 731.6
-    height: 458.8
->>>>>>> Raul
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1641,14 +1469,14 @@ MonoBehaviour:
     - {fileID: -5602963042399094863, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
     - {fileID: 4319728856903478249, guid: de1705507a5476b4db72105b261c8d5a, type: 2}
     m_ValueSerializationHelper:
-    - e00: 0.6443796
+    - e00: 0.55346847
       e01: 0
       e02: 0
-      e03: 21.875172
+      e03: 160.73358
       e10: 0
-      e11: 0.6443796
+      e11: 0.55346847
       e12: 0
-      e13: 64.64731
+      e13: 276.22815
       e20: 0
       e21: 0
       e22: 1
@@ -1690,9 +1518,9 @@ MonoBehaviour:
       e32: 0
       e33: 1
   m_PreviewAnimator: {fileID: 0}
-  m_AnimatorController: {fileID: 9100000, guid: 7db1893b8e604954e9727d2960d3700b, type: 2}
+  m_AnimatorController: {fileID: 9100000, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
   m_BreadCrumbs:
-  - m_Target: {fileID: 6147180508239695073, guid: 7db1893b8e604954e9727d2960d3700b, type: 2}
+  - m_Target: {fileID: -5602963042399094863, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
     m_ScrollPosition: {x: 0, y: 0}
   stateMachineGraph: {fileID: 0}
   stateMachineGraphGUI: {fileID: 0}
@@ -1727,15 +1555,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-<<<<<<< HEAD
-    y: 910
+    y: 1038
     width: 2019
-    height: 436
-=======
-    y: 564
-    width: 1148.6
-    height: 206
->>>>>>> Raul
+    height: 308
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -1758,15 +1580,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-<<<<<<< HEAD
-<<<<<<< HEAD
-    - Assets/Vefects/Free Blood VFX/Demo/Scene
-=======
-    - Assets/WC/Prefabs/props
->>>>>>> Raul
-=======
-    - Assets/Sonidos
->>>>>>> Andreu
+    - Assets/Scenes
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1776,54 +1590,30 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 88
   m_LastFolders:
-<<<<<<< HEAD
-<<<<<<< HEAD
-  - Assets/Vefects/Free Blood VFX/Demo/Scene
+  - Assets/Scenes
   m_LastFoldersGridSize: 88
   m_LastProjectPath: C:\Users\elora\Documents\GitHub\Proyecto_2_3D\Proyecto3D_Andreu_Raul_Yeray
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 384}
-    m_SelectedIDs: 04d10300
-    m_LastClickedID: 250116
-    m_ExpandedIDs: 0000000034bb00006ebb0000d6100100ee9d0300109e0300649f030008b003000cb0030018b003003cb003004ab00300b0b00300b2d00300c2d00300c8d00300dcd0030004d1030060d1030068d1030000ca9a3bffffff7f
-=======
-  - Assets/WC/Prefabs/props
-=======
-  - Assets/Sonidos
->>>>>>> Andreu
-  m_LastFoldersGridSize: 39
-  m_LastProjectPath: C:\Users\Usuario\Documents\GitHub\Proyecto_2_3D\Proyecto3D_Andreu_Raul_Yeray
-  m_LockTracker:
-    m_IsLocked: 0
-  m_FolderTreeState:
-<<<<<<< HEAD
-    scrollPos: {x: 0, y: 1254}
-    m_SelectedIDs: 34610300
-    m_LastClickedID: 221492
-    m_ExpandedIDs: 0000000056d800000ad9000014d9000024d9000028d9000032d90000f00701000208010010080100b20e010062110100641101006c110100186103001e61030000ca9a3bffffff7f
->>>>>>> Raul
-=======
-    scrollPos: {x: 0, y: 390}
-    m_SelectedIDs: 9a010100
-    m_LastClickedID: 65946
-    m_ExpandedIDs: 000000009a0001008801010092010100a2010100e00101007a0a010000ca9a3bffffff7f
->>>>>>> Andreu
+    scrollPos: {x: 0, y: 176}
+    m_SelectedIDs: acd90000
+    m_LastClickedID: 55724
+    m_ExpandedIDs: 00000000aad90000acd90000aed90000b0d90000b2d90000b4d90000b6d90000b8d90000bad90000bcd90000bed9000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
-      m_Name: Scripts
-      m_OriginalName: Scripts
+      m_Name: 
+      m_OriginalName: 
       m_EditFieldRect:
         serializedVersion: 2
         x: 0
         y: 0
         width: 0
         height: 0
-      m_UserData: 241754
+      m_UserData: 0
       m_IsWaitingForDelay: 0
       m_IsRenaming: 0
-      m_OriginalEventType: 0
+      m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_TrimLeadingAndTrailingWhitespace: 0
       m_ClientGUIView: {fileID: 11}
@@ -1838,15 +1628,7 @@ MonoBehaviour:
     scrollPos: {x: 0, y: 0}
     m_SelectedIDs: 
     m_LastClickedID: 0
-<<<<<<< HEAD
-<<<<<<< HEAD
-    m_ExpandedIDs: 0000000034bb00006ebb0000d610010000ca9a3bffffff7f
-=======
-    m_ExpandedIDs: 0000000056d80000
->>>>>>> Raul
-=======
-    m_ExpandedIDs: 000000009a000100
->>>>>>> Andreu
+    m_ExpandedIDs: 00000000aad90000acd90000aed90000b0d90000b2d90000b4d90000b6d90000b8d90000bad90000bcd90000bed9000000ca9a3bffffff7f
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1874,16 +1656,8 @@ MonoBehaviour:
   m_ListAreaState:
     m_SelectedInstanceIDs: 
     m_LastClickedInstanceID: 0
-    m_HadKeyboardFocusLastEvent: 1
-<<<<<<< HEAD
-<<<<<<< HEAD
+    m_HadKeyboardFocusLastEvent: 0
     m_ExpandedInstanceIDs: c623000060b3000048b4000036b800005ac100006ce3000056e3000064e30000eac20000eec50000e4bc00000e780000fa830100743c0100728b0100a6c30000228e0100e0de000014cc000042cd00008c340100c65a01003cbd00003eb80000ccc3000050370100021a0100b2f800009c7a020038d60000aec800001a7e00004abf00008eb40000e4f40000cccb000032b4000082c80000aac00000f0bc000024bd00007ece000064be00005ad60000aae700004cce0000e61901007e25010062e70000867b010060610100707c01001ee3000048e900000ce600003c1201009ee900009ae3000030d90000b2da0000cabe00003064feff340d010050ec0000344d050058c7000014bd000000000000a6c60000a4c60000fcaf0300
-=======
-    m_ExpandedInstanceIDs: c623000060b3000048b4000036b800005ac100006ce3000056e3000064e30000eac20000eec50000e4bc00000e780000fa830100743c0100728b0100a6c30000228e0100e0de000014cc000042cd00008c340100c65a01003cbd00003eb80000ccc3000050370100021a0100b2f800009c7a020038d60000aec800001a7e00004abf00008eb40000e4f40000cccb000032b4000082c80000aac00000f0bc000024bd00007ece000064be00005ad60000aae700004cce0000e61901007e25010062e70000867b010060610100707c01001ee3000048e900000ce60000000000003c1201009ee900009ae3000030d90000b2da0000cabe00003064feff340d010050ec0000344d05008ac30100
->>>>>>> Raul
-=======
-    m_ExpandedInstanceIDs: c623000060b3000048b4000036b800005ac100006ce3000056e3000064e30000eac20000eec50000e4bc00000e780000fa830100743c0100728b0100a6c30000228e0100e0de000014cc000042cd00008c340100c65a01003cbd00003eb80000ccc3000050370100021a0100b2f800009c7a020038d60000aec800001a7e00004abf00008eb40000e4f40000cccb000032b4000082c80000aac00000f0bc000024bd00007ece000064be00005ad60000aae700004cce0000e61901007e25010062e70000867b010060610100707c01001ee3000048e900000ce60000000000003c1201009ee900009ae3000030d90000b2da0000cabe00003064feff340d010050ec0000344d05008ac30100b00a0100
->>>>>>> Andreu
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1934,15 +1708,9 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-<<<<<<< HEAD
-    y: 910
+    y: 1038
     width: 2019
-    height: 436
-=======
-    y: 564
-    width: 1148.6
-    height: 206
->>>>>>> Raul
+    height: 308
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -2039,17 +1807,8 @@ MonoBehaviour:
     m_OverlaysVisible: 1
   m_LockTracker:
     m_IsLocked: 0
-<<<<<<< HEAD
-<<<<<<< HEAD
-  m_LastSelectedObjectID: 175230
+  m_LastSelectedObjectID: 2414292
 --- !u!114 &24
-=======
-  m_LastSelectedObjectID: 167258
-=======
-  m_LastSelectedObjectID: 67718
->>>>>>> Andreu
---- !u!114 &22
->>>>>>> Raul
 MonoBehaviour:
   m_ObjectHideFlags: 52
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2255,17 +2014,10 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-<<<<<<< HEAD
     x: 2020
     y: 79
     width: 539
     height: 836
-=======
-    x: 1149.6
-    y: 79.200005
-    width: 385.40002
-    height: 690.8
->>>>>>> Raul
   m_SerializedDataModeController:
     m_DataMode: 0
     m_PreferredDataMode: 0
@@ -2280,7 +2032,7 @@ MonoBehaviour:
   m_ObjectsLockedBeforeSerialization: []
   m_InstanceIDsLockedBeforeSerialization: 
   m_PreviewResizer:
-    m_CachedPref: 293.6
+    m_CachedPref: -293.6
     m_ControlHash: -371814159
     m_PrefName: Preview_InspectorPreview
   m_LastInspectedObjectInstanceID: -1
