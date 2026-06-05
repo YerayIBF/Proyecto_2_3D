@@ -41,6 +41,8 @@ public class ParedDestruct : MonoBehaviour
             {
                 Instantiate(cristalesRotos, puntoSpawnSuelo.position, puntoSpawnSuelo.rotation);
             }
+
+            AudioManager.Instance.PlaySFX("RomperCristal");
             
             Destroy(gameObject);
         }

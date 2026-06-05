@@ -168,18 +168,22 @@ namespace StarterAssets
 
         private void Update()
         {
+            if (_input.interact)
+            {
+                _input.interact = false;
 
-            if (Input.GetKeyDown(KeyCode.E) && !cercaDePila && !GameManager.instance.zonaActivacion)
-            {
-                _animator.SetTrigger("Coger");
-            }else if (Input.GetKeyDown(KeyCode.E) && cercaDePila)
-            {
-                pilaCercana.GetComponent<PilaMegafono>().Recargar();
-                Destroy(pilaCercana);
-                cercaDePila = false;
-            }else if (Input.GetKeyDown(KeyCode.E) && GameManager.instance.zonaActivacion)
-            {
-                GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                if (!cercaDePila && !GameManager.instance.zonaActivacion)
+                {
+                    _animator.SetTrigger("Coger");
+                }else if (cercaDePila)
+                {
+                    pilaCercana.GetComponent<PilaMegafono>().Recargar();
+                    Destroy(pilaCercana);
+                    cercaDePila = false;
+                }else if (GameManager.instance.zonaActivacion)
+                {
+                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                }
             }
 
             //testear minijuego
