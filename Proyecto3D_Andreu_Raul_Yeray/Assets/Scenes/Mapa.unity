@@ -6218,8 +6218,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0b919cade5a1f24d9d5011684feaefd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkRadius: 12
-  runMultiplier: 2.5
+  walkRadius: 5
+  runMultiplier: 1.5
   walkInterval: 0.4
   runInterval: 0.2
   drawGizmos: 1
@@ -101918,7 +101918,6 @@ MonoBehaviour:
   textoPapel: {fileID: 1205874378}
   textoSubtitulo: {fileID: 1718372422}
   canvasSubtitulo: {fileID: 515092906}
-  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &1056157511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178170,9 +178169,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 57086322}
     - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
+      propertyPath: chaseSpeed
+      value: 3.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
+      propertyPath: patrolSpeed
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
       propertyPath: lockerSystem
       value: 
       objectReference: {fileID: 57086332}
+    - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
+      propertyPath: detectionRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
+      propertyPath: attackCooldownTime
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
       propertyPath: 'patrolPoints.Array.data[0]'
       value: 
