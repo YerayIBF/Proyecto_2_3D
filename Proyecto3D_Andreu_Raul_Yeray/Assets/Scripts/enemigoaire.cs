@@ -1,5 +1,4 @@
 using UnityEngine;
- 
 public class enemigoaire : MonoBehaviour
 {
     public enum EnemyState { Wander, Attacking, Stunned }
@@ -38,6 +37,15 @@ public class enemigoaire : MonoBehaviour
     [Header("Stun")]
     public float duracionDelStun = 10f;
     private float cronometroStun;
+
+    [Header("Sonido")]
+    public AudioSource _audioSource;
+    public AudioClip sonidoDisparo;
+
+    void Start()
+    {
+        _audioSource = GetComponent<AudioSource>();
+    }
  
     void Update()
     {
@@ -224,7 +232,7 @@ public class enemigoaire : MonoBehaviour
             : transform.position + transform.forward;
 
         GameObject bola = Instantiate(prefabProyectil, spawn, Quaternion.identity);
-        
+        _audioSource.PlayOneShot(sonidoDisparo);        
         Proyectil proyectil = bola.GetComponent<Proyectil>();
         if (proyectil != null)
             proyectil.Init(direccionHaciaJugador);

@@ -284,10 +284,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
   handPoint: {fileID: 520260100}
+  handPointLeft: {fileID: 0}
   throwForce: 10
   lineRenderer: {fileID: 1415432615}
   predictionSteps: 30
   timeStep: 0.1
+  pickupRange: 2
+  apuntarAction: {fileID: 0}
+  lanzarAction: {fileID: 0}
+  soltarAction: {fileID: 0}
+  interactAction: {fileID: 0}
   objeto: {fileID: 0}
   apuntando: 0
 --- !u!1 &69517265
@@ -2727,6 +2733,11 @@ MonoBehaviour:
   scriptJugador: {fileID: 0}
   timelineInicial: {fileID: 0}
   textoTimelineInicial: {fileID: 0}
+  canvasPapel: {fileID: 0}
+  textoPapel: {fileID: 0}
+  textoSubtitulo: {fileID: 0}
+  canvasSubtitulo: {fileID: 0}
+  interactAction: {fileID: 0}
 --- !u!114 &653106876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8584,10 +8595,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 1415432616}
   handPoint: {fileID: 357957886}
+  handPointLeft: {fileID: 0}
   throwForce: 10
   lineRenderer: {fileID: 1415432615}
   predictionSteps: 30
   timeStep: 0.1
+  pickupRange: 2
+  apuntarAction: {fileID: 0}
+  lanzarAction: {fileID: 0}
+  soltarAction: {fileID: 0}
+  interactAction: {fileID: 0}
   objeto: {fileID: 0}
   apuntando: 0
 --- !u!1 &1739229933
