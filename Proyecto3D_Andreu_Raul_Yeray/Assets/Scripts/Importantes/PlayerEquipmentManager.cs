@@ -114,6 +114,9 @@ public class PlayerEquipmentManager : MonoBehaviour
 
     private void Update()
     {
+         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+        return;
+
         if (Input.GetKeyDown(swapKey) && CanSwapHand)
             SwapRightHand();
     }

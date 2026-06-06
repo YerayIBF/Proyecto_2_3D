@@ -114,6 +114,11 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Update()
     {
+
+        
+        if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+        return;
+
         if (!_hasFlashlight)
         {
             HandlePickup();
@@ -175,6 +180,13 @@ public class FlashlightSystem : MonoBehaviour
 
     private void HandleInput()
     {
+        // Si está escondido en taquilla, apagar y bloquear la linterna
+        if (PlayerStateMachine.Instance != null && PlayerStateMachine.Instance.IsHiding)
+        {
+            if (_isOn) SetLight(false);
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.F) && currentBattery > 0f)
             ToggleFlashlight();
 
@@ -197,8 +209,10 @@ public class FlashlightSystem : MonoBehaviour
             _isAiming = aimInput;
             OnAimingChanged?.Invoke(_isAiming);
             PlayerEquipmentManager.Instance?.SetAimingFlashlight(_isAiming);
+
+            if (!_isAiming) ResetStunCharge();
         }
-    }
+}
 
     // ─── Parpadeo ─────────────────────────────────────────────────────────────
 
