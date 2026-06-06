@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Playables;
 
 /// <summary>
 /// Script para la llave del nivel.
@@ -11,6 +12,7 @@ using UnityEngine;
 /// </summary>
 public class KeyPickup : MonoBehaviour
 {
+    public PlayableDirector timelineEnemigo;
     [Header("Referencias")]
     [Tooltip("Secuencia del enemigo que se activará al recoger la llave (opcional)")]
     public EnemyIntroSequence enemySequence;
@@ -24,5 +26,7 @@ public class KeyPickup : MonoBehaviour
 
         if (enemySequence != null)
             enemySequence.StartSequence();
+
+        timelineEnemigo.Play();
     }
 }
