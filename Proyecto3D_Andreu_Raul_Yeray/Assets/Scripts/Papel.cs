@@ -5,6 +5,7 @@ public class Papel : MonoBehaviour
     public string texto;
     public GameObject canvasLeer;
     public bool jugadorCerca = false;
+    private bool estaLeyendo = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -16,7 +17,14 @@ public class Papel : MonoBehaviour
     {
         if (jugadorCerca && Input.GetKeyDown(KeyCode.E))
         {
-            LeerPapel();
+            if (!estaLeyendo)
+            {
+                LeerPapel();
+            }
+            else
+            {
+                DejarDeLeerPapel();
+            }
         }
     }
 
@@ -46,10 +54,23 @@ public class Papel : MonoBehaviour
 
     void LeerPapel()
     {
+        estaLeyendo = true;
         GameManager.instance.MostrarPapel(texto);
+        
         if (canvasLeer != null)
         {
-            canvasLeer.SetActive(false);
+            canvasLeer.SetActive(false); 
+        }
+    }
+
+    void DejarDeLeerPapel()
+    {
+        estaLeyendo = false;
+        GameManager.instance.CerrarPapel();
+        
+        if (canvasLeer != null && jugadorCerca)
+        {
+            canvasLeer.SetActive(true); 
         }
     }
 }
