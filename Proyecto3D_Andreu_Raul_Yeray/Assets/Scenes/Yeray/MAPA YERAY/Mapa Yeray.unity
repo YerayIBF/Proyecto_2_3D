@@ -25651,7 +25651,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_TargetDisplay: 0
 --- !u!224 &280549549
 RectTransform:
@@ -101805,6 +101805,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tieneLinterna: 0
   tieneMegafono: 0
+  tieneLlave: 0
   canvasMegafono: {fileID: 927254741}
   textoEnergia: {fileID: 180825339}
   bateriaRayas:
@@ -101825,7 +101826,8 @@ MonoBehaviour:
   textoPapel: {fileID: 1205874378}
   textoSubtitulo: {fileID: 1718372422}
   canvasSubtitulo: {fileID: 515092906}
-  interactAction: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  iconoLlaveHUD: {fileID: 0}
+  mensajeLlaveRecogida: Has recogido la llave
 --- !u!114 &1056157511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108243,7 +108245,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.16666667
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: 7dfb65a1b17aa3b4894ad5eb4c3eff6a, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: eb1a5b9989011c9438498aea1d720ea4, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &1116816104
 Transform:

@@ -69,6 +69,10 @@ public class CogerObjeto : MonoBehaviour
 
     void Update()
     {
+        // Si el jugador está muerto, no procesar nada
+        if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+            return;
+
         // ── Inputs (mando + teclado) ──
         bool inputApuntar    = (Input.GetMouseButton(1))
                             || (apuntarAction != null && apuntarAction.action.IsPressed());
@@ -223,6 +227,8 @@ public class CogerObjeto : MonoBehaviour
 
     // ─── Apuntar y lanzar lanzable ───────────────────────────────────────────
 
+    private float _savedThrowForce = 10f;
+
     private void HandleAimAndThrow(bool inputApuntar, bool inputLanzarDown)
     {
         if (inputApuntar)
@@ -240,7 +246,11 @@ public class CogerObjeto : MonoBehaviour
 
         // Disparar el trigger del Animator — el Animation Event llamará a LanzarObjeto()
         if (inputLanzarDown)
+        {
+            // Guardar la fuerza ACTUAL antes de que se resetee durante la animación
+            _savedThrowForce = throwForce;
             TriggerThrowAnimation();
+        }
     }
 
     /// <summary>
@@ -276,8 +286,10 @@ public class CogerObjeto : MonoBehaviour
         rb.useGravity = true;
 
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
-        objetoCogido.transform.position = cam.transform.position + cam.transform.forward * 3f;
-        rb.AddForce(direction * throwForce, ForceMode.VelocityChange);
+
+        // Usar la fuerza guardada en el momento de pulsar lanzar
+        // (porque throwForce puede haberse reseteado mientras corría la animación)
+        rb.AddForce(direction * _savedThrowForce, ForceMode.VelocityChange);
 
         ThrowObject throwable = objetoCogido.GetComponent<ThrowObject>();
         if (throwable != null) throwable.Lanzado();
@@ -367,7 +379,7 @@ public class CogerObjeto : MonoBehaviour
             }
 
             Vector3 rotacion = handTarget.transform.localEulerAngles;
-            //handTarget.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
+            handTarget.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
 
             objetoCogido = objeto;
             PlayerEquipmentManager.Instance?.PickupThrowable(objetoCogido);
@@ -404,11 +416,10 @@ public class CogerObjeto : MonoBehaviour
     {
         if (lineRenderer == null) return;
 
-        /*Vector3 startPoint = handPointLeft != null
+        Vector3 startPoint = handPointLeft != null
             ? handPointLeft.transform.position
-            : handPoint.transform.position;*/
+            : handPoint.transform.position;
 
-        Vector3 startPoint = cam.transform.position + cam.transform.forward * 5.5f + Vector3.up * -0.7f;
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 startVel  = direction * throwForce;
 
