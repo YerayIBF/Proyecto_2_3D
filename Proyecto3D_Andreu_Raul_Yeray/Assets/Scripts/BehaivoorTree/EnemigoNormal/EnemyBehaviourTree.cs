@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-
 public class EnemyBehaviourTree : MonoBehaviour
 {
     [Header("Referencias")]
@@ -59,9 +58,11 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     private NavMeshAgent _agent;
     private Animator     _anim;
+    private EnemyAudio   _audio;
 
     private enum State { Wander, Chase, Attack, Stunned, Investigate, CheckLocker }
     private State _state = State.Wander;
+    private State _previousState = State.Wander;
 
     private bool  _isStunned = false;
     private float _stunTimer = 0f;
@@ -96,6 +97,11 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         _agent = GetComponent<NavMeshAgent>();
         if (ghostModel != null) _anim = ghostModel.GetComponent<Animator>();
+
+        // Audio: buscar en este GameObject, en hijos, o en el ghost
+        _audio = GetComponent<EnemyAudio>();
+        if (_audio == null) _audio = GetComponentInChildren<EnemyAudio>();
+        if (_audio == null && ghostModel != null) _audio = ghostModel.GetComponent<EnemyAudio>();
 
         if (_agent != null)
         {
@@ -206,8 +212,6 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
-        // ── PRIORIDAD MÁXIMA: si sabemos que está en una taquilla → CheckLocker ──
-        // (interrumpe Chase, Attack, Investigate, lo que sea)
         if (_knownLockerWithPlayer != null)
         {
             if (_state != State.CheckLocker)
@@ -218,7 +222,7 @@ public class EnemyBehaviourTree : MonoBehaviour
                 _lockerKillTriggered = false;
                 _frozenAtLocker = false;
                 _lockerMoveTimer = 0f;
-                _attackOnCooldown = false; // reset por si estaba atacando
+                _attackOnCooldown = false;
                 ChangeState(State.CheckLocker);
                 Debug.Log($"[BT] Cambio a CheckLocker porque el jugador está escondido en {_knownLockerWithPlayer.name}");
             }
@@ -259,21 +263,17 @@ public class EnemyBehaviourTree : MonoBehaviour
         }
     }
 
-    // ── CHASE: usa NavMesh.SamplePosition para perseguir aunque el jugador esté en el aire ──
-
     private void UpdateChase()
     {
         _agent.isStopped = false;
         _agent.speed = chaseSpeed;
 
-        // Obtener un punto del NavMesh cerca del jugador (por si está saltando)
         Vector3 targetPos = player.position;
         if (NavMesh.SamplePosition(player.position, out NavMeshHit navHit, 5f, NavMesh.AllAreas))
             targetPos = navHit.position;
 
         _agent.SetDestination(targetPos);
 
-        // Distancia HORIZONTAL al jugador (ignora altura para que pueda atacar aunque salte)
         Vector3 enemyFlat  = new Vector3(transform.position.x, 0f, transform.position.z);
         Vector3 playerFlat = new Vector3(player.position.x, 0f, player.position.z);
         float dist = Vector3.Distance(enemyFlat, playerFlat);
@@ -289,6 +289,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         _agent.ResetPath();
 
         if (_anim != null) _anim.SetTrigger(HashAttack);
+        _audio?.PlayAttack();
 
         bool playerHiding = lockerSystem != null && lockerSystem.IsHiding;
         if (!playerHiding)
@@ -332,6 +333,7 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         _isStunned = true;
         _stunTimer = 0f;
+        _audio?.StopAll();
         Debug.Log("[BT] ¡Aturdido por la linterna!");
     }
 
@@ -483,6 +485,7 @@ public class EnemyBehaviourTree : MonoBehaviour
                 {
                     _lockerKillTriggered = true;
                     if (_anim != null) _anim.SetTrigger(HashAttack);
+                    _audio?.PlayAttack();
                     Invoke(nameof(KillPlayerInLocker), lockerKillDelay);
                     return;
                 }
@@ -515,8 +518,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         ChangeState(State.Wander);
     }
 
-    // ── TRACK PLAYER HIDING: ahora también detecta si está cerca aunque no lo vea ──
-
     private void TrackPlayerHiding()
     {
         if (lockerSystem == null) return;
@@ -525,8 +526,6 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         if (hidingNow && !_playerWasHiding)
         {
-            // Si el enemigo está persiguiendo o muy cerca, sabe que el jugador está ahí
-            // (no necesita verlo directamente — lo intuye)
             bool nearby = Vector3.Distance(transform.position, player.position) < detectionRange * 0.6f;
 
             if (CanSeePlayerRaw() || _state == State.Chase || nearby)
@@ -604,7 +603,18 @@ public class EnemyBehaviourTree : MonoBehaviour
     private void ChangeState(State newState)
     {
         if (_state == newState) return;
+
+        _previousState = _state;
         _state = newState;
+
+        // Alerta al pasar a perseguir desde no perseguir
+        if (newState == State.Chase
+            && _previousState != State.Chase
+            && _previousState != State.Attack)
+        {
+            _audio?.PlayAlert();
+        }
+
         Debug.Log($"[BT] → {newState}");
 
         if (_anim != null)

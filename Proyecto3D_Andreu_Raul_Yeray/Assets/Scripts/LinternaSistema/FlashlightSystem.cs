@@ -209,8 +209,6 @@ public class FlashlightSystem : MonoBehaviour
             _isAiming = aimInput;
             OnAimingChanged?.Invoke(_isAiming);
             PlayerEquipmentManager.Instance?.SetAimingFlashlight(_isAiming);
-
-            if (!_isAiming) ResetStunCharge();
         }
 }
 
