@@ -247,6 +247,7 @@ public class CogerObjeto : MonoBehaviour
         rb.useGravity = true;
 
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
+        objetoCogido.transform.position = cam.transform.position + cam.transform.forward * 3f;
         rb.AddForce(direction * throwForce, ForceMode.VelocityChange);
 
         ThrowObject throwable = objetoCogido.GetComponent<ThrowObject>();
@@ -337,7 +338,7 @@ public class CogerObjeto : MonoBehaviour
             }
 
             Vector3 rotacion = handTarget.transform.localEulerAngles;
-            handTarget.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
+            //handTarget.transform.localRotation = Quaternion.Euler(rotacion.x, -150.3f, rotacion.z);
 
             objetoCogido = objeto;
             PlayerEquipmentManager.Instance?.PickupThrowable(objetoCogido);
@@ -360,10 +361,11 @@ public class CogerObjeto : MonoBehaviour
     {
         if (lineRenderer == null) return;
 
-        Vector3 startPoint = handPointLeft != null
+        /*Vector3 startPoint = handPointLeft != null
             ? handPointLeft.transform.position
-            : handPoint.transform.position;
+            : handPoint.transform.position;*/
 
+        Vector3 startPoint = cam.transform.position + cam.transform.forward * 5.5f + Vector3.up * -0.7f;
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
         Vector3 startVel  = direction * throwForce;
 
