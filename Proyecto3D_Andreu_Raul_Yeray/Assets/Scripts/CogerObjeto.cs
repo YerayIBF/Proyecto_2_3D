@@ -148,7 +148,7 @@ public class CogerObjeto : MonoBehaviour
         GameObject masCercano = null;
         float minDist = pickupRange;
 
-        string[] tags = { "objetoCogible", "Megafono", "Linterna" };
+        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave" };
         foreach (string tag in tags)
         {
             GameObject[] candidatos = GameObject.FindGameObjectsWithTag(tag);
@@ -188,6 +188,12 @@ public class CogerObjeto : MonoBehaviour
             if (item.transform.IsChildOf(this.transform))
                 return true;
         }
+
+        // Llave: si ya la tenemos según el GameManager, ignorarla
+        if (item.CompareTag("Llave")
+            && GameManager.instance != null
+            && GameManager.instance.tieneLlave)
+            return true;
 
         return false;
     }
@@ -232,8 +238,31 @@ public class CogerObjeto : MonoBehaviour
             throwForce = 10f;
         }
 
+        // Disparar el trigger del Animator — el Animation Event llamará a LanzarObjeto()
         if (inputLanzarDown)
+            TriggerThrowAnimation();
+    }
+
+    /// <summary>
+    /// Dispara la animación de lanzar correcta según si está agachado o de pie.
+    /// El Animation Event llamará a LanzarObjeto() en mitad de la animación.
+    /// </summary>
+    private void TriggerThrowAnimation()
+    {
+        if (animator == null)
+        {
+            // Sin animator → lanza directamente
             LanzarObjeto();
+            return;
+        }
+
+        bool isCrouched = PlayerStateMachine.Instance != null
+                       && PlayerStateMachine.Instance.IsCrouched;
+
+        if (isCrouched)
+            animator.SetTrigger("ThrowCrouched");
+        else
+            animator.SetTrigger("Throw");
     }
 
     public void LanzarObjeto()
@@ -285,7 +314,7 @@ public class CogerObjeto : MonoBehaviour
 
     private void ActualizarIconos()
     {
-        string[] tags = { "objetoCogible", "Megafono", "Linterna" };
+        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave" };
         foreach (string tag in tags)
         {
             GameObject[] items = GameObject.FindGameObjectsWithTag(tag);
@@ -351,6 +380,20 @@ public class CogerObjeto : MonoBehaviour
         {
             PlayerEquipmentManager.Instance?.PickupFlashlight(objeto);
             if (GameManager.instance != null) GameManager.instance.tieneLinterna = true;
+        }
+        else if (objeto.CompareTag("Llave"))
+        {
+            // Notificar al GameManager
+            if (GameManager.instance != null)
+                GameManager.instance.RecogerLlave();
+
+            // Activar la secuencia del enemigo si el objeto la tiene
+            KeyPickup keyPickup = objeto.GetComponent<KeyPickup>();
+            if (keyPickup != null)
+                keyPickup.OnPickedUp();
+
+            // Hacer desaparecer la llave del mundo
+            objeto.SetActive(false);
         }
 
         objeto = null;

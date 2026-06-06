@@ -16,6 +16,7 @@ TagManager:
   - Flashlight
   - EnemyEyes
   - Proyectil
+  - Llave
   layers:
   - Default
   - TransparentFX
