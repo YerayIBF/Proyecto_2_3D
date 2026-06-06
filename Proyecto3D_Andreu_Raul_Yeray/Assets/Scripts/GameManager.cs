@@ -32,27 +32,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textoSubtitulo;
     public GameObject canvasSubtitulo;
 
-    public InputActionReference interactAction;
-
-    private void OnEnable()
-    {
-        interactAction.action.Enable();
-        interactAction.action.performed += OnInteract;
-    }
-
-    private void OnDisable()
-    {
-        interactAction.action.performed -= OnInteract;
-        interactAction.action.Disable();
-    } 
-
-    private void OnInteract(InputAction.CallbackContext context)
-    {
-        if (leyendoPapel)
-        {
-            CerrarPapel();
-        }
-    }
+    //public InputActionReference interactAction;
 
     void Awake()
     {
@@ -60,6 +40,9 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+
+            //InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
+
         }
         else
         {
@@ -157,14 +140,12 @@ public class GameManager : MonoBehaviour
     {
         textoPapel.text = texto;
         canvasPapel.SetActive(true);
-        leyendoPapel = true;
         Time.timeScale = 0f; 
     }
 
     public void CerrarPapel()
     {
         canvasPapel.SetActive(false);
-        leyendoPapel = false;
         Time.timeScale = 1f; 
     }
 
