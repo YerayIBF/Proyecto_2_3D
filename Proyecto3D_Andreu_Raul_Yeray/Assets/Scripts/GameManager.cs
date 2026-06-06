@@ -11,6 +11,7 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     public bool tieneLinterna = false;
     public bool tieneMegafono = false;
+    public bool tieneLlave = false;   // ← NUEVO
     public GameObject canvasMegafono;
     public TextMeshProUGUI textoEnergia;
     private GameObject megafono;
@@ -32,27 +33,13 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI textoSubtitulo;
     public GameObject canvasSubtitulo;
 
-    public InputActionReference interactAction;
+    [Header("Llave (opcional, feedback visual)")]
+    [Tooltip("Icono de la llave en el HUD que se activa cuando la recoges")]
+    public GameObject iconoLlaveHUD;
+    [Tooltip("Texto que aparece al recoger la llave (opcional)")]
+    public string mensajeLlaveRecogida = "Has recogido la llave";
 
-    private void OnEnable()
-    {
-        interactAction.action.Enable();
-        interactAction.action.performed += OnInteract;
-    }
-
-    private void OnDisable()
-    {
-        interactAction.action.performed -= OnInteract;
-        interactAction.action.Disable();
-    } 
-
-    private void OnInteract(InputAction.CallbackContext context)
-    {
-        if (leyendoPapel)
-        {
-            CerrarPapel();
-        }
-    }
+    //public InputActionReference interactAction;
 
     void Awake()
     {
@@ -60,13 +47,16 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+
+            //InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
+
         }
         else
         {
             Destroy(gameObject);
         }
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
         scriptJugador.enabled = false;
@@ -74,20 +64,24 @@ public class GameManager : MonoBehaviour
         timelineInicial.Play();
         megafono = GameObject.FindGameObjectWithTag("Megafono");
         megafonoImg.sprite = iconoBateria;
+
+        // Asegurarse de que el icono de la llave está oculto al inicio
+        if (iconoLlaveHUD != null)
+            iconoLlaveHUD.SetActive(false);
     }
 
-    //Al finalizar la cinematica el personaje puede moverse y el texto desaparece
     private void OnTimelineFinished(PlayableDirector director)
     {
         scriptJugador.enabled = true;
         textoTimelineInicial.gameObject.SetActive(false);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+
     }
+
+    // ─── Megáfono ────────────────────────────────────────────────────────────
 
     public void RecogerMegafono()
     {
@@ -103,25 +97,23 @@ public class GameManager : MonoBehaviour
         if (megafonoScript != null)
         {
             ActualizarEnergia(megafonoScript.energiaActual, megafonoScript.maxEnergia);
-        } 
+        }
     }
 
-    //Actualizar energia del megafono de forma visual
     public void ActualizarEnergia(float energiaActual, float maxEnergia)
     {
-        //textoEnergia.text = Mathf.RoundToInt(energiaActual) + " / " + Mathf.RoundToInt(maxEnergia);
-        float porcentaje = energiaActual/maxEnergia;
+        float porcentaje = energiaActual / maxEnergia;
         float limite = porcentaje * bateriaRayas.Length;
         int rayas = Mathf.CeilToInt(porcentaje * bateriaRayas.Length);
 
         Color colorFondo;
 
-        if (porcentaje <= 0.25f) 
+        if (porcentaje <= 0.25f)
         {
             ColorUtility.TryParseHtmlString("#F7000A", out colorFondo);
             megafonoImg.sprite = iconoSinBateria;
-        } 
-        else 
+        }
+        else
         {
             ColorUtility.TryParseHtmlString("#4EF700", out colorFondo);
             megafonoImg.sprite = iconoBateria;
@@ -131,23 +123,58 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < bateriaRayas.Length; i++)
         {
-            if (i < rayas) 
+            if (i < rayas)
             {
                 bateriaRayas[i].SetActive(true);
 
-                if (rayas <= 2) 
+                if (rayas <= 2)
                     bateriaRayas[i].GetComponent<Image>().color = Color.red;
-                else 
+                else
                     bateriaRayas[i].GetComponent<Image>().color = Color.black;
-            } 
-            else 
+            }
+            else
             {
                 bateriaRayas[i].SetActive(false);
             }
         }
     }
 
-    //Reproducir cinematica inicial
+    // ─── Llave ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Llamado por KeyPickup cuando el jugador recoge la llave.
+    /// </summary>
+    public void RecogerLlave()
+    {
+        tieneLlave = true;
+
+        // Mostrar icono en el HUD
+        if (iconoLlaveHUD != null)
+            iconoLlaveHUD.SetActive(true);
+
+        // Mostrar subtítulo o mensaje
+        if (!string.IsNullOrEmpty(mensajeLlaveRecogida))
+            ReproducirVoz("", mensajeLlaveRecogida, 3f);
+
+        Debug.Log("[GameManager] Llave recogida.");
+    }
+
+    /// <summary>
+    /// Llamado por KeyDoor (o cualquier puerta) para gastar la llave al usarla.
+    /// Si quieres que la llave sea reutilizable, NO llames a este método.
+    /// </summary>
+    public void UsarLlave()
+    {
+        tieneLlave = false;
+
+        if (iconoLlaveHUD != null)
+            iconoLlaveHUD.SetActive(false);
+
+        Debug.Log("[GameManager] Llave usada.");
+    }
+
+    // ─── Otros ───────────────────────────────────────────────────────────────
+
     public void ReproducirTimelineInicial()
     {
         timelineInicial.Play();
@@ -157,15 +184,13 @@ public class GameManager : MonoBehaviour
     {
         textoPapel.text = texto;
         canvasPapel.SetActive(true);
-        leyendoPapel = true;
-        Time.timeScale = 0f; 
+        Time.timeScale = 0f;
     }
 
     public void CerrarPapel()
     {
         canvasPapel.SetActive(false);
-        leyendoPapel = false;
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
     }
 
     public void MostrarSubtitulo(string texto)
@@ -188,7 +213,7 @@ public class GameManager : MonoBehaviour
 
         if (subtitulo != "")
         {
-            StartCoroutine(MostrarSubtituloCoroutine(subtitulo, duracion));   
+            StartCoroutine(MostrarSubtituloCoroutine(subtitulo, duracion));
         }
     }
 

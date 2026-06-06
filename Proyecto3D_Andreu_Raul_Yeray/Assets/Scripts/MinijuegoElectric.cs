@@ -46,7 +46,7 @@ public class MinijuegoElectric : MonoBehaviour
             //guardamos el progreso llamando al script de progress manager
             ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
             puertaAnim.SetTrigger("Abrir");
-            GameManager.instance.ReproducirVoz("Subtitulo1", "S'ha obert una porta, hauria d'anar a mira", 2f);
+            GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
             TerminarJuego();
             //Activar electricidad
         } else {

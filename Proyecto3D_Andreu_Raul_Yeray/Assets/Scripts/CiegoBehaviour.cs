@@ -41,6 +41,7 @@ public class CiegoBehaviour : MonoBehaviour
 
     public ParticleSystem stunEffect;
     public ParticleSystem attackEffect;
+    public GameObject canvasAlerta;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -51,6 +52,7 @@ public class CiegoBehaviour : MonoBehaviour
         patrullajeScript = GetComponent<CiegoPatrol>();
         stunEffect.Stop();
         attackEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        canvasAlerta.SetActive(false);
     }
 
     // Update is called once per frame
@@ -156,6 +158,7 @@ public class CiegoBehaviour : MonoBehaviour
         if (!investigando)
         {
             AudioManager.Instance.PlaySFX("CiegoAlerta");
+            StartCoroutine(MostrarExclamacion());
         }
 
         sonidos.Clear();
@@ -164,6 +167,15 @@ public class CiegoBehaviour : MonoBehaviour
         sonidoDetectado = true;
         investigando = true;
         investigarTimer = 10f;
+    }
+
+    IEnumerator MostrarExclamacion()
+    {
+        canvasAlerta.SetActive(true);
+
+        yield return new WaitForSeconds(1.5f);
+
+        canvasAlerta.SetActive(false);
     }
 
     public void PerseguirSonido()
@@ -245,8 +257,7 @@ public class CiegoBehaviour : MonoBehaviour
                     //Atacar al jugador, funcion script jugador take damage
                     Debug.Log("Estoy recibiendo daño");
                     //instanciar player states machine para quitar daño al jugador
-                    PlayerStateMachine playerStateMachine = col.GetComponent<PlayerStateMachine>();
-                    playerStateMachine.TakeDamage(10f);
+                    PlayerStateMachine.Instance.TakeDamage(10f);
                 }
             }
         }

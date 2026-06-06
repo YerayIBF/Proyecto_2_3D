@@ -985,11 +985,14 @@ MonoBehaviour:
   iconoBateria: {fileID: 21300000, guid: cca7f3419c7ad4f44bc020d9f9078382, type: 3}
   iconoSinBateria: {fileID: 21300000, guid: c5bb6cd2eb5f80f40af7293ca33e0384, type: 3}
   zonaActivacion: 0
-  scriptJugador: {fileID: 0}
+  scriptJugador: {fileID: 1130712151}
   timelineInicial: {fileID: 0}
   textoTimelineInicial: {fileID: 0}
+  canvasPapel: {fileID: 0}
+  textoPapel: {fileID: 0}
   textoSubtitulo: {fileID: 0}
   canvasSubtitulo: {fileID: 0}
+  interactAction: {fileID: 0}
 --- !u!114 &653106876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2421,6 +2424,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0b41afd706b64214aa661c9327217c56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1130712151 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 458221277952903890, guid: 7d16331e3835a8a4e81d52c52acc27b9, type: 3}
+  m_PrefabInstance: {fileID: 3384446913707589876}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26e54e5a728a9234ab24fcf1460ed8a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1001 &1202189286
