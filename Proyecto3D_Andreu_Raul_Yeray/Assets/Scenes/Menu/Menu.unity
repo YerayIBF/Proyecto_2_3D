@@ -18743,9 +18743,9 @@ MonoBehaviour:
   mainMixer: {fileID: 24100000, guid: 451a7131610081a48ac3e9bd20da863b, type: 2}
   musicSounds:
   - soundName: Menu
-    clip: {fileID: 8300000, guid: cf4b90058015a614fb5f7210b3512b0d, type: 3}
+    clip: {fileID: 8300000, guid: 759bcd18e9e293a488d24e0ce57c767d, type: 3}
   - soundName: Game
-    clip: {fileID: 8300000, guid: b77618e8d65faab4881f2fdd1e258109, type: 3}
+    clip: {fileID: 8300000, guid: 53c66aaa3459c724189f75abf4682670, type: 3}
   sfxSounds:
   - soundName: CiegoPasos
     clip: {fileID: 8300000, guid: 213d7f0c31c6cb649845808d01e4e1c2, type: 3}
