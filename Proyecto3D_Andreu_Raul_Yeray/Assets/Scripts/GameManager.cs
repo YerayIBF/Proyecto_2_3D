@@ -288,13 +288,13 @@ public class GameManager : MonoBehaviour
         scriptJugador.enabled = true;
     }
 
-    public void PanelCompletado()
+    /*public void PanelCompletado()
     {
         _panelesCompletados++;
         Debug.Log($"Paneles: {_panelesCompletados}/{totalPaneles}");
 
         if (_panelesCompletados >= totalPaneles)
             puertaAnim.SetTrigger("Abrir");
-    }
+    }*/
 
 }

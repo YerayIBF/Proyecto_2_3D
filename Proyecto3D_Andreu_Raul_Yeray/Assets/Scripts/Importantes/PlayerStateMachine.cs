@@ -20,6 +20,12 @@ public class PlayerStateMachine : MonoBehaviour
         AimingFlashlight,
         AimingMegaphone,
         HoldingObject,
+        Picking,
+        Throwing,
+        ThrowingCrouched,
+        Reloading,
+        ReloadingCrouched,
+        TakingDamage,
         Hiding,
         Dead
     }
@@ -441,6 +447,56 @@ public class PlayerStateMachine : MonoBehaviour
 
         OnPlayerDied?.Invoke();
         Debug.Log("[PlayerState] MUERTO");
+    }
+
+    /// <summary>
+    /// Respawn del jugador en la posición/rotación dadas. Restaura vida, stamina,
+    /// estado, ragdoll y animator. NO toca el resto del nivel.
+    /// </summary>
+    public void Respawn(Vector3 spawnPosition, Quaternion spawnRotation)
+    {
+        Debug.Log("[PlayerState] Respawn...");
+
+        // Restaurar vida y stamina
+        currentHealth = maxHealth;
+        currentStamina = maxStamina;
+        _staminaExhausted = false;
+        _lastDamageTime = -999f;
+
+        // Quitar animación de muerte
+        if (playerAnimator != null)
+        {
+            playerAnimator.SetBool(HashIsDead, false);
+            playerAnimator.enabled = true;
+        }
+
+        // Desactivar ragdoll si está activo
+        PlayerRagdoll ragdoll = GetComponent<PlayerRagdoll>();
+        if (ragdoll != null) ragdoll.DeactivateRagdoll();
+
+        // Reposicionar al jugador
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+            transform.position = spawnPosition;
+            transform.rotation = spawnRotation;
+            characterController.enabled = true;
+        }
+        else
+        {
+            transform.position = spawnPosition;
+            transform.rotation = spawnRotation;
+        }
+
+        // Reactivar control
+        if (tpController != null) tpController.enabled = true;
+
+        // Volver al estado Idle
+        ChangeState(PlayerState.Idle);
+
+        // Notificar al HUD
+        OnHealthChanged?.Invoke(1f);
+        OnStaminaChanged?.Invoke(1f);
     }
 
     // ─── Cambio de estado ────────────────────────────────────────────────────
