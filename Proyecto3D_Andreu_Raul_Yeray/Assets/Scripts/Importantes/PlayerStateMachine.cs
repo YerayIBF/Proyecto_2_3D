@@ -91,6 +91,12 @@ public class PlayerStateMachine : MonoBehaviour
     private bool _isCrouched = false;
     public bool IsCrouched => _isCrouched;
 
+    // ─── Estados temporales (animaciones de duración fija) ───────────────────
+
+    private PlayerState _temporaryState = PlayerState.Idle;
+    private float _temporaryStateEndTime = -1f;
+    private bool _inTemporaryState = false;
+
     // ─── Eventos ─────────────────────────────────────────────────────────────
 
     public System.Action<PlayerState> OnStateChanged;
@@ -231,6 +237,21 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void EvaluateState()
     {
+        // Si estamos en un estado temporal (animación de coger/lanzar/recargar/recibir golpe), mantenerlo hasta que termine
+        if (_inTemporaryState)
+        {
+            if (Time.time >= _temporaryStateEndTime)
+            {
+                _inTemporaryState = false;
+                // Continúa con la evaluación normal
+            }
+            else
+            {
+                ChangeState(_temporaryState);
+                return;
+            }
+        }
+
         if (lockerSystem != null && lockerSystem.IsHiding)
         {
             ChangeState(PlayerState.Hiding);
@@ -264,6 +285,28 @@ public class PlayerStateMachine : MonoBehaviour
             else
                 ChangeState(PlayerState.Idle);
         }
+    }
+
+    /// <summary>
+    /// Activa un estado temporal que durará 'duration' segundos.
+    /// Se usa para animaciones de coger, lanzar, recargar, recibir golpe.
+    /// Tras la duración, vuelve a la evaluación normal.
+    /// </summary>
+    public void EnterTemporaryState(PlayerState state, float duration)
+    {
+        if (CurrentState == PlayerState.Dead) return;
+
+        _temporaryState = state;
+        _temporaryStateEndTime = Time.time + duration;
+        _inTemporaryState = true;
+        ChangeState(state);
+    }
+
+    /// <summary>Sale del estado temporal antes de tiempo si es necesario.</summary>
+    public void ExitTemporaryState()
+    {
+        _inTemporaryState = false;
+        _temporaryStateEndTime = -1f;
     }
 
     private void ApplyStateRules()
@@ -358,7 +401,11 @@ public class PlayerStateMachine : MonoBehaviour
 
         // Animación de daño (solo si no muere)
         if (currentHealth > 0f && playerAnimator != null)
+        {
             playerAnimator.SetTrigger(HashTakeDamage);
+            // Activar el estado TakingDamage durante la animación
+            EnterTemporaryState(PlayerState.TakingDamage, 0.5f);
+        }
 
         if (currentHealth <= 0f)
             Die();
@@ -451,7 +498,7 @@ public class PlayerStateMachine : MonoBehaviour
 
     /// <summary>
     /// Respawn del jugador en la posición/rotación dadas. Restaura vida, stamina,
-    /// estado, ragdoll y animator. NO toca el resto del nivel.
+    /// estado, ragdoll, cámara y animator. NO toca el resto del nivel.
     /// </summary>
     public void Respawn(Vector3 spawnPosition, Quaternion spawnRotation)
     {
@@ -463,6 +510,9 @@ public class PlayerStateMachine : MonoBehaviour
         _staminaExhausted = false;
         _lastDamageTime = -999f;
 
+        // Salir de estado temporal por si lo había
+        _inTemporaryState = false;
+
         // Quitar animación de muerte
         if (playerAnimator != null)
         {
@@ -473,6 +523,10 @@ public class PlayerStateMachine : MonoBehaviour
         // Desactivar ragdoll si está activo
         PlayerRagdoll ragdoll = GetComponent<PlayerRagdoll>();
         if (ragdoll != null) ragdoll.DeactivateRagdoll();
+
+        // Reset de la cámara de muerte
+        DeathCamera deathCam = FindFirstObjectByType<DeathCamera>();
+        if (deathCam != null) deathCam.ResetCamera();
 
         // Reposicionar al jugador
         if (characterController != null)
