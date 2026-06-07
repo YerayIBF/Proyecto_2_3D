@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.InputSystem;
 
 public class MinijuegoElectric : MonoBehaviour
 {
@@ -19,7 +20,34 @@ public class MinijuegoElectric : MonoBehaviour
     public Transform puertaIzquierda;
     public Transform puertaDerecha;
     public float velocidadApertura = 2f;
+    public InputActionReference MinigameAction;
 
+
+    void OnEnable()
+    {
+        if (MinigameAction != null)
+        {
+            MinigameAction.action.Enable();
+            MinigameAction.action.performed += OnMinigameGreen;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (MinigameAction != null)
+        {
+            MinigameAction.action.performed -= OnMinigameGreen;
+            MinigameAction.action.Disable();
+        }
+    }
+
+    private void OnMinigameGreen(InputAction.CallbackContext context)
+    {
+        if (juegoActivo)
+        {
+            ComprobarExito();
+        }
+    }
     void Start()
     {
         //Si el puzzle ya ha sido completado antes y se ha guardado el progreso se abre la puerta al iniciar

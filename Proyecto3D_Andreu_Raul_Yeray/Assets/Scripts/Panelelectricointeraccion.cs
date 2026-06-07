@@ -102,7 +102,7 @@ public class PanelElectricoInteraccion : MonoBehaviour
     public void MinijuegoCompletado()
     {
         CerrarMinijuego();
-        GameManager.instance.PanelCompletado();
+        //GameManager.instance.PanelCompletado();
     }
 
     private void OnTriggerEnter(Collider other)
