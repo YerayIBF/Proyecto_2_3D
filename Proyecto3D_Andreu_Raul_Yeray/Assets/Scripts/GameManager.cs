@@ -6,6 +6,7 @@ using StarterAssets;
 using TMPro;
 using System.Collections;
 using UnityEngine.InputSystem;
+using Unity.Cinemachine; 
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -25,6 +26,7 @@ public class GameManager : MonoBehaviour
 
     public PlayableDirector timelineInicial;
     public TextMeshProUGUI textoTimelineInicial;
+    public PlayableDirector timelineEnemigo;
 
     public GameObject canvasPapel;
     public TextMeshProUGUI textoPapel;
@@ -38,6 +40,13 @@ public class GameManager : MonoBehaviour
     public GameObject iconoLlaveHUD;
     [Tooltip("Texto que aparece al recoger la llave (opcional)")]
     public string mensajeLlaveRecogida = "Has recogido la llave";
+    public Transform playerCameraRoot;
+    public CinemachineCamera camaraVirtualSpline; 
+    public float duracionCinematica = 5f; 
+
+    private CinemachineSplineDolly splineDolly;
+    private Coroutine cinematicaCoroutine;
+    //public GameObject camaraVirtualJugador; 
 
     //public InputActionReference interactAction;
 
@@ -54,6 +63,12 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+        }
+
+        if (camaraVirtualSpline != null)
+        {
+            splineDolly = camaraVirtualSpline.GetComponent<CinemachineSplineDolly>();
+            camaraVirtualSpline.Priority = 0; 
         }
     }
 
@@ -223,4 +238,49 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(duracion);
         OcultarSubtitulo();
     }
+
+    public void ActivarTimelineLlave()
+    {
+        //camaraVirtualJugador.SetActive(false);
+        camaraVirtualSpline.Priority = 100;
+
+        scriptJugador.enabled = false;
+       if (cinematicaCoroutine != null) StopCoroutine(cinematicaCoroutine);
+        cinematicaCoroutine = StartCoroutine(RecorrerSpline());
+    }
+
+    /*private void OnTimelineFinalizado(PlayableDirector director)
+    {
+        scriptJugador.enabled = true;
+    }*/
+
+    private IEnumerator RecorrerSpline()
+    {
+        float tiempoPasado = 0f;
+
+        while (tiempoPasado < duracionCinematica)
+        {
+            tiempoPasado += Time.deltaTime;
+            
+            float progreso = tiempoPasado / duracionCinematica;
+            
+            splineDolly.CameraPosition = progreso;
+
+            yield return null; 
+        }
+
+        splineDolly.CameraPosition = 1f;
+
+        FinalizarCinematica();
+    }
+
+    private void FinalizarCinematica()
+    {
+        camaraVirtualSpline.Priority = 0;
+
+        splineDolly.CameraPosition = 0f;
+
+        scriptJugador.enabled = true;
+    }
+
 }
