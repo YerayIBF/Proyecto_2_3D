@@ -178,7 +178,7 @@ namespace StarterAssets
             {
                 _input.interact = false;
 
-                if (!cercaDePila && !GameManager.instance.zonaActivacion)
+                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
                 {
                     _animator.SetTrigger("Coger");
                 }else if (cercaDePila)
@@ -189,6 +189,9 @@ namespace StarterAssets
                 }else if (GameManager.instance.zonaActivacion)
                 {
                     GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                }else if (GameManager.instance.zonaActivacion2)
+                {
+                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuegoAnimator();
                 }
             }
 
