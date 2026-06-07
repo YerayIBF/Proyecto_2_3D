@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections;
+using UnityEngine.InputSystem;
 
 public class MinijuegoElectric : MonoBehaviour
 {
@@ -14,14 +16,52 @@ public class MinijuegoElectric : MonoBehaviour
 
     private float progreso = 0f;
     private bool juegoActivo = false;
-    public Animator puertaAnim;
+    //public Animator puertaAnim;
+    public Transform puertaIzquierda;
+    public Transform puertaDerecha;
+    public float velocidadApertura = 2f;
+    public InputActionReference MinigameAction;
 
+
+    void OnEnable()
+    {
+        if (MinigameAction != null)
+        {
+            MinigameAction.action.Enable();
+            MinigameAction.action.performed += OnMinigameGreen;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (MinigameAction != null)
+        {
+            MinigameAction.action.performed -= OnMinigameGreen;
+            MinigameAction.action.Disable();
+        }
+    }
+
+    private void OnMinigameGreen(InputAction.CallbackContext context)
+    {
+        if (juegoActivo)
+        {
+            ComprobarExito();
+        }
+    }
     void Start()
     {
         //Si el puzzle ya ha sido completado antes y se ha guardado el progreso se abre la puerta al iniciar
         if (ProgressManager.instance.PuzzleCompletado(puzzle1))
         {
-            puertaAnim.SetTrigger("Abrir");
+            //puertaAnim.SetTrigger("Abrir");
+            if (puertaIzquierda != null)
+            {
+                puertaIzquierda.rotation *= Quaternion.Euler(0, -90f, 0);
+            }
+            if (puertaDerecha != null)
+            {
+                puertaDerecha.rotation *= Quaternion.Euler(0, 90f, 0);
+            }
         }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -45,7 +85,8 @@ public class MinijuegoElectric : MonoBehaviour
             Debug.Log("Correcto");
             //guardamos el progreso llamando al script de progress manager
             ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
-            puertaAnim.SetTrigger("Abrir");
+            //puertaAnim.SetTrigger("Abrir");
+            StartCoroutine(AbrirPuertas());
             GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
             TerminarJuego();
             //Activar electricidad
@@ -83,5 +124,24 @@ public class MinijuegoElectric : MonoBehaviour
         float posX = (centroProgreso * anchoTotal) - (anchoTotal / 2f);
 
         imagenZonaVerde.anchoredPosition = new Vector2(posX, 0);
+    }
+
+    IEnumerator AbrirPuertas()
+    {
+       //Rotar las puertas para que se abran y el jugador pueda pasar
+        Quaternion rotObjetivoIzq = puertaIzquierda.rotation * Quaternion.Euler(0, -90f, 0);
+        Quaternion rotObjetivoDer = puertaDerecha.rotation * Quaternion.Euler(0, 90f, 0);
+
+        while (Quaternion.Angle(puertaIzquierda.rotation, rotObjetivoIzq) > 0.1f)
+        {
+            puertaIzquierda.rotation = Quaternion.Lerp(
+                puertaIzquierda.rotation, rotObjetivoIzq, Time.deltaTime * velocidadApertura);
+            puertaDerecha.rotation = Quaternion.Lerp(
+                puertaDerecha.rotation, rotObjetivoDer, Time.deltaTime * velocidadApertura);
+            yield return null;
+        }
+
+        puertaIzquierda.rotation = rotObjetivoIzq;
+        puertaDerecha.rotation = rotObjetivoDer;
     }
 }
