@@ -87,7 +87,7 @@ public class MinijuegoElectric : MonoBehaviour
             ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
             //puertaAnim.SetTrigger("Abrir");
             StartCoroutine(AbrirPuertas());
-            GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
+            GameManager.instance.ReproducirVoz("Sembla que s'ha obert una porta, hauria d'anar a mirar", 2f);
             TerminarJuego();
             //Activar electricidad
         } else {
