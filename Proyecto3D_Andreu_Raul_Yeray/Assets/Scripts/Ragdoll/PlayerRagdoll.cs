@@ -43,10 +43,6 @@ public class PlayerRagdoll : MonoBehaviour
         TrySubscribe();
     }
 
-    /// <summary>
-    /// Suscribe el evento. Si el PlayerStateMachine no existe aún,
-    /// lo intenta en cada Update hasta conseguirlo.
-    /// </summary>
     private void TrySubscribe()
     {
         if (_subscribed) return;
@@ -65,7 +61,6 @@ public class PlayerRagdoll : MonoBehaviour
 
     private void Update()
     {
-        // Reintentar suscripción si falló en Start
         if (!_subscribed) TrySubscribe();
     }
 
@@ -114,6 +109,25 @@ public class PlayerRagdoll : MonoBehaviour
         }
 
         Debug.Log("[Ragdoll] Activado completamente.");
+    }
+
+    /// <summary>
+    /// Desactiva el ragdoll y devuelve el control al Animator. Llamado al respawnear.
+    /// </summary>
+    public void DeactivateRagdoll()
+    {
+        if (!_ragdollActive) return;
+        _ragdollActive = false;
+
+        SetRagdollActive(false);
+
+        if (playerAnimator != null)
+            playerAnimator.enabled = true;
+
+        if (characterController != null)
+            characterController.enabled = true;
+
+        Debug.Log("[Ragdoll] Desactivado (respawn).");
     }
 
     private void SetRagdollActive(bool active)
