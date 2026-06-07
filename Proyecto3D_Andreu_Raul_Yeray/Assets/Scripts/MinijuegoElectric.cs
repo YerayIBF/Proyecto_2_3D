@@ -98,6 +98,17 @@ public class MinijuegoElectric : MonoBehaviour
     }
 
     public void IniciarJuego() {
+        //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
+        float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
+        zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
+        zonaSeguraFin = zonaSeguraInicio + anchoZona;        
+
+        if (zonaSeguraFin > 1f)
+        {
+            zonaSeguraFin = 1f;
+            zonaSeguraInicio = zonaSeguraFin - anchoZona;
+        }
+
         juegoActivo = true;
         panelMinijuego.SetActive(true);
         progreso = 0;
