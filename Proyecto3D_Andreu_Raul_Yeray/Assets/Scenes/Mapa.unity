@@ -59510,6 +59510,32 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2807056271499772748, guid: 728952ca14c2ece4eb2d302a93ecec02, type: 3}
   m_PrefabInstance: {fileID: 600691323}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &601249187 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2769520740847521404, guid: c55344dc699981c49a0ce330225b292f, type: 3}
+  m_PrefabInstance: {fileID: 733687737}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &601249192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601249187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe878c96d4aad6045b369ccd0a82e10f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactRange: 2
+  interactKey: 101
+  openAngleY: 90
+  openDuration: 1.5
+  consumirLlave: 0
+  openSound: {fileID: 0}
+  lockedSound: {fileID: 0}
+  pickupIcon: {fileID: 0}
+  _opened: 0
 --- !u!1001 &602078170
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -71104,7 +71130,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2769520740847521404, guid: c55344dc699981c49a0ce330225b292f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 601249192}
   m_SourcePrefab: {fileID: 100100000, guid: c55344dc699981c49a0ce330225b292f, type: 3}
 --- !u!4 &733809945 stripped
 Transform:
@@ -72351,7 +72380,7 @@ MonoBehaviour:
   interactKey: 101
   openAngleY: -90
   openDuration: 1.5
-  consumirLlave: 1
+  consumirLlave: 0
   openSound: {fileID: 0}
   lockedSound: {fileID: 0}
   pickupIcon: {fileID: 0}
@@ -177351,7 +177380,8 @@ PrefabInstance:
       value: SM_Heavy_Door_A
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2769520740847521404, guid: c55344dc699981c49a0ce330225b292f, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c55344dc699981c49a0ce330225b292f, type: 3}
@@ -185259,7 +185289,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1879236194
 Transform:
   m_ObjectHideFlags: 0
