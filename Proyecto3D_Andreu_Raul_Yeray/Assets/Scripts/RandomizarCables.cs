@@ -1,21 +1,29 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class RandomizarCables : MonoBehaviour
 {
     private void Awake()
     {
-        for (int i = 0; i < transform.childCount; i++)
+        int count = transform.childCount;
+
+        // Intercambia solo las posiciones LOCALES en Y (el color/cable sube o baja)
+        for (int i = 0; i < count; i++)
         {
-            GameObject cableActual = transform.GetChild(i).gameObject;
-            GameObject otroCable = transform.GetChild(Random.Range(0, transform.childCount)).gameObject;
+            int j = Random.Range(0, count);
 
-            Vector2 nuevaPosCableActual = otroCable.transform.position;
-            Vector2 nuevaPosOtroCable = cableActual.transform.position;
+            Transform a = transform.GetChild(i);
+            Transform b = transform.GetChild(j);
 
-            cableActual.transform.position = nuevaPosCableActual;
-            otroCable.transform.position = nuevaPosOtroCable;
+            Vector3 posA = a.localPosition;
+            Vector3 posB = b.localPosition;
+
+            // Solo intercambia la Y para mantener X y Z intactas
+            float tempY = posA.y;
+            posA.y = posB.y;
+            posB.y = tempY;
+
+            a.localPosition = posA;
+            b.localPosition = posB;
         }
     }
 }
