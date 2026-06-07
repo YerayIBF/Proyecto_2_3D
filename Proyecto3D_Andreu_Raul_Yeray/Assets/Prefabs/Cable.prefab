@@ -114,7 +114,7 @@ Transform:
   m_GameObject: {fileID: 3140218071868314082}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.824, y: 0, z: 0}
+  m_LocalPosition: {x: 0.589, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -156,7 +156,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.053485125, y: 0}
+  m_Offset: {x: -0.13707954, y: -0.0075504035}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -166,7 +166,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.66126126, y: 0.37600756}
+  m_Size: {x: 0.6069037, y: 0.33070508}
   m_EdgeRadius: 0
 --- !u!114 &9028092866366964424
 MonoBehaviour:
@@ -182,6 +182,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   finalCable: {fileID: 6007051555380473705}
   luz: {fileID: 4746593390920360361}
+  esPuntoAnclaje: 0
+  colorOriginal: {r: 0, g: 0, b: 0, a: 0}
+  velocidadMando: 3
+  tiempoAntesDeConectar: 0.4
 --- !u!1 &4746593390920360361
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,7 +299,7 @@ Transform:
   m_GameObject: {fileID: 6078279532793044809}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.089000076, y: 0, z: 0}
+  m_LocalPosition: {x: -0.1409, y: -0.0078, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -469,8 +473,8 @@ Transform:
   m_GameObject: {fileID: 6598143068617979488}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.209, y: -0.007, z: 0}
-  m_LocalScale: {x: 0.33, y: 1, z: 1}
+  m_LocalPosition: {x: -0.049, y: -0.007, z: 0}
+  m_LocalScale: {x: 0.51757973, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6833356181085047412}

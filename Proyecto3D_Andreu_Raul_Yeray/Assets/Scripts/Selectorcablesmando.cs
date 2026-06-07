@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class SelectorCablesMando : MonoBehaviour
 {
@@ -20,13 +21,20 @@ public class SelectorCablesMando : MonoBehaviour
         Instance = this;
     }
 
-    void Start()
+    void OnEnable()
+    {
+        // Cada vez que se activa el minijuego, reconstruye la lista y selecciona el primero
+        ConstruirLista();
+        _indiceActual = 0;
+        _cableArrastrando = null;
+        SeleccionarCableActual();
+    }
+
+    void ConstruirLista()
     {
         cables = new Cable[cablesObj.Length];
         for (int i = 0; i < cablesObj.Length; i++)
-            cables[i] = cablesObj[i].GetComponentInChildren<Cable>();
-
-        SeleccionarCableActual();
+            cables[i] = cablesObj[i] != null ? cablesObj[i].GetComponentInChildren<Cable>() : null;
     }
 
     void Update()
@@ -34,16 +42,16 @@ public class SelectorCablesMando : MonoBehaviour
         if (_cooldownNavegacion > 0f) _cooldownNavegacion -= Time.deltaTime;
 
         if (_cableArrastrando == null)
-            NavegerCables();
+            NavegarCables();
         else
             GestionarArrastre();
     }
 
-    void NavegerCables()
+    void NavegarCables()
     {
         if (cables == null || cables.Length == 0) return;
 
-        float v = Input.GetAxisRaw("Vertical");
+        float v = LeerVertical();
 
         if (_cooldownNavegacion <= 0f)
         {
@@ -59,7 +67,7 @@ public class SelectorCablesMando : MonoBehaviour
             }
         }
 
-        if (Input.GetButtonDown("Submit"))
+        if (BotonAccionPulsado())
         {
             Cable cable = cables[_indiceActual];
             if (cable != null && !cable.Conectado)
@@ -73,7 +81,7 @@ public class SelectorCablesMando : MonoBehaviour
 
     void GestionarArrastre()
     {
-        if (Input.GetButtonDown("Submit"))
+        if (BotonAccionPulsado())
         {
             _cableArrastrando.SoltarMando();
             _cableArrastrando = null;
@@ -87,15 +95,23 @@ public class SelectorCablesMando : MonoBehaviour
         StartCoroutine(LimpiarYSeleccionar());
     }
 
+    // Llamado al cerrar el panel — suelta cualquier cable agarrado
+    public void CancelarTodo()
+    {
+        if (_cableArrastrando != null)
+        {
+            _cableArrastrando.SoltarMando();
+            _cableArrastrando = null;
+        }
+    }
+
     private System.Collections.IEnumerator LimpiarYSeleccionar()
     {
         yield return null;
 
         for (int i = 0; i < cables.Length; i++)
-        {
             if (cables[i] != null && cables[i].Conectado)
                 cables[i] = null;
-        }
 
         SeleccionarCableActual();
     }
@@ -131,5 +147,35 @@ public class SelectorCablesMando : MonoBehaviour
             if (cables[i] == null) continue;
             cables[i].finalCable.color = cables[i].colorOriginal;
         }
+    }
+
+    // ─── Input del nuevo Input System ──────────────────────────────────────────
+
+    float LeerVertical()
+    {
+        float v = 0f;
+        if (Gamepad.current != null)
+        {
+            v = Gamepad.current.leftStick.ReadValue().y;
+            // También el d-pad
+            if (Gamepad.current.dpad.up.isPressed)   v =  1;
+            if (Gamepad.current.dpad.down.isPressed) v = -1;
+        }
+        if (Keyboard.current != null)
+        {
+            if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed)   v =  1;
+            if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) v = -1;
+        }
+        return v;
+    }
+
+    bool BotonAccionPulsado()
+    {
+        bool pulsado = false;
+        if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame) // cuadrado PS / X Xbox
+            pulsado = true;
+        if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
+            pulsado = true;
+        return pulsado;
     }
 }

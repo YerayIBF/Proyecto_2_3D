@@ -81,6 +81,9 @@ namespace StarterAssets
         [Tooltip("If false, the character won't rotate towards movement (used while aiming)")]
         public bool RotateTowardsMovement = true;
 
+        //juego de cables
+        public bool bloqueado = false;
+
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -169,6 +172,8 @@ namespace StarterAssets
 
         private void Update()
         {
+            if (bloqueado) return;
+
             if (_input.interact)
             {
                 _input.interact = false;
@@ -202,6 +207,7 @@ namespace StarterAssets
 
         private void LateUpdate()
         {
+            if (bloqueado) return;
             CameraRotation();
         }
 
