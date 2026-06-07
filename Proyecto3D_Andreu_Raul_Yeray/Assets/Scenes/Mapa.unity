@@ -199574,8 +199574,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Parece que unas rocas han cortado el camino, debo encontrar una salida
-    lo antes posible
+  m_text: Sembla que unes pedres han tallat el cami, haig de trobar una sortida el
+    mes aviat posible
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 2520121f54745904e8bd9658fd5900c7, type: 2}
   m_sharedMaterial: {fileID: -4169294629044903310, guid: 2520121f54745904e8bd9658fd5900c7, type: 2}
