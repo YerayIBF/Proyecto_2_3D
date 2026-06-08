@@ -12,10 +12,12 @@ using UnityEngine.Playables;
 /// </summary>
 public class KeyPickup : MonoBehaviour
 {
-
     [Header("Referencias")]
     [Tooltip("Secuencia del enemigo que se activará al recoger la llave (opcional)")]
     public EnemyIntroSequence enemySequence;
+
+    [Tooltip("GameObject que engloba todos los paneles de cables (se activa al coger la llave)")]
+    public GameObject paneles;
 
     /// <summary>
     /// Llamado por CogerObjeto.AnimatorCogerObjeto() cuando se recoge la llave.
@@ -27,7 +29,10 @@ public class KeyPickup : MonoBehaviour
         if (enemySequence != null)
             enemySequence.StartSequence();
 
-        //timelineEnemigo.Play();
+        // Activa todos los paneles de cables
+        if (paneles != null)
+            paneles.SetActive(true);
+
         GameManager.instance.ActivarTimelineLlave();
     }
 }
