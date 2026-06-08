@@ -22,6 +22,8 @@ public class GameManager : MonoBehaviour
     public Sprite iconoBateria;
     public Sprite iconoSinBateria;
     public bool zonaActivacion = false;
+    
+    public bool zonaActivacion2 = false;
     public ThirdPersonController scriptJugador;
 
     public PlayableDirector timelineInicial;
