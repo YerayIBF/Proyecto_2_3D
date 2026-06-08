@@ -189,6 +189,9 @@ namespace StarterAssets
                 else if (GameManager.instance.zonaActivacion)
                 {
                     GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                }else if (GameManager.instance.zonaActivacion2)
+                {
+                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuegoAnimator();
                 }
                 else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
                 {

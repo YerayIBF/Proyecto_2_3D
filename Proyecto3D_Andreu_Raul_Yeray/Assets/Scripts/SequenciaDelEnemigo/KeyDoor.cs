@@ -75,7 +75,7 @@ public class KeyDoor : MonoBehaviour
 
             // Mostrar mensaje en el HUD
             if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("", "Necesitas una llave", 2f);
+                GameManager.instance.ReproducirVoz("Sembla que necesito una clau", 2f);
         }
     }
 

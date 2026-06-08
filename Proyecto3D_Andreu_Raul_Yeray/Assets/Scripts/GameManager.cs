@@ -41,7 +41,7 @@ public class GameManager : MonoBehaviour
     [Tooltip("Icono de la llave en el HUD que se activa cuando la recoges")]
     public GameObject iconoLlaveHUD;
     [Tooltip("Texto que aparece al recoger la llave (opcional)")]
-    public string mensajeLlaveRecogida = "Has recogido la llave";
+    public string mensajeLlaveRecogida = "He agafat una clau";
     public Transform playerCameraRoot;
     public CinemachineCamera camaraVirtualSpline; 
     public float duracionCinematica = 5f; 
@@ -180,7 +180,7 @@ public class GameManager : MonoBehaviour
 
         // Mostrar subtítulo o mensaje
         if (!string.IsNullOrEmpty(mensajeLlaveRecogida))
-            ReproducirVoz("", mensajeLlaveRecogida, 3f);
+            ReproducirVoz(mensajeLlaveRecogida, 3f);
 
         Debug.Log("[GameManager] Llave recogida.");
     }
@@ -230,12 +230,8 @@ public class GameManager : MonoBehaviour
         canvasSubtitulo.SetActive(false);
     }
 
-    public void ReproducirVoz(string nombreAudio, string subtitulo, float duracion)
+    public void ReproducirVoz(string subtitulo, float duracion)
     {
-        if (nombreAudio != "")
-        {
-            AudioManager.Instance.PlaySFX(nombreAudio);
-        }
 
         if (subtitulo != "")
         {
