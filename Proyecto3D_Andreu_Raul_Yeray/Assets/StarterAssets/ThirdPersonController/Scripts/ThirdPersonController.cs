@@ -90,6 +90,7 @@ namespace StarterAssets
 
         // player
         private float cristalSonidoCooldown = 0f;
+       
         private float soundCooldown = 0f;
         public float soundCooldownTime = 0.5f; 
         private float _speed;
@@ -174,21 +175,33 @@ namespace StarterAssets
         {
             if (bloqueado) return;
 
-            if (_input.interact)
+          
+        if (_input.interact)
             {
                 _input.interact = false;
 
-                if (!cercaDePila && !GameManager.instance.zonaActivacion)
-                {
-                    _animator.SetTrigger("Coger");
-                }else if (cercaDePila)
+                if (cercaDePila)
                 {
                     pilaCercana.GetComponent<PilaMegafono>().Recargar();
                     Destroy(pilaCercana);
                     cercaDePila = false;
-                }else if (GameManager.instance.zonaActivacion)
+                }
+                else if (GameManager.instance.zonaActivacion)
                 {
                     GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                }
+                else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
+                {
+                    // Bloquear spam: solo si no estamos ya cogiendo algo
+                    bool yaEstaCogiendo = PlayerStateMachine.Instance != null
+                                    && PlayerStateMachine.Instance.CurrentState == PlayerStateMachine.PlayerState.Picking;
+
+                    if (!yaEstaCogiendo)
+                    {
+                        _animator.SetTrigger("Coger");
+                        PlayerStateMachine.Instance?.EnterTemporaryState(
+                            PlayerStateMachine.PlayerState.Picking, 1.2f);
+                    }
                 }
             }
 

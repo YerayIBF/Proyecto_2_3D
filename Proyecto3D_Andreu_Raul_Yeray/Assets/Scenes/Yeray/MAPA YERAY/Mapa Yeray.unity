@@ -6061,6 +6061,8 @@ MonoBehaviour:
   CameraAngleOverride: 0
   LockCameraPosition: 0
   RotateTowardsMovement: 1
+  bloqueado: 0
+  cogerCooldownTime: 1.2
   soundCooldownTime: 0.5
   puertaAnim: {fileID: 1881202550}
   cogerObjetoScript: {fileID: 2111777984}
@@ -7606,6 +7608,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2807056271499772748, guid: 728952ca14c2ece4eb2d302a93ecec02, type: 3}
   m_PrefabInstance: {fileID: 69180183}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &70806160
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 70806161}
+  m_Layer: 0
+  m_Name: SpawnPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &70806161
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70806160}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.25, y: 0.344, z: 14.74}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &71678268
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15107,7 +15140,10 @@ MonoBehaviour:
   velocidadAguja: 2
   zonaSeguraInicio: 0.7
   zonaSeguraFin: 0.8
-  puertaAnim: {fileID: 0}
+  puertaIzquierda: {fileID: 0}
+  puertaDerecha: {fileID: 0}
+  velocidadApertura: 2
+  MinigameAction: {fileID: 0}
 --- !u!4 &159925454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 599758391018583926, guid: 727f4eaf23c322e4791914b86951e959, type: 3}
@@ -20488,7 +20524,7 @@ PrefabInstance:
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: pickupIcon
       value: 
-      objectReference: {fileID: 409762525}
+      objectReference: {fileID: 0}
     - target: {fileID: 1337531095674303311, guid: 59d2cfcb1a822ac4180cf3ede7f55196, type: 3}
       propertyPath: aimParticles
       value: 
@@ -25587,6 +25623,8 @@ MonoBehaviour:
   retryButton: {fileID: 2046311925}
   menuButton: {fileID: 970961763}
   deathUIGroup: {fileID: 700967841}
+  spawnPoint: {fileID: 0}
+  autoUseInitialPosition: 1
   menuSceneName: Menu
   fadeDuration: 2.5
   showUIDelay: 0.5
@@ -102001,7 +102039,10 @@ MonoBehaviour:
   velocidadAguja: 1.5
   zonaSeguraInicio: 0.7
   zonaSeguraFin: 0.8
-  puertaAnim: {fileID: 1881202550}
+  puertaIzquierda: {fileID: 0}
+  puertaDerecha: {fileID: 0}
+  velocidadApertura: 2
+  MinigameAction: {fileID: 0}
 --- !u!114 &1056157514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166163,8 +166204,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 2520121f54745904e8bd9658fd5900c7, type: 2}
-  m_sharedMaterial: {fileID: -4169294629044903310, guid: 2520121f54745904e8bd9658fd5900c7, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -209425,3 +209466,4 @@ SceneRoots:
   - {fileID: 503459267}
   - {fileID: 389443066}
   - {fileID: 1961114765}
+  - {fileID: 70806161}

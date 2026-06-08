@@ -114,14 +114,12 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Update()
     {
-
-        
         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
-        return;
+            return;
 
         if (!_hasFlashlight)
         {
-            HandlePickup();
+           
             return;
         }
 
@@ -499,8 +497,16 @@ public void TriggerReloadAnimation()
     bool isCrouched = PlayerStateMachine.Instance.IsCrouched;
 
     if (isCrouched)
+    {
         anim.SetTrigger("ReloadCrouched");
+        PlayerStateMachine.Instance.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.ReloadingCrouched, 1.5f);
+    }
     else
+    {
         anim.SetTrigger("Reload");
+        PlayerStateMachine.Instance.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.Reloading, 1.5f);
+    }
 }
 }
