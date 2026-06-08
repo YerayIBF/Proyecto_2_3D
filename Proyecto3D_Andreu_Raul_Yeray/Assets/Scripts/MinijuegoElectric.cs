@@ -23,6 +23,10 @@ public class MinijuegoElectric : MonoBehaviour
     public InputActionReference MinigameAction;
     public bool conAnimator = false;
 
+    [Header("Audio")]
+    public AudioSource openSound;
+    public AudioSource openSoundGarage;
+
 
     void OnEnable()
     {
@@ -104,13 +108,16 @@ public class MinijuegoElectric : MonoBehaviour
             //guardamos el progreso llamando al script de progress manager
             if (conAnimator)
             {
+                if (openSoundGarage != null) openSoundGarage.Play();
                 puertaAnim.SetTrigger("Abrir");
             }
             else
             {
+                if (openSound != null) openSound.Play();
                 StartCoroutine(AbrirPuertas());
-                GameManager.instance.ReproducirVoz("Sembla que s'ha obert una porta, hauria d'anar a mirar", 2f);
+                GameManager.instance.ReproducirVoz("Sembla que s'ha obert una porta, hauria d'anar a mirar", 4f);
                 ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
+                
             }
             TerminarJuego();
             //Activar electricidad
