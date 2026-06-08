@@ -35,7 +35,7 @@ public class Cable : MonoBehaviour
         posicionLocalOriginal = transform.localPosition;
         rotacionLocalOriginal = transform.localRotation;
         tamañoOriginal        = finalCable.size;
-        tareaCables           = transform.root.gameObject.GetComponent<TareaCables>();
+        tareaCables           = GetComponentInParent<TareaCables>();
     }
 
     void Update()
@@ -71,7 +71,6 @@ public class Cable : MonoBehaviour
         transform.localPosition += new Vector3(mov.x, mov.y, 0) * Time.deltaTime * velocidadMando;
     }
 
-    // Lee el stick izquierdo del mando + teclado como fallback
     public static Vector2 LeerStick()
     {
         Vector2 mov = Vector2.zero;
@@ -79,7 +78,6 @@ public class Cable : MonoBehaviour
         if (Gamepad.current != null)
             mov = Gamepad.current.leftStick.ReadValue();
 
-        // Fallback teclado para testear
         if (Keyboard.current != null)
         {
             if (Keyboard.current.aKey.isPressed) mov.x = -1;
@@ -115,21 +113,22 @@ public class Cable : MonoBehaviour
         finalCable.color        = colorOriginal;
     }
 
+    // ─── Conexión con colliders 3D (funciona con cualquier rotación) ───────────
+
     private void ComprobarConexion()
     {
-        // Usa el collider real del cable (sin radio de ayuda)
-        Collider2D miCollider = GetComponent<Collider2D>();
+        BoxCollider miCollider = GetComponent<BoxCollider>();
         if (miCollider == null) return;
 
-        ContactFilter2D filtro = new ContactFilter2D();
-        filtro.useTriggers = true;
-        Collider2D[] resultados = new Collider2D[10];
-        int count = miCollider.Overlap(filtro, resultados);
+        // Centro y mitad del tamaño del collider en espacio mundo
+        Vector3 centro = transform.TransformPoint(miCollider.center);
+        Vector3 halfExtents = Vector3.Scale(miCollider.size, transform.lossyScale) * 0.5f;
 
-        for (int i = 0; i < count; i++)
+        Collider[] resultados = Physics.OverlapBox(centro, halfExtents, transform.rotation);
+
+        foreach (Collider col in resultados)
         {
-            Collider2D col = resultados[i];
-            if (col == null || col.gameObject == gameObject) continue;
+            if (col.gameObject == gameObject) continue;
 
             Cable otroCable = col.GetComponent<Cable>();
             if (otroCable == null || !otroCable.esPuntoAnclaje || otroCable.Conectado) continue;
@@ -141,8 +140,12 @@ public class Cable : MonoBehaviour
 
             Conectar();
             otroCable.Conectar();
-            tareaCables.conexionesActuales++;
-            tareaCables.ComprobarVictoria();
+
+            if (tareaCables != null)
+            {
+                tareaCables.conexionesActuales++;
+                tareaCables.ComprobarVictoria();
+            }
 
             if (SelectorCablesMando.Instance != null)
                 SelectorCablesMando.Instance.SiguienteCable();

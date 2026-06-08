@@ -48,6 +48,10 @@ public class GameManager : MonoBehaviour
     public int totalPaneles = 5;
     private int _panelesCompletados = 0;
     public Animator puertaAnim;
+    public CinemachineCamera camaraEvento;
+    public float duracionCamara = 3f;
+    public GameObject dialogo;
+
 
     private CinemachineSplineDolly splineDolly;
     private Coroutine cinematicaCoroutine;
@@ -288,13 +292,29 @@ public class GameManager : MonoBehaviour
         scriptJugador.enabled = true;
     }
 
-    /*public void PanelCompletado()
+    public void PanelCompletado()
     {
         _panelesCompletados++;
         Debug.Log($"Paneles: {_panelesCompletados}/{totalPaneles}");
 
         if (_panelesCompletados >= totalPaneles)
+        {
             puertaAnim.SetTrigger("Abrir");
-    }*/
+            StartCoroutine(MostrarCamaraEvento());
+            
+            if (dialogo != null)
+            dialogo.SetActive(false);
+        }
+    }
+
+    private System.Collections.IEnumerator MostrarCamaraEvento()
+    {
+        if (camaraEvento != null)
+        {
+            camaraEvento.Priority = 30;
+            yield return new WaitForSeconds(duracionCamara);
+            camaraEvento.Priority = 0;
+        }
+    }
 
 }
