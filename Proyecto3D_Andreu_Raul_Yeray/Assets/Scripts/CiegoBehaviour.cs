@@ -42,6 +42,8 @@ public class CiegoBehaviour : MonoBehaviour
     public ParticleSystem stunEffect;
     public ParticleSystem attackEffect;
     public GameObject canvasAlerta;
+    private float cooldownDeteccion = 0f;
+    public float tiempoEntreDetecciones = 1f;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -148,8 +150,14 @@ public class CiegoBehaviour : MonoBehaviour
         return sonidos.Count > 0;
     }
 
+    //Funcion para detectar el sonido que sera llamada desde el script de emitir sonido para informar al enemigo
     public void DetectarSonido(Vector3 posicionSonido)
     {
+        if (Time.time < cooldownDeteccion)
+        {
+            return;
+        }
+        cooldownDeteccion = Time.time + tiempoEntreDetecciones;
         /*if (sonidos.Count >= 3)
         {
             sonidos.RemoveAt(0);
@@ -178,10 +186,12 @@ public class CiegoBehaviour : MonoBehaviour
         canvasAlerta.SetActive(false);
     }
 
+
+    //Funcion para perseguir el sonido producido
     public void PerseguirSonido()
     {
         patrullar = false;
-        perseguir = true;
+        //perseguir = true;
 
         if (sonidos.Count == 0)
         {
@@ -190,22 +200,27 @@ public class CiegoBehaviour : MonoBehaviour
             return;
         }
 
-        Vector3 sonidoCercano = sonidos[0];
-        float minDistancia = float.MaxValue;
-
-        foreach (Vector3 sonido in sonidos)
+        if (!perseguir)
         {
-            float distancia = Vector3.Distance(transform.position, sonido);
-            if (distancia <= areaEscucha)
-            {
-                minDistancia = distancia;
-                sonidoCercano = sonido;
-            }
-        }
+            perseguir = true;
 
-        //agent.SetDestination(sonidoCercano);
-        patrullajeScript.ActivarPersecución(sonidoCercano);
-        animator.SetInteger("state", 2);
+            Vector3 sonidoCercano = sonidos[0];
+            float minDistancia = float.MaxValue;
+
+            foreach (Vector3 sonido in sonidos)
+            {
+                float distancia = Vector3.Distance(transform.position, sonido);
+                if (distancia <= areaEscucha)
+                {
+                    minDistancia = distancia;
+                    sonidoCercano = sonido;
+                }
+            }
+
+            //agent.SetDestination(sonidoCercano);
+            patrullajeScript.ActivarPersecución(sonidoCercano);
+            animator.SetInteger("state", 2);
+        }
         if (agent.velocity.magnitude > 0.1f)
         {
             Vector3 direccionMovimiento = agent.velocity.normalized;
@@ -214,7 +229,8 @@ public class CiegoBehaviour : MonoBehaviour
         }
 
 
-        if (minDistancia <= areaAtaque)
+        float distanciaSonido = Vector3.Distance(transform.position, sonidos[0]);
+        if (distanciaSonido <= areaAtaque)
         {
             perseguir = false;
             patrullajeScript.DesactivarPatrullaje();
@@ -382,8 +398,8 @@ public class CiegoBehaviour : MonoBehaviour
     //Sonido de pasos que se llamara desde el animation event de la animacion walk del enemigo
     public void SonidoPaso()
     {
-        AudioManager.Instance.PlaySFX("CiegoPasos");
-        //AudioManager.Instance.PlaySFXAtPoint("PasosCiego", transform.position);
+        //AudioManager.Instance.PlaySFX("CiegoPasos");
+        AudioManager.Instance.PlaySFXAtPoint("CiegoPasos", transform.position);
     }
 
     public void Aturdido()

@@ -103,7 +103,9 @@ public class MinijuegoElectric : MonoBehaviour
     }*/
 
     void ComprobarExito() {
-        if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
+        float margenExito = 0.05f;
+
+        if (progreso >= zonaSeguraInicio - margenExito && progreso <= zonaSeguraFin + margenExito) {
             Debug.Log("Correcto");
             //guardamos el progreso llamando al script de progress manager
             if (conAnimator)
