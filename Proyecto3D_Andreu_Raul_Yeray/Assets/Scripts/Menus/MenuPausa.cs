@@ -16,6 +16,7 @@ public class MenuPausa : MonoBehaviour
 
     public InputActionReference pauseAction; 
     public InputActionReference moveAction;
+    public GameObject panelControls;
 
     void OnEnable()
     {
@@ -127,5 +128,34 @@ public class MenuPausa : MonoBehaviour
     {
         SceneManager.LoadScene("Menu"); 
         Time.timeScale = 1; 
+    }
+
+    public void AbrirControles()
+    {
+        panelControls.SetActive(true);
+        pauseMenu.SetActive(false);
+        
+        if (EventSystem.current != null)
+        {
+            Selectable botonCerrar = panelControls.GetComponentInChildren<Selectable>();
+            if (botonCerrar != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+                EventSystem.current.SetSelectedGameObject(botonCerrar.gameObject);
+            }
+        }
+    }
+
+    public void CerrarControls()
+    {
+        panelControls.SetActive(false);
+        pauseMenu.SetActive(true);
+
+        Selectable primerElemento = pauseMenu.GetComponentInChildren<Selectable>();
+        if (primerElemento != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(primerElemento.gameObject);
+        }
     }
 }

@@ -16,11 +16,12 @@ public class MinijuegoElectric : MonoBehaviour
 
     private float progreso = 0f;
     private bool juegoActivo = false;
-    //public Animator puertaAnim;
+    public Animator puertaAnim;
     public Transform puertaIzquierda;
     public Transform puertaDerecha;
     public float velocidadApertura = 2f;
     public InputActionReference MinigameAction;
+    public bool conAnimator = false;
 
 
     void OnEnable()
@@ -84,10 +85,16 @@ public class MinijuegoElectric : MonoBehaviour
         if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
             Debug.Log("Correcto");
             //guardamos el progreso llamando al script de progress manager
-            ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
-            //puertaAnim.SetTrigger("Abrir");
-            StartCoroutine(AbrirPuertas());
-            GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
+            if (conAnimator)
+            {
+                puertaAnim.SetTrigger("Abrir");
+            }
+            else
+            {
+                StartCoroutine(AbrirPuertas());
+                GameManager.instance.ReproducirVoz("Sembla que s'ha obert una porta, hauria d'anar a mirar", 2f);
+                ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
+            }
             TerminarJuego();
             //Activar electricidad
         } else {
@@ -98,6 +105,36 @@ public class MinijuegoElectric : MonoBehaviour
     }
 
     public void IniciarJuego() {
+        //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
+        float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
+        zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
+        zonaSeguraFin = zonaSeguraInicio + anchoZona;        
+
+        if (zonaSeguraFin > 1f)
+        {
+            zonaSeguraFin = 1f;
+            zonaSeguraInicio = zonaSeguraFin - anchoZona;
+        }
+
+        juegoActivo = true;
+        panelMinijuego.SetActive(true);
+        progreso = 0;
+        ZonaVerdeSetup();
+    }
+
+    public void IniciarJuegoAnimator() {
+        conAnimator = true;
+        //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
+        float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
+        zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
+        zonaSeguraFin = zonaSeguraInicio + anchoZona;        
+
+        if (zonaSeguraFin > 1f)
+        {
+            zonaSeguraFin = 1f;
+            zonaSeguraInicio = zonaSeguraFin - anchoZona;
+        }
+
         juegoActivo = true;
         panelMinijuego.SetActive(true);
         progreso = 0;

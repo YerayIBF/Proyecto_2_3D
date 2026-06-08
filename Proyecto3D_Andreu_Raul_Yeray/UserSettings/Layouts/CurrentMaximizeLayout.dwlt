@@ -1332,9 +1332,15 @@ MonoBehaviour:
       e32: 0
       e33: 1
   m_PreviewAnimator: {fileID: 0}
+<<<<<<< HEAD
   m_AnimatorController: {fileID: 9100000, guid: 782e21c300cf29844b15a50ce50c2793, type: 2}
   m_BreadCrumbs:
   - m_Target: {fileID: -6264008897829558465, guid: 782e21c300cf29844b15a50ce50c2793, type: 2}
+=======
+  m_AnimatorController: {fileID: 9100000, guid: 7db1893b8e604954e9727d2960d3700b, type: 2}
+  m_BreadCrumbs:
+  - m_Target: {fileID: 6147180508239695073, guid: 7db1893b8e604954e9727d2960d3700b, type: 2}
+>>>>>>> Andreu
     m_ScrollPosition: {x: 0, y: 0}
   stateMachineGraph: {fileID: 0}
   stateMachineGraphGUI: {fileID: 0}
@@ -1518,7 +1524,7 @@ MonoBehaviour:
       m_OriginalEventType: 11
       m_IsRenamingFilename: 1
       m_TrimLeadingAndTrailingWhitespace: 0
-      m_ClientGUIView: {fileID: 12}
+      m_ClientGUIView: {fileID: 0}
     m_CreateAssetUtility:
       m_EndAction: {fileID: 0}
       m_InstanceID: 0
