@@ -54,6 +54,9 @@ public class GameManager : MonoBehaviour
     public float duracionCamara = 3f;
     public GameObject dialogo;
 
+    [Header("Audio")]
+    public AudioSource openSoundGarage;
+
 
     private CinemachineSplineDolly splineDolly;
     private Coroutine cinematicaCoroutine;
@@ -297,6 +300,7 @@ public class GameManager : MonoBehaviour
 
         if (_panelesCompletados >= totalPaneles)
         {
+            if (openSoundGarage != null) openSoundGarage.Play();
             puertaAnim.SetTrigger("Abrir");
             StartCoroutine(MostrarCamaraEvento());
             

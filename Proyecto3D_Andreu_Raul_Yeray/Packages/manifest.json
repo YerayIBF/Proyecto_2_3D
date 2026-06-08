@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.cqf.urpvolumetricfog": "https://github.com/CristianQiu/Unity-URP-Volumetric-Light.git",
     "com.ethangrane.unity-time-tracker": "file:C:/Users/rpucholgimenez/Desktop/Manage-It-Productivity-Time-Tracker-for-Unity-release",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.12",
