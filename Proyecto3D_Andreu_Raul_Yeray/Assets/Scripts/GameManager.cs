@@ -44,6 +44,11 @@ public class GameManager : MonoBehaviour
     public CinemachineCamera camaraVirtualSpline; 
     public float duracionCinematica = 5f; 
 
+    [Header("Paneles")]
+    public int totalPaneles = 5;
+    private int _panelesCompletados = 0;
+    public Animator puertaAnim;
+
     private CinemachineSplineDolly splineDolly;
     private Coroutine cinematicaCoroutine;
     //public GameObject camaraVirtualJugador; 

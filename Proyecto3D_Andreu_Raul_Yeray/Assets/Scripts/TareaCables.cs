@@ -4,13 +4,23 @@ using UnityEngine;
 
 public class TareaCables : MonoBehaviour
 {
-    public int conexionesActuales;
-
+   [Header("Configuración")]
+    public int conexionesTotales = 4;   // cuántos cables hay que conectar para ganar
+    public int conexionesActuales = 0;
+ 
+    [Header("Referencia al panel")]
+    public PanelElectricoInteraccion panel; // arrastra el PanelElectrico
+ 
     public void ComprobarVictoria()
     {
-        if (conexionesActuales == 4)
+        Debug.Log($"[Cables] Conexiones: {conexionesActuales}/{conexionesTotales}");
+ 
+        if (conexionesActuales >= conexionesTotales)
         {
-            Destroy(this.gameObject, 1f);
+            Debug.Log("[Cables] ¡Minijuego completado!");
+ 
+            if (panel != null)
+                panel.MinijuegoCompletado();
         }
     }
 }
