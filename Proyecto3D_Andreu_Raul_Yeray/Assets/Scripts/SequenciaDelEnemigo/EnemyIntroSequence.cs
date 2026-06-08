@@ -55,9 +55,14 @@ public class EnemyIntroSequence : MonoBehaviour
         if (behaviourTree == null) behaviourTree = GetComponent<EnemyBehaviourTree>();
         if (ghostModel != null) _anim = ghostModel.GetComponent<Animator>();
 
-        // BehaviourTree y ghost desactivados al inicio
+        // BehaviourTree, ghost y audio desactivados al inicio
         if (behaviourTree != null) behaviourTree.enabled = false;
         if (ghostModel != null) ghostModel.gameObject.SetActive(false);
+
+        // Desactivar audio durante la cinemática
+        EnemyAudio audio = GetComponent<EnemyAudio>();
+        if (audio == null) audio = GetComponentInChildren<EnemyAudio>();
+        if (audio != null) audio.enabled = false;
     }
 
     // ─── API pública ─────────────────────────────────────────────────────────
@@ -226,7 +231,10 @@ public class EnemyIntroSequence : MonoBehaviour
             ghostModel.position = transform.position;
             ghostModel.rotation = transform.rotation;
         }
-
+        
+        EnemyAudio audio = GetComponent<EnemyAudio>();
+        if (audio == null) audio = GetComponentInChildren<EnemyAudio>();
+        if (audio != null) audio.enabled = true;
         // Activar el BehaviourTree con stun extra largo
         if (behaviourTree != null)
         {
