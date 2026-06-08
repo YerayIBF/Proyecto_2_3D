@@ -50,7 +50,7 @@ public class PilaLinterna : MonoBehaviour
             Debug.Log("[PilaLinterna] Inventario lleno.");
             // Opcional: mostrar mensaje al jugador
             if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("", "Inventario lleno de pilas", 2f);
+                GameManager.instance.ReproducirVoz("El inventari esta ple de piles", 2f);
             return;
         }
 

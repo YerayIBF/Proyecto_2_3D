@@ -60,7 +60,7 @@ public class MenuPausa : MonoBehaviour
             sfxVolumeSlider.onValueChanged.AddListener(audioManager.SetSFXVolume);
 
             float volM, volS;
-            audioManager.mainMixer.GetFloat("MusicaVol", out volM);
+            audioManager.mainMixer.GetFloat("MusicVol", out volM);
             audioManager.mainMixer.GetFloat("SFXVol", out volS);
             //sfxVolumeSlider.value = audioManager.sfxSource.volume;
 
