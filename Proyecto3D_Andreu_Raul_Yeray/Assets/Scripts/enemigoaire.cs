@@ -38,6 +38,14 @@ public class enemigoaire : MonoBehaviour
     public float duracionDelStun = 10f;
     private float cronometroStun;
 
+    [Tooltip("Tiempo de cooldown después del stun durante el cual no se puede stunear")]
+    public float cooldownStun = 5f;
+    private float cronometroCooldown = 0f;
+
+    // Propiedades públicas para EnemyEyeFlashAire
+    public bool IsCurrentlyStunned => currentState == EnemyState.Stunned;
+    public bool CanBeStunned => cronometroCooldown <= 0f && currentState != EnemyState.Stunned;
+
     [Header("Sonido")]
     public AudioSource _audioSource;
     public AudioClip sonidoDisparo;
@@ -50,6 +58,7 @@ public class enemigoaire : MonoBehaviour
     void Update()
     {
         if (_visionMemoryTimer > 0f) _visionMemoryTimer -= Time.deltaTime;
+        if (cronometroCooldown > 0f) cronometroCooldown -= Time.deltaTime;
  
         ComprobarSonido();
         ManejarEstados();
@@ -72,7 +81,11 @@ public class enemigoaire : MonoBehaviour
         {
             cronometroStun -= Time.deltaTime;
             if (cronometroStun <= 0)
+            {
                 currentState = EnemyState.Wander;
+                cronometroCooldown = cooldownStun;
+                Debug.Log($"[{gameObject.name}] Recuperado. Cooldown de stun: {cooldownStun}s");
+            }
             return;
         }
  
@@ -243,6 +256,12 @@ public class enemigoaire : MonoBehaviour
  
     public void AplicarStun(float duracion)
     {
+        if (cronometroCooldown > 0f)
+        {
+            Debug.Log($"[{gameObject.name}] Stun en cooldown. Quedan {cronometroCooldown:F1}s");
+            return;
+        }
+
         currentState = EnemyState.Stunned;
         cronometroStun = duracion;
         Debug.Log($"[{gameObject.name}] Stunneado {duracion}s");

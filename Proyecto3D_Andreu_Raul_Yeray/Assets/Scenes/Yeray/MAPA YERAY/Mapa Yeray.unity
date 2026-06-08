@@ -6062,7 +6062,6 @@ MonoBehaviour:
   LockCameraPosition: 0
   RotateTowardsMovement: 1
   bloqueado: 0
-  cogerCooldownTime: 1.2
   soundCooldownTime: 0.5
   puertaAnim: {fileID: 1881202550}
   cogerObjetoScript: {fileID: 2111777984}
@@ -15140,10 +15139,12 @@ MonoBehaviour:
   velocidadAguja: 2
   zonaSeguraInicio: 0.7
   zonaSeguraFin: 0.8
+  puertaAnim: {fileID: 0}
   puertaIzquierda: {fileID: 0}
   puertaDerecha: {fileID: 0}
   velocidadApertura: 2
   MinigameAction: {fileID: 0}
+  conAnimator: 0
 --- !u!4 &159925454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 599758391018583926, guid: 727f4eaf23c322e4791914b86951e959, type: 3}
@@ -101979,6 +101980,7 @@ MonoBehaviour:
   iconoBateria: {fileID: 21300000, guid: cca7f3419c7ad4f44bc020d9f9078382, type: 3}
   iconoSinBateria: {fileID: 21300000, guid: c5bb6cd2eb5f80f40af7293ca33e0384, type: 3}
   zonaActivacion: 0
+  zonaActivacion2: 0
   scriptJugador: {fileID: 57086330}
   timelineInicial: {fileID: 1043389898}
   textoTimelineInicial: {fileID: 2031717928}
@@ -101992,6 +101994,11 @@ MonoBehaviour:
   playerCameraRoot: {fileID: 0}
   camaraVirtualSpline: {fileID: 0}
   duracionCinematica: 5
+  totalPaneles: 5
+  puertaAnim: {fileID: 0}
+  camaraEvento: {fileID: 0}
+  duracionCamara: 3
+  dialogo: {fileID: 0}
 --- !u!114 &1056157511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102039,10 +102046,12 @@ MonoBehaviour:
   velocidadAguja: 1.5
   zonaSeguraInicio: 0.7
   zonaSeguraFin: 0.8
+  puertaAnim: {fileID: 0}
   puertaIzquierda: {fileID: 0}
   puertaDerecha: {fileID: 0}
   velocidadApertura: 2
   MinigameAction: {fileID: 0}
+  conAnimator: 0
 --- !u!114 &1056157514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102060,6 +102069,7 @@ MonoBehaviour:
   sfxVolumeSlider: {fileID: 1329887291}
   pauseAction: {fileID: 8340587552566868485, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   moveAction: {fileID: -8784545083839296357, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  panelControls: {fileID: 0}
 --- !u!1001 &1057212946
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -178115,6 +178125,8 @@ MonoBehaviour:
   behaviourTree: {fileID: 1847997881}
   stunColor: {r: 1, g: 1, b: 1, a: 1}
   stunIntensity: 3
+  cooldownColor: {r: 1, g: 0, b: 0, a: 1}
+  cooldownIntensity: 4
   blinkCount: 4
   blinkOnDuration: 0.08
   blinkOffDuration: 0.06

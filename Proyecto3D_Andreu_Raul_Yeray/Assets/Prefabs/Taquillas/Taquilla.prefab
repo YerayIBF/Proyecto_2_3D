@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   doorRenderer: {fileID: 246284098292663310}
-  hidingAlpha: 0.9
+  hidingAlpha: 0.5
   fadeSpeed: 3
 --- !u!1 &4374006610664105012
 GameObject:

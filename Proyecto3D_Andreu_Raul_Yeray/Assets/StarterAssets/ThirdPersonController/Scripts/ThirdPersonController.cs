@@ -180,6 +180,10 @@ namespace StarterAssets
             {
                 _input.interact = false;
 
+                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
+                {
+                    _animator.SetTrigger("Coger");
+                }else if (cercaDePila)
                 if (cercaDePila)
                 {
                     pilaCercana.GetComponent<PilaMegafono>().Recargar();
