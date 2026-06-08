@@ -181,6 +181,10 @@ namespace StarterAssets
                 _input.interact = false;
 
                 if (cercaDePila)
+                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
+                {
+                    _animator.SetTrigger("Coger");
+                }else if (cercaDePila)
                 {
                     pilaCercana.GetComponent<PilaMegafono>().Recargar();
                     Destroy(pilaCercana);
@@ -189,6 +193,9 @@ namespace StarterAssets
                 else if (GameManager.instance.zonaActivacion)
                 {
                     GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
+                }else if (GameManager.instance.zonaActivacion2)
+                {
+                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuegoAnimator();
                 }
                 else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
                 {
