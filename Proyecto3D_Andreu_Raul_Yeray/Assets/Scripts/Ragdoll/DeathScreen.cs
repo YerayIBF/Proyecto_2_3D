@@ -5,31 +5,37 @@ using TMPro;
 using System.Collections;
 
 /// <summary>
-/// Pantalla de muerte. Se suscribe al evento OnPlayerDied del PlayerStateMachine
-/// y muestra una transición de fade a negro, mensaje y botones de reintentar / menú.
+/// Pantalla de muerte con sistema de respawn.
+/// - Botón Reintentar: respawnea al jugador en el punto inicial SIN recargar la escena
+/// - Botón Menú: carga la escena del menú principal
 /// </summary>
 public class DeathScreen : MonoBehaviour
 {
     [Header("Referencias UI")]
-    [Tooltip("Image negro a pantalla completa, alpha 0 al inicio")]
     public Image fadeImage;
-    [Tooltip("Texto 'HAS MUERTO'")]
     public TextMeshProUGUI deathText;
-    [Tooltip("Botón de reintentar (recarga escena actual)")]
     public Button retryButton;
-    [Tooltip("Botón para ir al menú principal")]
     public Button menuButton;
-    [Tooltip("CanvasGroup que contiene el texto y los botones (para fade in)")]
     public CanvasGroup deathUIGroup;
 
+    [Header("Spawn point del jugador")]
+    [Tooltip("Transform donde reaparecerá el jugador al pulsar Reintentar. Si está vacío, usa la posición inicial guardada al empezar.")]
+    public Transform spawnPoint;
+    [Tooltip("Si está marcado, guarda automáticamente la posición inicial del jugador al empezar la escena")]
+    public bool autoUseInitialPosition = true;
+
     [Header("Escenas")]
-    [Tooltip("Nombre de la escena del menú principal")]
     public string menuSceneName = "Menu";
 
     [Header("Tiempos")]
     public float fadeDuration = 2.5f;
     public float showUIDelay = 0.5f;
     public float uiFadeDuration = 1f;
+
+    // Posición/rotación guardadas al inicio
+    private Vector3 _initialPosition;
+    private Quaternion _initialRotation;
+    private bool _initialPositionSaved = false;
 
     private void Awake()
     {
@@ -59,7 +65,17 @@ public class DeathScreen : MonoBehaviour
     private void Start()
     {
         if (PlayerStateMachine.Instance != null)
+        {
             PlayerStateMachine.Instance.OnPlayerDied += ShowDeathScreen;
+
+            // Guardar la posición inicial del jugador
+            if (autoUseInitialPosition)
+            {
+                _initialPosition = PlayerStateMachine.Instance.transform.position;
+                _initialRotation = PlayerStateMachine.Instance.transform.rotation;
+                _initialPositionSaved = true;
+            }
+        }
     }
 
     private void OnDestroy()
@@ -88,7 +104,7 @@ public class DeathScreen : MonoBehaviour
 
         float t = 0f;
         Color startColor = fadeImage != null ? fadeImage.color : Color.black;
-        Color endColor   = new Color(0f, 0f, 0f, 1f);
+        Color endColor = new Color(0f, 0f, 0f, 1f);
 
         while (t < fadeDuration)
         {
@@ -122,13 +138,81 @@ public class DeathScreen : MonoBehaviour
         }
     }
 
+    // ─── Ocultar pantalla de muerte (al respawnear) ──────────────────────────
+
+    private IEnumerator HideDeathScreen()
+    {
+        // Ocultar UI rápido
+        if (deathUIGroup != null)
+        {
+            deathUIGroup.alpha = 0f;
+            deathUIGroup.interactable = false;
+            deathUIGroup.blocksRaycasts = false;
+        }
+
+        // Fade out del negro
+        float t = 0f;
+        float duration = 0.5f;
+        Color startColor = fadeImage != null ? fadeImage.color : Color.black;
+        Color endColor = new Color(0f, 0f, 0f, 0f);
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float progress = Mathf.Clamp01(t / duration);
+            if (fadeImage != null)
+                fadeImage.color = Color.Lerp(startColor, endColor, progress);
+            yield return null;
+        }
+
+        if (fadeImage != null)
+        {
+            fadeImage.color = endColor;
+            fadeImage.raycastTarget = false;
+        }
+
+        // Bloquear cursor para volver a jugar
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     // ─── Botones ─────────────────────────────────────────────────────────────
 
     private void OnRetryClicked()
     {
-        Debug.Log("[DeathScreen] Reintentar — recargando escena.");
+        Debug.Log("[DeathScreen] Reintentar — respawneando jugador.");
         Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+
+        if (PlayerStateMachine.Instance != null)
+        {
+            Vector3 pos;
+            Quaternion rot;
+
+            if (spawnPoint != null)
+            {
+                pos = spawnPoint.position;
+                rot = spawnPoint.rotation;
+            }
+            else if (_initialPositionSaved)
+            {
+                pos = _initialPosition;
+                rot = _initialRotation;
+            }
+            else
+            {
+                Debug.LogWarning("[DeathScreen] No hay spawn point ni posición inicial guardada. Recargando escena.");
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                return;
+            }
+
+            PlayerStateMachine.Instance.Respawn(pos, rot);
+            StartCoroutine(HideDeathScreen());
+        }
+        else
+        {
+            // Fallback: si no hay PlayerStateMachine, recarga la escena
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     private void OnMenuClicked()

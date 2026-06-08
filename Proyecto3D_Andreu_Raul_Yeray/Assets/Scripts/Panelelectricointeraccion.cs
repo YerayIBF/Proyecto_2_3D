@@ -22,6 +22,7 @@ public class PanelElectricoInteraccion : MonoBehaviour
     private StarterAssetsInputs _input;
     private bool _jugadorCerca    = false;
     private bool _minijuegoActivo = false;
+    private bool _panelCompletado = false;
 
     void Start()
     {
@@ -32,8 +33,8 @@ public class PanelElectricoInteraccion : MonoBehaviour
 
     void Update()
     {
-        // Abrir con E / interact
-        if (_jugadorCerca && !_minijuegoActivo && _input != null && _input.interact)
+        // Abrir con E / interact (solo si no está ya completado)
+        if (_jugadorCerca && !_minijuegoActivo && !_panelCompletado && _input != null && _input.interact)
         {
             _input.interact = false;
             AbrirMinijuego();
@@ -101,8 +102,22 @@ public class PanelElectricoInteraccion : MonoBehaviour
 
     public void MinijuegoCompletado()
     {
+        _panelCompletado = true;
         CerrarMinijuego();
-        //GameManager.instance.PanelCompletado();
+
+        // Avisar al GameManager (cuenta para la puerta)
+        if (GameManager.instance != null)
+            GameManager.instance.PanelCompletado();
+
+        if (promptInteraccion != null) promptInteraccion.SetActive(false);
+    }
+
+    // Para paneles especiales: cierra el minijuego pero NO cuenta para la puerta
+    public void CompletarSinContar()
+    {
+        _panelCompletado = true;
+        CerrarMinijuego();
+        if (promptInteraccion != null) promptInteraccion.SetActive(false);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -110,7 +125,8 @@ public class PanelElectricoInteraccion : MonoBehaviour
         if (!other.CompareTag("Player")) return;
         _jugadorCerca = true;
         _input = other.GetComponent<StarterAssetsInputs>();
-        if (promptInteraccion != null) promptInteraccion.SetActive(true);
+        if (!_panelCompletado && promptInteraccion != null)
+            promptInteraccion.SetActive(true);
     }
 
     private void OnTriggerExit(Collider other)

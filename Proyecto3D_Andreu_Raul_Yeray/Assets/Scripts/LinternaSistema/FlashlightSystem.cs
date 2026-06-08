@@ -114,14 +114,12 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Update()
     {
-
-        
         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
-        return;
+            return;
 
         if (!_hasFlashlight)
         {
-            HandlePickup();
+           
             return;
         }
 
@@ -192,10 +190,7 @@ public class FlashlightSystem : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            if (PlayerStateMachine.Instance != null)
-                PlayerStateMachine.Instance.TryReloadFlashlight();
-            else
-                Reload();
+            TriggerReloadAnimation();   
         }
 
         bool canAim = _isOn;
@@ -464,4 +459,54 @@ public class FlashlightSystem : MonoBehaviour
             Gizmos.DrawWireSphere(transform.position, pickupRange);
         }
     }
+
+
+
+// Dispara la animación de recarga. El Animation Event llamará a Reload().
+public void TriggerReloadAnimation()
+{
+    // Solo si tiene linterna en mano
+    if (PlayerEquipmentManager.Instance == null
+        || !PlayerEquipmentManager.Instance.IsFlashlightInHand)
+        return;
+
+    // Comprobar que tiene baterías antes de animar
+    if (PlayerStateMachine.Instance == null
+        || PlayerStateMachine.Instance.BatteryCount <= 0)
+    {
+        Debug.Log("[Flashlight] Sin baterías, no se puede recargar.");
+        return;
+    }
+
+    // No recargar si ya está al máximo
+    if (currentBattery >= maxBattery)
+    {
+        Debug.Log("[Flashlight] Batería al máximo.");
+        return;
+    }
+
+    // Animator
+    if (PlayerStateMachine.Instance.playerAnimator == null)
+    {
+        // Fallback sin animator
+        PlayerStateMachine.Instance.TryReloadFlashlight();
+        return;
+    }
+
+    Animator anim = PlayerStateMachine.Instance.playerAnimator;
+    bool isCrouched = PlayerStateMachine.Instance.IsCrouched;
+
+    if (isCrouched)
+    {
+        anim.SetTrigger("ReloadCrouched");
+        PlayerStateMachine.Instance.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.ReloadingCrouched, 1.5f);
+    }
+    else
+    {
+        anim.SetTrigger("Reload");
+        PlayerStateMachine.Instance.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.Reloading, 1.5f);
+    }
+}
 }

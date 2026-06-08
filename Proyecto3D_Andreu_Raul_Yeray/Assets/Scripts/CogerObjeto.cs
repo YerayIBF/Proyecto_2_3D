@@ -98,45 +98,55 @@ public class CogerObjeto : MonoBehaviour
 
         // Apuntar + lanzar (solo con lanzable en mano)
         if (objetoCogido != null && objetoCogido.CompareTag("objetoCogible"))
-            HandleAimAndThrow(inputApuntar, inputLanzarDown);
+        {
+        HandleAimAndThrow(inputApuntar, inputLanzarDown);
 
-        // Apuntar megáfono
-        if (PlayerEquipmentManager.Instance != null
+    // Si estaba apuntando con megáfono, cancelarlo
+    if (apuntando)
+    {
+        apuntando = false;
+        if (animator != null) animator.SetBool("isAiming", false);
+        if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
+        PlayerEquipmentManager.Instance?.SetAimingMegaphone(false);
+    }
+    }
+    // Apuntar megáfono (solo si NO tenemos lanzable en mano)
+    else if (PlayerEquipmentManager.Instance != null
             && PlayerEquipmentManager.Instance.IsMegaphoneInHand)
-        {
-            HandleMegaphoneAim(inputApuntar);
-        }
-        else if (apuntando)
-        {
-            apuntando = false;
-            if (animator != null) animator.SetBool("isAiming", false);
-            if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
-        }
+    {
+        HandleMegaphoneAim(inputApuntar);
+    }
+    else if (apuntando)
+    {
+        apuntando = false;
+        if (animator != null) animator.SetBool("isAiming", false);
+        if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
+    }
 
         // Recoger (E / Interact)
         if (inputInteractDown && objetoCogido == null)
-        {
-            if (objeto == null)
             {
-                Debug.Log("[CogerObjeto] No hay nada cerca para recoger.");
-                return;
-            }
-
-            if (objeto.CompareTag("objetoCogible"))
-            {
-                if (PlayerEquipmentManager.Instance != null
-                    && !PlayerEquipmentManager.Instance.CanPickupThrowable)
+                if (objeto == null)
                 {
-                    Debug.Log("[CogerObjeto] No puedes recoger lanzables ahora.");
+                    Debug.Log("[CogerObjeto] No hay nada cerca para recoger.");
                     return;
                 }
-            }
 
-            if (animator != null)
-                animator.SetTrigger("Coger");
-            else
-                AnimatorCogerObjeto();
-        }
+                if (objeto.CompareTag("objetoCogible"))
+                {
+                    if (PlayerEquipmentManager.Instance != null
+                        && !PlayerEquipmentManager.Instance.CanPickupThrowable)
+                    {
+                        Debug.Log("[CogerObjeto] No puedes recoger lanzables ahora.");
+                        return;
+                    }
+                }
+
+                if (animator != null)
+                    animator.SetTrigger("Coger");
+                else
+                    AnimatorCogerObjeto();
+            }
     }
 
     // ─── Detección por distancia ─────────────────────────────────────────────
@@ -258,23 +268,29 @@ public class CogerObjeto : MonoBehaviour
     /// El Animation Event llamará a LanzarObjeto() en mitad de la animación.
     /// </summary>
     private void TriggerThrowAnimation()
+{
+    if (animator == null)
     {
-        if (animator == null)
-        {
-            // Sin animator → lanza directamente
-            LanzarObjeto();
-            return;
-        }
-
-        bool isCrouched = PlayerStateMachine.Instance != null
-                       && PlayerStateMachine.Instance.IsCrouched;
-
-        if (isCrouched)
-            animator.SetTrigger("ThrowCrouched");
-        else
-            animator.SetTrigger("Throw");
+        LanzarObjeto();
+        return;
     }
 
+    bool isCrouched = PlayerStateMachine.Instance != null
+                   && PlayerStateMachine.Instance.IsCrouched;
+
+    if (isCrouched)
+    {
+        animator.SetTrigger("ThrowCrouched");
+        PlayerStateMachine.Instance?.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.ThrowingCrouched, 1f);
+    }
+    else
+    {
+        animator.SetTrigger("Throw");
+        PlayerStateMachine.Instance?.EnterTemporaryState(
+            PlayerStateMachine.PlayerState.Throwing, 1f);
+    }
+}
     public void LanzarObjeto()
     {
         if (objetoCogido == null) return;
