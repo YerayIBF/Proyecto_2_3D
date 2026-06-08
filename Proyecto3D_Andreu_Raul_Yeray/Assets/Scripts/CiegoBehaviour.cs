@@ -382,8 +382,8 @@ public class CiegoBehaviour : MonoBehaviour
     //Sonido de pasos que se llamara desde el animation event de la animacion walk del enemigo
     public void SonidoPaso()
     {
-        AudioManager.Instance.PlaySFX("CiegoPasos");
-        //AudioManager.Instance.PlaySFXAtPoint("PasosCiego", transform.position);
+        //AudioManager.Instance.PlaySFX("CiegoPasos");
+        AudioManager.Instance.PlaySFXAtPoint("CiegoPasos", transform.position);
     }
 
     public void Aturdido()

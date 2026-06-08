@@ -103,7 +103,20 @@ public class AudioManager : MonoBehaviour
         Sound sfx = Array.Find(sfxSounds, s => s.soundName == name);
         if (sfx == null) return;
 
-        AudioSource.PlayClipAtPoint(sfx.clip, position, 0.5f);
+        //AudioSource.PlayClipAtPoint(sfx.clip, position, 0.5f);
+        GameObject tempAudio = new GameObject("TempAudio");
+        tempAudio.transform.position = position;
+
+        AudioSource source = tempAudio.AddComponent<AudioSource>();
+        source.clip = sfx.clip;
+        source.spatialBlend = 1f;      
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.minDistance = 2f;        
+        source.maxDistance = 20f;       
+        source.volume = 0.8f;
+        source.Play();
+
+        Destroy(tempAudio, sfx.clip.length);
     }
 
 
