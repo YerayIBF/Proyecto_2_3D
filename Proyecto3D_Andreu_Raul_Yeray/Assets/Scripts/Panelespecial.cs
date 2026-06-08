@@ -24,7 +24,7 @@ public class PanelEspecial : MonoBehaviour
         Debug.Log("[PanelEspecial] Panel completado, ejecutando apagón.");
 
         if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("", "Perfecte, ja he tallat la llum. Hauria d'anar amb la llanterna apagada i sense fer soroll.", 8f);
+                GameManager.instance.ReproducirVoz("Perfecte, ja he tallat la llum. Hauria d'anar amb la llanterna apagada i sense fer soroll.", 8f);
 
         // 1. Cegar a los enemigos
         foreach (enemigoaire e in enemigos)

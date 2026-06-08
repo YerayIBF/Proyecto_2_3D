@@ -3,148 +3,221 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// HUD de la linterna. Coloca en un Canvas (Screen Space Overlay).
+/// HUD de la linterna.
+/// - Usa CanvasGroup para ocultarse/mostrarse (no SetActive)
+/// - Esto permite que el script siga corriendo aunque el HUD esté "invisible"
 ///
-/// Setup Inspector:
-///   flashlightSystem  → el FlashlightSystem del jugador
-///   batteryFill       → Image con Fill Method = Filled (barra de batería)
-///   batteryIcon       → Image del icono de linterna/batería
-///   batteryText       → TextMeshProUGUI con el % (opcional)
-///   lowBatteryColor   → color cuando la batería está baja (rojo)
-///   normalColor       → color normal (verde o blanco)
-///   flashlightOffIcon → sprite cuando la linterna está apagada
-///   flashlightOnIcon  → sprite cuando está encendida
+/// LAYOUT (esquina inferior izquierda):
+///   [icono linterna] [════ barra ════] 87%
+///                    [icono pila] x2
 /// </summary>
 public class FlashlightHUD : MonoBehaviour
 {
-    [Header("Referencias")]
-    public FlashlightSystem flashlightSystem;
+    [Header("Canvas Group del HUD")]
+    [Tooltip("CanvasGroup que controla la visibilidad. Asignar el CanvasGroup del propio HUD.")]
+    public CanvasGroup canvasGroup;
 
-    [Header("UI — Batería")]
-    [Tooltip("Image con Image Type = Filled para mostrar la barra")]
-    public Image    batteryFill;
-    [Tooltip("Icono de linterna o batería")]
-    public Image    batteryIcon;
-    [Tooltip("Texto opcional con el porcentaje")]
-    public TextMeshProUGUI batteryText;
+    [Header("Icono de la linterna")]
+    [Tooltip("Image del icono de la linterna (se atenúa cuando la linterna está apagada)")]
+    public Image flashlightIcon;
+    [Tooltip("Alpha del icono cuando la linterna está apagada (0-1). Por defecto 200/255 ≈ 0.78")]
+    [Range(0f, 1f)]
+    public float iconAlphaOff = 0.4f;
 
-    [Header("Colores")]
-    public Color normalColor     = Color.green;
-    public Color midColor        = Color.yellow;
-    public Color lowBatteryColor = Color.red;
+    [Header("Barra de batería")]
+    public Slider batterySlider;
+    public Image batterySliderFill;
 
-    [Tooltip("Porcentaje a partir del cual el color cambia a mid (0-1)")]
-    public float midThreshold  = 0.5f;
-    [Tooltip("Porcentaje a partir del cual el color cambia a low (0-1)")]
-    public float lowThreshold  = 0.2f;
+    [Header("Porcentaje")]
+    public TextMeshProUGUI batteryPercentText;
+    public bool showPercentage = true;
 
-    [Header("Iconos de estado")]
-    public Sprite flashlightOnSprite;
-    public Sprite flashlightOffSprite;
+    [Header("Contador de pilas (x2)")]
+    public TextMeshProUGUI batteryCountText;
+    public Image batteryCountIcon;
+    public string countFormat = "x{0}";
 
-    [Header("Parpadeo del HUD cuando batería crítica")]
-    public float hudFlickerSpeed = 3f;
-    private float _hudFlickerTimer = 0f;
+    [Header("Gradiente de colores de la barra")]
+    public Color colorFull = new Color(0.3f, 1f, 0.3f);
+    public Color colorMid  = new Color(1f, 0.85f, 0.2f);
+    public Color colorLow  = new Color(1f, 0.3f, 0.3f);
+
+    [Header("Contador de pilas - colores")]
+    public Color countNormalColor = Color.white;
+    public Color countEmptyColor  = new Color(1f, 0.4f, 0.4f);
+
+    [Header("Comportamiento")]
+    public bool hideUntilFlashlightPickup = true;
+
+    [Header("Delay inicial (cinemática)")]
+    [Tooltip("Si está marcado, el HUD permanece oculto durante X segundos al empezar")]
+    public bool hideAtStart = false;
+    public float initialHideDuration = 5f;
+
+    private bool _initialHideFinished = false;
+    private FlashlightSystem _flashlight;
 
     // ─── Init ────────────────────────────────────────────────────────────────
 
     private void Start()
     {
-        if (flashlightSystem == null)
-            flashlightSystem = Object.FindFirstObjectByType<FlashlightSystem>();
+        _flashlight = FindFirstObjectByType<FlashlightSystem>();
 
-        if (flashlightSystem != null)
+        if (_flashlight != null)
         {
-            // Suscribirse a los eventos
-            flashlightSystem.OnBatteryChanged    += UpdateBatteryUI;
-            flashlightSystem.OnFlashlightToggled += UpdateFlashlightIcon;
+            _flashlight.OnBatteryChanged += UpdateFlashlightBattery;
+            _flashlight.OnFlashlightToggled += UpdateFlashlightIcon;
+            UpdateFlashlightBattery(_flashlight.BatteryPercent);
+            UpdateFlashlightIcon(_flashlight.IsOn);
+        }
 
-            // Estado inicial
-            UpdateBatteryUI(flashlightSystem.BatteryPercent);
-            UpdateFlashlightIcon(flashlightSystem.IsOn);
+        if (PlayerStateMachine.Instance != null)
+        {
+            PlayerStateMachine.Instance.OnBatteryCountChanged += UpdateBatteryCount;
+            UpdateBatteryCount(PlayerStateMachine.Instance.BatteryCount);
+        }
+
+        // Estado inicial
+        if (hideAtStart)
+        {
+            SetVisible(false);
+            _initialHideFinished = false;
+            Invoke(nameof(EndInitialHide), initialHideDuration);
+        }
+        else
+        {
+            _initialHideFinished = true;
+
+            // Mostrar o no según si tiene linterna
+            if (hideUntilFlashlightPickup)
+            {
+                bool hasFlashlight = _flashlight != null && _flashlight.HasFlashlight;
+                SetVisible(hasFlashlight);
+            }
+            else
+            {
+                SetVisible(true);
+            }
+        }
+    }
+
+    private void EndInitialHide()
+    {
+        _initialHideFinished = true;
+
+        // Decidir si se muestra según condiciones normales
+        if (hideUntilFlashlightPickup)
+        {
+            bool hasFlashlight = _flashlight != null && _flashlight.HasFlashlight;
+            SetVisible(hasFlashlight);
+        }
+        else
+        {
+            SetVisible(true);
+        }
+
+        Debug.Log("[FlashlightHUD] Cinemática terminada.");
+    }
+
+    /// <summary>Para llamar desde fuera cuando termine la cinemática.</summary>
+    public void ShowHUDNow()
+    {
+        CancelInvoke(nameof(EndInitialHide));
+        EndInitialHide();
+    }
+
+    private void Update()
+    {
+        if (!_initialHideFinished) return;
+
+        // Mostrar el HUD cuando se recoge la linterna
+        if (hideUntilFlashlightPickup
+            && _flashlight != null
+            && _flashlight.HasFlashlight
+            && canvasGroup != null
+            && canvasGroup.alpha < 0.5f)
+        {
+            SetVisible(true);
         }
     }
 
     private void OnDestroy()
     {
-        if (flashlightSystem != null)
+        if (_flashlight != null)
         {
-            flashlightSystem.OnBatteryChanged    -= UpdateBatteryUI;
-            flashlightSystem.OnFlashlightToggled -= UpdateFlashlightIcon;
+            _flashlight.OnBatteryChanged -= UpdateFlashlightBattery;
+            _flashlight.OnFlashlightToggled -= UpdateFlashlightIcon;
+        }
+
+        if (PlayerStateMachine.Instance != null)
+            PlayerStateMachine.Instance.OnBatteryCountChanged -= UpdateBatteryCount;
+    }
+
+    // ─── Visibilidad ─────────────────────────────────────────────────────────
+
+    private void SetVisible(bool visible)
+    {
+        if (canvasGroup == null) return;
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
+    }
+
+    // ─── Actualizar visuales ─────────────────────────────────────────────────
+
+    private void UpdateFlashlightBattery(float batteryPercent)
+    {
+        if (batterySlider != null)
+            batterySlider.value = batteryPercent;
+
+        if (batterySliderFill != null)
+            batterySliderFill.color = GetBatteryColor(batteryPercent);
+
+        if (batteryPercentText != null && showPercentage)
+        {
+            int percent = Mathf.RoundToInt(batteryPercent * 100f);
+            batteryPercentText.text = $"{percent}%";
+            batteryPercentText.color = GetBatteryColor(batteryPercent);
         }
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────
-
-    private void Update()
+    private Color GetBatteryColor(float percent)
     {
-        if (flashlightSystem == null) return;
-
-        // Parpadeo del HUD cuando la batería está crítica
-        float percent = flashlightSystem.BatteryPercent;
-        if (percent <= lowThreshold && flashlightSystem.IsOn)
+        if (percent > 0.5f)
         {
-            _hudFlickerTimer += Time.deltaTime * hudFlickerSpeed;
-            float alpha = Mathf.PingPong(_hudFlickerTimer, 1f);
-
-            if (batteryFill != null)
-            {
-                Color c = batteryFill.color;
-                c.a = Mathf.Lerp(0.3f, 1f, alpha);
-                batteryFill.color = c;
-            }
+            float t = (percent - 0.5f) / 0.5f;
+            return Color.Lerp(colorMid, colorFull, t);
         }
         else
         {
-            // Asegurar alpha completo cuando no parpadea
-            if (batteryFill != null)
-            {
-                Color c = batteryFill.color;
-                c.a = 1f;
-                batteryFill.color = c;
-            }
+            float t = percent / 0.5f;
+            return Color.Lerp(colorLow, colorMid, t);
         }
     }
 
-    // ─── Callbacks ───────────────────────────────────────────────────────────
-
-    private void UpdateBatteryUI(float percent)
+    private void UpdateBatteryCount(int count)
     {
-        // Actualizar barra
-        if (batteryFill != null)
+        if (batteryCountText != null)
         {
-            batteryFill.fillAmount = percent;
-
-            // Color según nivel
-            if (percent <= lowThreshold)
-                batteryFill.color = new Color(lowBatteryColor.r, lowBatteryColor.g, lowBatteryColor.b, batteryFill.color.a);
-            else if (percent <= midThreshold)
-                batteryFill.color = new Color(midColor.r, midColor.g, midColor.b, batteryFill.color.a);
-            else
-                batteryFill.color = new Color(normalColor.r, normalColor.g, normalColor.b, batteryFill.color.a);
+            batteryCountText.text = string.Format(countFormat, count);
+            batteryCountText.color = (count <= 0) ? countEmptyColor : countNormalColor;
         }
 
-        // Texto opcional
-        if (batteryText != null)
-            batteryText.text = $"{Mathf.RoundToInt(percent * 100f)}%";
-
-        // Ocultar HUD si no tiene linterna
-        if (flashlightSystem != null && !flashlightSystem.HasFlashlight)
-            gameObject.SetActive(false);
+        if (batteryCountIcon != null)
+        {
+            batteryCountIcon.color = (count <= 0) ? countEmptyColor : countNormalColor;
+        }
     }
 
+    /// <summary>
+    /// Cambia el alpha del icono de la linterna según si está encendida o no.
+    /// </summary>
     private void UpdateFlashlightIcon(bool isOn)
     {
-        if (batteryIcon == null) return;
+        if (flashlightIcon == null) return;
 
-        if (isOn && flashlightOnSprite != null)
-            batteryIcon.sprite = flashlightOnSprite;
-        else if (!isOn && flashlightOffSprite != null)
-            batteryIcon.sprite = flashlightOffSprite;
-
-        // Atenuar icono cuando está apagada
-        Color c = batteryIcon.color;
-        c.a = isOn ? 1f : 0.4f;
-        batteryIcon.color = c;
+        Color c = flashlightIcon.color;
+        c.a = isOn ? 1f : iconAlphaOff;
+        flashlightIcon.color = c;
     }
 }

@@ -38,7 +38,7 @@ public class MenuManager : MonoBehaviour
     public void Jugar()
     {
         //GraphicsSettings.renderPipelineAsset = Resources.Load<RenderPipelineAsset>("UniversalRenderPipelineAsset");
-        SceneManager.LoadScene("Mapa1"); 
+        SceneManager.LoadScene("Mapa"); 
         Time.timeScale = 1;
     }
 

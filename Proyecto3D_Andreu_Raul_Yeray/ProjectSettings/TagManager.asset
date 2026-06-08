@@ -18,6 +18,7 @@ TagManager:
   - Proyectil
   - Llave
   - Dialogo
+  - Pila
   layers:
   - Default
   - TransparentFX
