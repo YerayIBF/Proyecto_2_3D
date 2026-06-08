@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     public Sprite iconoBateria;
     public Sprite iconoSinBateria;
     public bool zonaActivacion = false;
+    
     public bool zonaActivacion2 = false;
     public ThirdPersonController scriptJugador;
 
@@ -40,7 +41,7 @@ public class GameManager : MonoBehaviour
     [Tooltip("Icono de la llave en el HUD que se activa cuando la recoges")]
     public GameObject iconoLlaveHUD;
     [Tooltip("Texto que aparece al recoger la llave (opcional)")]
-    public string mensajeLlaveRecogida = "He agafat una clau, em pot servir per obrir alguna porta";
+    public string mensajeLlaveRecogida = "He agafat una clau";
     public Transform playerCameraRoot;
     public CinemachineCamera camaraVirtualSpline; 
     public float duracionCinematica = 5f; 

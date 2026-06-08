@@ -81,6 +81,23 @@ public class MinijuegoElectric : MonoBehaviour
         }
     }
 
+    /*void ComprobarExito() {
+        if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
+            Debug.Log("Correcto");
+            //guardamos el progreso llamando al script de progress manager
+            ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
+            //puertaAnim.SetTrigger("Abrir");
+            StartCoroutine(AbrirPuertas());
+            GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
+            TerminarJuego();
+            //Activar electricidad
+        } else {
+            Debug.Log("Incorrecto - Ruido fuerte");
+            //Emitir ruido en esa zona
+            TerminarJuego();
+        }
+    }*/
+
     void ComprobarExito() {
         if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
             Debug.Log("Correcto");
@@ -121,6 +138,7 @@ public class MinijuegoElectric : MonoBehaviour
         progreso = 0;
         ZonaVerdeSetup();
     }
+
 
     public void IniciarJuegoAnimator() {
         conAnimator = true;

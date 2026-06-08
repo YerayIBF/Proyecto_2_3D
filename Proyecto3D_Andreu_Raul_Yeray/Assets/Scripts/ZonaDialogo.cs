@@ -25,7 +25,7 @@ public class ZonaDialogo : MonoBehaviour
         if (Keyboard.current != null && Keyboard.current.xKey.wasPressedThisFrame)
         {
             if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("", texto, duracion);
+                GameManager.instance.ReproducirVoz(texto, duracion);
 
             yaUsado = true;
         }
