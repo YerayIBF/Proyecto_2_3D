@@ -85014,6 +85014,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SM_Double_Door_A
       objectReference: {fileID: 0}
+    - target: {fileID: 4172488449024734734, guid: ef7e6506f6b7e8a40a68d08c1c839973, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

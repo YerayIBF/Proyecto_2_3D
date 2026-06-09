@@ -173,6 +173,20 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     private void Update()
     {
+        
+         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+        {
+            if (_state != State.Wander)
+            {
+                _knownLockerWithPlayer = null;
+                _targetLocker = null;
+                _frozenAtLocker = false;
+                ChangeState(State.Wander);
+            }
+            UpdateWander();
+            return;
+        }
+
         if (_investigateCooldownTimer > 0f) _investigateCooldownTimer -= Time.deltaTime;
         if (_stunCooldownTimer > 0f) _stunCooldownTimer -= Time.deltaTime;
         if (_visionMemoryTimer > 0f) _visionMemoryTimer -= Time.deltaTime;
