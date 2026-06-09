@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Puerta que requiere la llave para abrirse.
@@ -55,21 +55,8 @@ public class KeyDoor : MonoBehaviour
         if (pickupIcon != null)
             pickupIcon.MostrarIcono(inRange);
 
-        if (inRange && BotonAbrirPulsado())
+        if (inRange && Input.GetKeyDown(interactKey))
             TryOpen();
-    }
-
-    private bool BotonAbrirPulsado()
-    {
-        // Teclado (E)
-        if (Input.GetKeyDown(interactKey))
-            return true;
-
-        // Mando: cuadrado PS / X Xbox (buttonWest)
-        if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)
-            return true;
-
-        return false;
     }
 
     private void TryOpen()
@@ -119,5 +106,10 @@ public class KeyDoor : MonoBehaviour
             yield return null;
         }
         transform.localRotation = _openRotation;
+
+        if (esPuertaFinal)
+        {
+            SceneManager.LoadScene("Creditos");
+        }
     }
 }
