@@ -12,7 +12,8 @@ public class GameManager : MonoBehaviour
     public static GameManager instance;
     public bool tieneLinterna = false;
     public bool tieneMegafono = false;
-    public bool tieneLlave = false;   // ← NUEVO
+    public bool tieneLlave = false;
+    public bool tieneLlaveFinal = false;
     public GameObject canvasMegafono;
     public TextMeshProUGUI textoEnergia;
     private GameObject megafono;
@@ -186,6 +187,13 @@ public class GameManager : MonoBehaviour
             ReproducirVoz(mensajeLlaveRecogida, 3f);
 
         Debug.Log("[GameManager] Llave recogida.");
+    }
+
+    public void RecogerLlaveFinal()
+    {
+        tieneLlaveFinal = true;
+
+        ReproducirVoz("He trobat la clau de la sortida, he de trobar la sortida ràpid", 3f);
     }
 
     /// <summary>
