@@ -19622,7 +19622,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56260d0179b784c478b7770dd7e0b0fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damage: 20
+  damage: 35
   velocidad: 40
   capasColision:
     serializedVersion: 2

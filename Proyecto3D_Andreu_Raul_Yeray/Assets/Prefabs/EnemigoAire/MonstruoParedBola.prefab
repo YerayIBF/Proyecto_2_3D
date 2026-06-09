@@ -177,7 +177,7 @@ MonoBehaviour:
   prefabProyectil: {fileID: 6638208836457653635, guid: eb2e8f6c6b986974c9e889fc1a6f2d7d, type: 3}
   puntoDisparo: {fileID: 7414028087344581418}
   fuerzaDisparo: 40
-  tiempoEntreAtaques: 3
+  tiempoEntreAtaques: 1
   duracionDelStun: 10
   cooldownStun: 5
   _audioSource: {fileID: 2637712756989550201}
@@ -381,7 +381,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.00556, y: 0.01576, z: 0.02267}
-  m_LocalPosition: {x: 0.00508, y: 0.01576, z: 0.02351}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -534,7 +533,6 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.00506, y: 0.015585, z: 0.02284}
-  m_LocalPosition: {x: -0.00506, y: 0.015585, z: 0.0235}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
