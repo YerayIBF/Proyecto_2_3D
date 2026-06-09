@@ -17,6 +17,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/CablesTask.unity
     guid: 6585f2454914ec54bbf8f83e5c518ca9
+  - enabled: 1
+    path: Assets/Scenes/Creditos.unity
+    guid: de010c7f2b7e9e04b8e80e9272145c37
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 9e7be553448fa2546aea5752021cbcf7, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: ad47186b81e1b134aba890ce2510a5c3, type: 3}
