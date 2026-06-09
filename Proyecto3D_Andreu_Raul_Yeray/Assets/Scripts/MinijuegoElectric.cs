@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using Unity.Cinemachine;
 
 public class MinijuegoElectric : MonoBehaviour
 {
@@ -26,6 +27,14 @@ public class MinijuegoElectric : MonoBehaviour
     [Header("Audio")]
     public AudioSource openSound;
     public AudioSource openSoundGarage;
+
+    [Header("Cámara del garage")]
+    public CinemachineCamera camaraGarage;
+    public float duracionCamaraGarage = 3f;
+
+    // Booleanas de finalizado
+    public bool _puertasCompletado = false;
+    public bool _garageCompletado  = false;
 
 
     void OnEnable()
@@ -67,6 +76,7 @@ public class MinijuegoElectric : MonoBehaviour
             {
                 puertaDerecha.rotation *= Quaternion.Euler(0, 90f, 0);
             }
+            _puertasCompletado = true;
         }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -85,23 +95,6 @@ public class MinijuegoElectric : MonoBehaviour
         }
     }
 
-    /*void ComprobarExito() {
-        if (progreso >= zonaSeguraInicio && progreso <= zonaSeguraFin) {
-            Debug.Log("Correcto");
-            //guardamos el progreso llamando al script de progress manager
-            ProgressManager.instance.RegistrarPuzzleCompletado(puzzle1);
-            //puertaAnim.SetTrigger("Abrir");
-            StartCoroutine(AbrirPuertas());
-            GameManager.instance.ReproducirVoz("Subtitulo1", "Sembla que s'ha obert una porta, un moment, ¿que ha estat aquest soroll?", 2f);
-            TerminarJuego();
-            //Activar electricidad
-        } else {
-            Debug.Log("Incorrecto - Ruido fuerte");
-            //Emitir ruido en esa zona
-            TerminarJuego();
-        }
-    }*/
-
     void ComprobarExito() {
         float margenExito = 0.05f;
 
@@ -110,11 +103,19 @@ public class MinijuegoElectric : MonoBehaviour
             //guardamos el progreso llamando al script de progress manager
             if (conAnimator)
             {
+                if (_garageCompletado) { TerminarJuego(); return; }
+                _garageCompletado = true;
+
                 if (openSoundGarage != null) openSoundGarage.Play();
                 puertaAnim.SetTrigger("Abrir");
+
+                if (camaraGarage != null) StartCoroutine(MostrarCamaraGarage());
             }
             else
             {
+                if (_puertasCompletado) { TerminarJuego(); return; }
+                _puertasCompletado = true;
+
                 if (openSound != null) openSound.Play();
                 StartCoroutine(AbrirPuertas());
                 GameManager.instance.ReproducirVoz("Sembla que s'ha obert una porta, hauria d'anar a mirar", 4f);
@@ -130,26 +131,31 @@ public class MinijuegoElectric : MonoBehaviour
         }
     }
 
-    public void IniciarJuego() {
-        //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
-        float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
-        zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
-        zonaSeguraFin = zonaSeguraInicio + anchoZona;        
+   public void IniciarJuego() {
+    Debug.Log("=== IniciarJuego LLAMADO ===");
+    if (_puertasCompletado) { Debug.Log("Bloqueado: puertas completado"); return; }
+    conAnimator = false;
+    
+    float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
+    zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
+    zonaSeguraFin = zonaSeguraInicio + anchoZona;        
 
-        if (zonaSeguraFin > 1f)
-        {
-            zonaSeguraFin = 1f;
-            zonaSeguraInicio = zonaSeguraFin - anchoZona;
-        }
+    if (zonaSeguraFin > 1f)
+    {
+        zonaSeguraFin = 1f;
+        zonaSeguraInicio = zonaSeguraFin - anchoZona;
+    }
 
-        juegoActivo = true;
-        panelMinijuego.SetActive(true);
-        progreso = 0;
-        ZonaVerdeSetup();
+    juegoActivo = true;
+    panelMinijuego.SetActive(true);
+    Debug.Log("Panel activado. activeInHierarchy = " + panelMinijuego.activeInHierarchy);
+    progreso = 0;
+    ZonaVerdeSetup();
     }
 
 
     public void IniciarJuegoAnimator() {
+        if (_garageCompletado) return;
         conAnimator = true;
         //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
         float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
@@ -207,5 +213,12 @@ public class MinijuegoElectric : MonoBehaviour
 
         puertaIzquierda.rotation = rotObjetivoIzq;
         puertaDerecha.rotation = rotObjetivoDer;
+    }
+
+    IEnumerator MostrarCamaraGarage()
+    {
+        camaraGarage.Priority = 30;
+        yield return new WaitForSeconds(duracionCamaraGarage);
+        camaraGarage.Priority = 0;
     }
 }

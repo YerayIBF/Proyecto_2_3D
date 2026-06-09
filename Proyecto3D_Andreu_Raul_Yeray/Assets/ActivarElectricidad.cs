@@ -5,16 +5,13 @@ public class ActivarElectricidad : MonoBehaviour
     public BoxCollider electricidadCollider;
     public GameObject canvasElectricidad;
     public Animator puertaAnim;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    [Header("Minijuego de esta zona")]
+    public MinijuegoElectric minijuego; // arrastra el MinijuegoElectric de ESTA puerta
+
     void Start()
     {
         canvasElectricidad.SetActive(false);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private void OnTriggerEnter(Collider other)
@@ -23,7 +20,7 @@ public class ActivarElectricidad : MonoBehaviour
         {
             canvasElectricidad.SetActive(true);
             GameManager.instance.zonaActivacion = true;
-            //puertaAnim.SetTrigger("Abrir");
+            GameManager.instance.minijuegoActivo = minijuego; // guarda cuál es el minijuego de esta zona
         }
     }
 

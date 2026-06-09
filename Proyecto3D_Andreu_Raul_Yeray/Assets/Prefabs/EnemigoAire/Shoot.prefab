@@ -19626,7 +19626,7 @@ MonoBehaviour:
   velocidad: 30
   capasColision:
     serializedVersion: 2
-    m_Bits: 131073
+    m_Bits: 131137
 --- !u!1 &8842829420721852190
 GameObject:
   m_ObjectHideFlags: 0
