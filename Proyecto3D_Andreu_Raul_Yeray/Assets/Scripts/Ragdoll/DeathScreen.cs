@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 using TMPro;
 using System.Collections;
 
@@ -8,6 +9,8 @@ using System.Collections;
 /// Pantalla de muerte con sistema de respawn.
 /// - Botón Reintentar: respawnea al jugador en el punto inicial SIN recargar la escena
 /// - Botón Menú: carga la escena del menú principal
+/// - Compatible con mando: selecciona automáticamente el botón Reintentar
+/// - Fuerza el cursor visible cada frame mientras está activa
 /// </summary>
 public class DeathScreen : MonoBehaviour
 {
@@ -19,9 +22,7 @@ public class DeathScreen : MonoBehaviour
     public CanvasGroup deathUIGroup;
 
     [Header("Spawn point del jugador")]
-    [Tooltip("Transform donde reaparecerá el jugador al pulsar Reintentar. Si está vacío, usa la posición inicial guardada al empezar.")]
     public Transform spawnPoint;
-    [Tooltip("Si está marcado, guarda automáticamente la posición inicial del jugador al empezar la escena")]
     public bool autoUseInitialPosition = true;
 
     [Header("Escenas")]
@@ -32,10 +33,10 @@ public class DeathScreen : MonoBehaviour
     public float showUIDelay = 0.5f;
     public float uiFadeDuration = 1f;
 
-    // Posición/rotación guardadas al inicio
     private Vector3 _initialPosition;
     private Quaternion _initialRotation;
     private bool _initialPositionSaved = false;
+    private bool _screenActive = false;
 
     private void Awake()
     {
@@ -68,12 +69,44 @@ public class DeathScreen : MonoBehaviour
         {
             PlayerStateMachine.Instance.OnPlayerDied += ShowDeathScreen;
 
-            // Guardar la posición inicial del jugador
             if (autoUseInitialPosition)
             {
                 _initialPosition = PlayerStateMachine.Instance.transform.position;
                 _initialRotation = PlayerStateMachine.Instance.transform.rotation;
                 _initialPositionSaved = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Mientras la pantalla está activa, fuerza el cursor visible cada frame
+    /// para evitar que otros scripts lo bloqueen.
+    /// </summary>
+    private void Update()
+    {
+        if (_screenActive)
+        {
+            // Fuerza cursor visible cada frame
+            if (Cursor.lockState != CursorLockMode.None)
+                Cursor.lockState = CursorLockMode.None;
+            if (!Cursor.visible)
+                Cursor.visible = true;
+
+            // Si por algún motivo se deselecciona el botón, lo reselecciona
+            // (importante para mando)
+            EventSystem es = EventSystem.current;
+            if (es != null && es.currentSelectedGameObject == null && retryButton != null)
+            {
+                es.SetSelectedGameObject(retryButton.gameObject);
+            }
+
+            // Bloquear inputs del jugador
+            if (PlayerStateMachine.Instance != null && PlayerStateMachine.Instance.inputs != null)
+            {
+                PlayerStateMachine.Instance.inputs.move = Vector2.zero;
+                PlayerStateMachine.Instance.inputs.look = Vector2.zero;
+                PlayerStateMachine.Instance.inputs.sprint = false;
+                PlayerStateMachine.Instance.inputs.jump = false;
             }
         }
     }
@@ -94,6 +127,7 @@ public class DeathScreen : MonoBehaviour
 
     public void ShowDeathScreen()
     {
+        _screenActive = true;
         StartCoroutine(FadeAndShow());
     }
 
@@ -136,13 +170,21 @@ public class DeathScreen : MonoBehaviour
             deathUIGroup.interactable = true;
             deathUIGroup.blocksRaycasts = true;
         }
+
+        // Seleccionar el botón Reintentar (importante para mando)
+        if (EventSystem.current != null && retryButton != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null); // limpiar
+            EventSystem.current.SetSelectedGameObject(retryButton.gameObject);
+        }
     }
 
     // ─── Ocultar pantalla de muerte (al respawnear) ──────────────────────────
 
     private IEnumerator HideDeathScreen()
     {
-        // Ocultar UI rápido
+        _screenActive = false;
+
         if (deathUIGroup != null)
         {
             deathUIGroup.alpha = 0f;
@@ -150,7 +192,6 @@ public class DeathScreen : MonoBehaviour
             deathUIGroup.blocksRaycasts = false;
         }
 
-        // Fade out del negro
         float t = 0f;
         float duration = 0.5f;
         Color startColor = fadeImage != null ? fadeImage.color : Color.black;
@@ -174,6 +215,10 @@ public class DeathScreen : MonoBehaviour
         // Bloquear cursor para volver a jugar
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Limpiar selección de EventSystem
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(null);
     }
 
     // ─── Botones ─────────────────────────────────────────────────────────────
@@ -210,7 +255,6 @@ public class DeathScreen : MonoBehaviour
         }
         else
         {
-            // Fallback: si no hay PlayerStateMachine, recarga la escena
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
@@ -219,6 +263,7 @@ public class DeathScreen : MonoBehaviour
     {
         Debug.Log($"[DeathScreen] Volviendo al menú: {menuSceneName}");
         Time.timeScale = 1f;
+        _screenActive = false;
         SceneManager.LoadScene(menuSceneName);
     }
 }
