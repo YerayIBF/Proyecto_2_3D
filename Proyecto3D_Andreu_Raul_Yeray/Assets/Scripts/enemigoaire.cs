@@ -57,6 +57,17 @@ public class enemigoaire : MonoBehaviour
  
     void Update()
     {
+        // Si el jugador está muerto, volver a Wander y no hacer nada más
+        if (PlayerState != null && !PlayerState.IsAlive)
+        {
+            if (currentState != EnemyState.Wander)
+            {
+                currentState = EnemyState.Wander;
+                _tieneObjetivoSonido = false;
+            }
+            return;
+        }
+
         if (_visionMemoryTimer > 0f) _visionMemoryTimer -= Time.deltaTime;
         if (cronometroCooldown > 0f) cronometroCooldown -= Time.deltaTime;
  
@@ -68,6 +79,7 @@ public class enemigoaire : MonoBehaviour
     {
         if (currentState == EnemyState.Stunned) return;
         if (jugador == null || PlayerState == null) return;
+        if (!PlayerState.IsAlive) return;
         if (PlayerState.CurrentState != PlayerStateMachine.PlayerState.Running) return;
  
         float distancia = Vector3.Distance(transform.position, jugador.position);
@@ -152,6 +164,7 @@ public class enemigoaire : MonoBehaviour
     bool CanSeePlayer()
     {
         if (jugador == null || eyes == null) return false;
+        if (PlayerState != null && !PlayerState.IsAlive) return false;
  
         // En zona oscura: solo ve al jugador si lleva la linterna encendida
         if (cannotSee)
@@ -215,6 +228,7 @@ public class enemigoaire : MonoBehaviour
     public void OnHeardNoise(Vector3 noisePosition)
     {
         if (currentState == EnemyState.Stunned) return;
+        if (PlayerState != null && !PlayerState.IsAlive) return;
  
         float distancia = Vector3.Distance(transform.position, noisePosition);
         if (distancia > radioDeAudicion) return;

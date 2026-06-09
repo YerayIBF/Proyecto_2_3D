@@ -1,21 +1,17 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections;
 
 /// <summary>
 /// Sistema de linterna.
 ///
-/// - El jugador no puede usar la linterna hasta recogerla con E
-/// - Si startPickedUp = true, ya la tiene equipada al inicio (test/tutorial saltado)
-/// - F = encender/apagar
-/// - Click DERECHO = apuntar (zoom + más intensa)
-/// - R = recargar
-///
-/// Para el stun: detecta colliders con el tag "EnemyEyes".
+/// - F / Y (mando) = encender/apagar
+/// - R / RT (mando) = recargar
+/// - Click DERECHO / RB (mando) = apuntar
 /// </summary>
 public class FlashlightSystem : MonoBehaviour
 {
     [Header("Pickup")]
-    [Tooltip("Si está marcado, la linterna empieza ya recogida (no necesita E)")]
     public bool startPickedUp = false;
     public float pickupRange = 2f;
     public GameObject pickupIcon;
@@ -52,11 +48,15 @@ public class FlashlightSystem : MonoBehaviour
     public float flickerThreshold = 0.15f;
 
     [Header("Detección de ojos (por TAG)")]
-    [Tooltip("Tag de los colliders de ojos de los enemigos. Por defecto 'EnemyEyes'.")]
     public string eyesTag = "EnemyEyes";
     public int      coneRayCount    = 8;
     public float    coneAngle       = 15f;
     public float    stunDetectRange = 10f;
+
+    [Header("Input Actions (opcional, para mando)")]
+    public InputActionReference toggleFlashlightAction;
+    public InputActionReference reloadAction;
+    public InputActionReference apuntarAction;
 
     // ─── Estado ───────────────────────────────────────────────────────────────
 
@@ -78,6 +78,22 @@ public class FlashlightSystem : MonoBehaviour
     public System.Action<float> OnBatteryChanged;
     public System.Action<bool>  OnFlashlightToggled;
     public System.Action<bool>  OnAimingChanged;
+
+    // ─── Input Actions enable/disable ────────────────────────────────────────
+
+    private void OnEnable()
+    {
+        if (toggleFlashlightAction != null) toggleFlashlightAction.action.Enable();
+        if (reloadAction != null)           reloadAction.action.Enable();
+        if (apuntarAction != null)          apuntarAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (toggleFlashlightAction != null) toggleFlashlightAction.action.Disable();
+        if (reloadAction != null)           reloadAction.action.Disable();
+        if (apuntarAction != null)          apuntarAction.action.Disable();
+    }
 
     // ─── Init ────────────────────────────────────────────────────────────────
 
@@ -102,14 +118,7 @@ public class FlashlightSystem : MonoBehaviour
 
     private void Start()
     {
-        if (startPickedUp)
-        {
-            _hasFlashlight = true;
-        }
-        else
-        {
-            _hasFlashlight = false;
-        }
+        _hasFlashlight = startPickedUp;
     }
 
     private void Update()
@@ -119,7 +128,6 @@ public class FlashlightSystem : MonoBehaviour
 
         if (!_hasFlashlight)
         {
-           
             return;
         }
 
@@ -136,23 +144,6 @@ public class FlashlightSystem : MonoBehaviour
     }
 
     // ─── PICKUP ──────────────────────────────────────────────────────────────
-
-    private void HandlePickup()
-    {
-        if (_player == null) return;
-
-        float dist = Vector3.Distance(transform.position, _player.position);
-        bool nowInRange = dist <= pickupRange;
-
-        if (nowInRange != _playerInRange)
-        {
-            _playerInRange = nowInRange;
-            if (pickupIcon != null) pickupIcon.SetActive(_playerInRange);
-        }
-
-        if (_playerInRange && Input.GetKeyDown(KeyCode.E))
-            Pickup();
-    }
 
     private void Pickup()
     {
@@ -185,19 +176,31 @@ public class FlashlightSystem : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.F) && currentBattery > 0f)
+        // ── ENCENDER / APAGAR LINTERNA (F / Y mando) ──
+        bool toggleInput = Input.GetKeyDown(KeyCode.F)
+                        || (toggleFlashlightAction != null && toggleFlashlightAction.action.WasPressedThisFrame());
+
+        if (toggleInput && currentBattery > 0f)
             ToggleFlashlight();
 
-        if (Input.GetKeyDown(KeyCode.R))
+        // ── RECARGAR (R / RT mando) ──
+        bool reloadInput = Input.GetKeyDown(KeyCode.R)
+                        || (reloadAction != null && reloadAction.action.WasPressedThisFrame());
+
+        if (reloadInput)
         {
-            TriggerReloadAnimation();   
+            TriggerReloadAnimation();
         }
 
+        // ── APUNTAR (click derecho / RB mando) ──
         bool canAim = _isOn;
         if (PlayerEquipmentManager.Instance != null)
             canAim = canAim && PlayerEquipmentManager.Instance.CanAimFlashlight;
 
-        bool aimInput = Input.GetMouseButton(1) && canAim;
+        bool aimInputPressed = Input.GetMouseButton(1)
+                            || (apuntarAction != null && apuntarAction.action.IsPressed());
+
+        bool aimInput = aimInputPressed && canAim;
 
         if (aimInput != _isAiming)
         {
@@ -205,7 +208,7 @@ public class FlashlightSystem : MonoBehaviour
             OnAimingChanged?.Invoke(_isAiming);
             PlayerEquipmentManager.Instance?.SetAimingFlashlight(_isAiming);
         }
-}
+    }
 
     // ─── Parpadeo ─────────────────────────────────────────────────────────────
 
@@ -297,76 +300,66 @@ public class FlashlightSystem : MonoBehaviour
 
     // ─── DETECCIÓN OJOS POR TAG ──────────────────────────────────────────────
 
-   private void DetectEyesStun()
-{
-    if (!_isAiming || mainCamera == null) return;
-
-    Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-
-    EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
-    enemigoaire hitAire = TryRaycastEyesAire(ray.origin, ray.direction);
-
-    if (hitEnemy == null && hitAire == null)
+    private void DetectEyesStun()
     {
-        for (int i = 0; i < coneRayCount; i++)
+        if (!_isAiming || mainCamera == null) return;
+
+        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+
+        EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
+        enemigoaire hitAire = TryRaycastEyesAire(ray.origin, ray.direction);
+
+        if (hitEnemy == null && hitAire == null)
         {
-            float angle = (360f / coneRayCount) * i;
-            Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
-                        * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
+            for (int i = 0; i < coneRayCount; i++)
+            {
+                float angle = (360f / coneRayCount) * i;
+                Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
+                            * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
 
-            if (hitEnemy == null) hitEnemy = TryRaycastEyes(ray.origin, dir);
-            if (hitAire  == null) hitAire  = TryRaycastEyesAire(ray.origin, dir);
+                if (hitEnemy == null) hitEnemy = TryRaycastEyes(ray.origin, dir);
+                if (hitAire  == null) hitAire  = TryRaycastEyesAire(ray.origin, dir);
 
-            if (hitEnemy != null && hitAire != null) break;
+                if (hitEnemy != null && hitAire != null) break;
+            }
+        }
+
+        bool anyHit = hitEnemy != null || hitAire != null;
+
+        if (anyHit && !_stunDetected)
+        {
+            _stunDetected = true;
+
+            if (hitEnemy != null)
+            {
+                hitEnemy.Stun();
+                Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
+            }
+
+            if (hitAire != null)
+            {
+                hitAire.AplicarStun(hitAire.duracionDelStun);
+                Debug.Log($"[Flashlight] ¡Stun! → {hitAire.gameObject.name}");
+            }
+        }
+        else if (!anyHit)
+        {
+            _stunDetected = false;
         }
     }
 
-    bool anyHit = hitEnemy != null || hitAire != null;
-
-    if (anyHit && !_stunDetected)
-    {
-        _stunDetected = true;
-
-        if (hitEnemy != null)
-        {
-            hitEnemy.Stun();
-            Debug.Log($"[Flashlight] ¡Stun! → {hitEnemy.gameObject.name}");
-        }
-
-        if (hitAire != null)
-        {
-            hitAire.AplicarStun(hitAire.duracionDelStun);
-            Debug.Log($"[Flashlight] ¡Stun! → {hitAire.gameObject.name}");
-        }
-    }
-    else if (!anyHit)
-    {
-        _stunDetected = false;
-    }
-}
-
-    
-
-    /// <summary>
-    /// Lanza un raycast y comprueba si lo que golpea tiene el tag eyesTag.
-    /// Si sí, busca el EnemyBehaviourTree en la escena (porque puede estar en
-    /// otro GameObject — el EnemyLogic, separado del Ghost donde están los ojos).
-    /// </summary>
     private EnemyBehaviourTree TryRaycastEyes(Vector3 origin, Vector3 direction)
     {
-       if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
-        ~0, QueryTriggerInteraction.Collide))
-        return null;
+        if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
+            ~0, QueryTriggerInteraction.Collide))
+            return null;
 
-        // Comprobar tag
         if (!hit.collider.CompareTag(eyesTag))
             return null;
 
-        // Buscar el BehaviourTree en padres O en toda la escena
         EnemyBehaviourTree bt = hit.collider.GetComponentInParent<EnemyBehaviourTree>();
         if (bt != null) return bt;
 
-        // Si los ojos están en el Ghost (separado del Logic), buscamos al más cercano
         EnemyBehaviourTree[] allEnemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
         EnemyBehaviourTree nearest = null;
         float minDist = float.MaxValue;
@@ -384,21 +377,18 @@ public class FlashlightSystem : MonoBehaviour
 
     private enemigoaire TryRaycastEyesAire(Vector3 origin, Vector3 direction)
     {
-        int layerMask = ~LayerMask.GetMask("EnemyRange"); // ignora el collider grande
+        int layerMask = ~LayerMask.GetMask("EnemyRange");
 
-       if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
-        layerMask, QueryTriggerInteraction.Collide))
-        return null;
+        if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
+            layerMask, QueryTriggerInteraction.Collide))
+            return null;
 
-        // Comprobar tag
         if (!hit.collider.CompareTag(eyesTag))
-        return null;
+            return null;
 
-        // Buscar el BehaviourTree en padres O en toda la escena
         enemigoaire bt = hit.collider.GetComponentInParent<enemigoaire>();
         if (bt != null) return bt;
 
-        // Si los ojos están en el Ghost (separado del Logic), buscamos al más cercano
         enemigoaire[] allEnemies = Object.FindObjectsByType<enemigoaire>(FindObjectsSortMode.None);
         enemigoaire nearest = null;
         float minDist = float.MaxValue;
@@ -460,53 +450,47 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
+    // ─── Animación de recarga ────────────────────────────────────────────────
 
-
-// Dispara la animación de recarga. El Animation Event llamará a Reload().
-public void TriggerReloadAnimation()
-{
-    // Solo si tiene linterna en mano
-    if (PlayerEquipmentManager.Instance == null
-        || !PlayerEquipmentManager.Instance.IsFlashlightInHand)
-        return;
-
-    // Comprobar que tiene baterías antes de animar
-    if (PlayerStateMachine.Instance == null
-        || PlayerStateMachine.Instance.BatteryCount <= 0)
+    public void TriggerReloadAnimation()
     {
-        Debug.Log("[Flashlight] Sin baterías, no se puede recargar.");
-        return;
-    }
+        if (PlayerEquipmentManager.Instance == null
+            || !PlayerEquipmentManager.Instance.IsFlashlightInHand)
+            return;
 
-    // No recargar si ya está al máximo
-    if (currentBattery >= maxBattery)
-    {
-        Debug.Log("[Flashlight] Batería al máximo.");
-        return;
-    }
+        if (PlayerStateMachine.Instance == null
+            || PlayerStateMachine.Instance.BatteryCount <= 0)
+        {
+            Debug.Log("[Flashlight] Sin baterías, no se puede recargar.");
+            return;
+        }
 
-    // Animator
-    if (PlayerStateMachine.Instance.playerAnimator == null)
-    {
-        // Fallback sin animator
-        PlayerStateMachine.Instance.TryReloadFlashlight();
-        return;
-    }
+        if (currentBattery >= maxBattery)
+        {
+            Debug.Log("[Flashlight] Batería al máximo.");
+            return;
+        }
 
-    Animator anim = PlayerStateMachine.Instance.playerAnimator;
-    bool isCrouched = PlayerStateMachine.Instance.IsCrouched;
+        if (PlayerStateMachine.Instance.playerAnimator == null)
+        {
+            PlayerStateMachine.Instance.TryReloadFlashlight();
+            return;
+        }
 
-    if (isCrouched)
-    {
-        anim.SetTrigger("ReloadCrouched");
-        PlayerStateMachine.Instance.EnterTemporaryState(
-            PlayerStateMachine.PlayerState.ReloadingCrouched, 1.5f);
+        Animator anim = PlayerStateMachine.Instance.playerAnimator;
+        bool isCrouched = PlayerStateMachine.Instance.IsCrouched;
+
+        if (isCrouched)
+        {
+            anim.SetTrigger("ReloadCrouched");
+            PlayerStateMachine.Instance.EnterTemporaryState(
+                PlayerStateMachine.PlayerState.ReloadingCrouched, 1.5f);
+        }
+        else
+        {
+            anim.SetTrigger("Reload");
+            PlayerStateMachine.Instance.EnterTemporaryState(
+                PlayerStateMachine.PlayerState.Reloading, 1.5f);
+        }
     }
-    else
-    {
-        anim.SetTrigger("Reload");
-        PlayerStateMachine.Instance.EnterTemporaryState(
-            PlayerStateMachine.PlayerState.Reloading, 1.5f);
-    }
-}
 }

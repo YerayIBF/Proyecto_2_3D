@@ -1,10 +1,11 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Manager central de equipamiento.
 ///
 /// REGLAS:
-/// - Mano dcha: linterna O megáfono (alterna con Q)
+/// - Mano dcha: linterna O megáfono (alterna con Q / D-Pad)
 /// - Mano izq: solo lanzables
 /// - Si llevas lanzable → NO puedes apuntar nada
 /// - Si apuntas → NO puedes cambiar de mano ni recoger
@@ -47,8 +48,14 @@ public class PlayerEquipmentManager : MonoBehaviour
     [Header("Inicio")]
     public bool startWithFlashlight = false;
 
-    [Header("Tecla de cambio")]
+    [Header("Tecla de cambio (teclado)")]
     public KeyCode swapKey = KeyCode.Q;
+
+    [Header("Input Actions (mando) — D-Pad")]
+    [Tooltip("Botón Next del D-Pad (derecha) para cambiar de arma")]
+    public InputActionReference nextAction;
+    [Tooltip("Botón Previous del D-Pad (izquierda) para cambiar de arma")]
+    public InputActionReference previousAction;
 
     public enum RightHandItem { Flashlight, Megaphone }
     public RightHandItem CurrentRightHand { get; private set; } = RightHandItem.Flashlight;
@@ -65,13 +72,13 @@ public class PlayerEquipmentManager : MonoBehaviour
         _hasFlashlight
         && CurrentRightHand == RightHandItem.Flashlight
         && !_aimingMegaphone
-        && _heldThrowable == null;          // ← NUEVO: no apuntar con lanzable
+        && _heldThrowable == null;
 
     public bool CanAimMegaphone =>
         _hasMegaphone
         && CurrentRightHand == RightHandItem.Megaphone
         && !_aimingFlashlight
-        && _heldThrowable == null;          // ← NUEVO
+        && _heldThrowable == null;
 
     public bool CanPickupThrowable =>
         _heldThrowable == null
@@ -83,7 +90,21 @@ public class PlayerEquipmentManager : MonoBehaviour
         && _hasMegaphone
         && !_aimingFlashlight
         && !_aimingMegaphone
-        && _heldThrowable == null;          // ← NUEVO: tampoco cambiar de mano
+        && _heldThrowable == null;
+
+    // ─── Input Actions enable/disable ────────────────────────────────────────
+
+    private void OnEnable()
+    {
+        if (nextAction != null)     nextAction.action.Enable();
+        if (previousAction != null) previousAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (nextAction != null)     nextAction.action.Disable();
+        if (previousAction != null) previousAction.action.Disable();
+    }
 
     // ─── Init ────────────────────────────────────────────────────────────────
 
@@ -95,16 +116,13 @@ public class PlayerEquipmentManager : MonoBehaviour
 
     private void Start()
     {
-        // Si el flag startWithFlashlight está activado Y hay linterna asignada
         if (startWithFlashlight && linternaObject != null)
         {
             _hasFlashlight = true;
 
-            // Activar la linterna y desactivar su física/colliders
             linternaObject.SetActive(true);
             DisablePhysicsOf(linternaObject);
 
-            // Avisar al FlashlightSystem que ya está recogida
             FlashlightSystem fs = linternaObject.GetComponentInChildren<FlashlightSystem>();
             if (fs != null) fs.PickupFlashlight();
         }
@@ -114,10 +132,15 @@ public class PlayerEquipmentManager : MonoBehaviour
 
     private void Update()
     {
-         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
-        return;
+        if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+            return;
 
-        if (Input.GetKeyDown(swapKey) && CanSwapHand)
+        // Cambiar de mano (Q teclado o D-Pad izq/dch mando)
+        bool swapInput = Input.GetKeyDown(swapKey)
+                      || (nextAction != null && nextAction.action.WasPressedThisFrame())
+                      || (previousAction != null && previousAction.action.WasPressedThisFrame());
+
+        if (swapInput && CanSwapHand)
             SwapRightHand();
     }
 

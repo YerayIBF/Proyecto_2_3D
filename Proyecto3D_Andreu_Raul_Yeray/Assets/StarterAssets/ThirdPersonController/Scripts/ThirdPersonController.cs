@@ -178,48 +178,38 @@ namespace StarterAssets
           
         if (_input.interact)
         {
-            if (_input.interact)
-            {
-                _input.interact = false;
+            _input.interact = false;
 
-                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
+            Debug.Log($"Interact pulsado. zonaActivacion={GameManager.instance.zonaActivacion}, zonaActivacion2={GameManager.instance.zonaActivacion2}, minijuegoActivo={GameManager.instance.minijuegoActivo}");
+
+            if (cercaDePila)
+            {
+                pilaCercana.GetComponent<PilaMegafono>().Recargar();
+                Destroy(pilaCercana);
+                cercaDePila = false;
+            }
+            else if (GameManager.instance.zonaActivacion)
+            {
+                GameManager.instance.minijuegoActivo.IniciarJuego();
+            }
+            else if (GameManager.instance.zonaActivacion2)
+            {
+                GameManager.instance.minijuegoActivo.IniciarJuegoAnimator();
+            }
+            else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
+            {
+                // Bloquear spam: solo si no estamos ya cogiendo algo
+                bool yaEstaCogiendo = PlayerStateMachine.Instance != null
+                                && PlayerStateMachine.Instance.CurrentState == PlayerStateMachine.PlayerState.Picking;
+
+                if (!yaEstaCogiendo)
                 {
                     _animator.SetTrigger("Coger");
-                }else if (cercaDePila)
-                Debug.Log($"Interact pulsado. zonaActivacion={GameManager.instance.zonaActivacion}, zonaActivacion2={GameManager.instance.zonaActivacion2}, minijuegoActivo={GameManager.instance.minijuegoActivo}");
-    
-                if (cercaDePila)
-                {
-                    pilaCercana.GetComponent<PilaMegafono>().Recargar();
-                    Destroy(pilaCercana);
-                    cercaDePila = false;
-                }
-                else if (GameManager.instance.zonaActivacion)
-                {
-                    GameManager.instance.minijuegoActivo.IniciarJuego();
-                }
-                else if (GameManager.instance.zonaActivacion2)
-                {
-                    GameManager.instance.minijuegoActivo.IniciarJuegoAnimator();
-                }
-                else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
-                {
-                    bool yaEstaCogiendo = PlayerStateMachine.Instance != null
-                                    && PlayerStateMachine.Instance.CurrentState == PlayerStateMachine.PlayerState.Picking;
-    
-                    if (!yaEstaCogiendo)
-                    {
-                        _animator.SetTrigger("Coger");
-                        PlayerStateMachine.Instance?.EnterTemporaryState(
-                            PlayerStateMachine.PlayerState.Picking, 1.2f);
-                    }
-                }
-                else
-                {
-                    // Nada cerca: animación de coger genérica
-                    _animator.SetTrigger("Coger");
+                    PlayerStateMachine.Instance?.EnterTemporaryState(
+                        PlayerStateMachine.PlayerState.Picking, 1.2f);
                 }
             }
+            // Si no hay nada cerca → no hace nada (no animación genérica)
         }
 
             //testear minijuego
