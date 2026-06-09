@@ -7,12 +7,6 @@
       "dependencies": {},
       "hash": "16dece56060da010541cc48948cee5eb41b54c1d"
     },
-    "com.ethangrane.unity-time-tracker": {
-      "version": "file:C:/Users/rpucholgimenez/Desktop/Manage-It-Productivity-Time-Tracker-for-Unity-release",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {}
-    },
     "com.occasoftware.buto": {
       "version": "file:com.occasoftware.buto",
       "depth": 0,
