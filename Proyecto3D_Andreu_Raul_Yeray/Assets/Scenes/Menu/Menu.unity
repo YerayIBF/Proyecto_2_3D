@@ -6651,7 +6651,7 @@ MonoBehaviour:
   m_text: Controls
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
-  m_sharedMaterial: {fileID: -1964854698639113864, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
+  m_sharedMaterial: {fileID: -4169294629044903310, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10410,7 +10410,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 942881551}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 703287092}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: AbrirControles
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &942881551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13072,7 +13084,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1176454372}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 703287092}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: CerrarOpciones
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1176454372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14742,7 +14766,7 @@ MonoBehaviour:
   m_text: Opcions
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
-  m_sharedMaterial: {fileID: -1964854698639113864, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
+  m_sharedMaterial: {fileID: -4169294629044903310, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -15365,7 +15389,7 @@ MonoBehaviour:
   m_text: Sortir
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
-  m_sharedMaterial: {fileID: -1964854698639113864, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
+  m_sharedMaterial: {fileID: -4169294629044903310, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -16848,7 +16872,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1450061589}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 703287092}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: CerrarControles
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1450061589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17951,7 +17987,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1567018547}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 703287092}
+        m_TargetAssemblyTypeName: MenuManager, Assembly-CSharp
+        m_MethodName: Salir
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1567018547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19450,7 +19498,7 @@ MonoBehaviour:
   m_text: Jugar
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
-  m_sharedMaterial: {fileID: -1964854698639113864, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
+  m_sharedMaterial: {fileID: -4169294629044903310, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -23821,7 +23869,7 @@ MonoBehaviour:
   m_text: Game Name
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
-  m_sharedMaterial: {fileID: -1964854698639113864, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
+  m_sharedMaterial: {fileID: -4169294629044903310, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

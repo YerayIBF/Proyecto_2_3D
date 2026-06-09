@@ -423,6 +423,12 @@ public class CogerObjeto : MonoBehaviour
 
             // Hacer desaparecer la llave del mundo
             objeto.SetActive(false);
+        }else if (objeto.CompareTag("LlaveFinal"))
+        {
+            GameManager.instance.RecogerLlaveFinal();
+            
+            //Añadir funcion que se ejecutara cuando se recoja la llave (abrir puerta salida)
+            objeto.SetActive(false);
         }
 
         objeto = null;

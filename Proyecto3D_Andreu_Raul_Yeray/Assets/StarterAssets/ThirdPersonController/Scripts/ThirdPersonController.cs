@@ -181,6 +181,11 @@ namespace StarterAssets
             if (_input.interact)
             {
                 _input.interact = false;
+
+                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
+                {
+                    _animator.SetTrigger("Coger");
+                }else if (cercaDePila)
                 Debug.Log($"Interact pulsado. zonaActivacion={GameManager.instance.zonaActivacion}, zonaActivacion2={GameManager.instance.zonaActivacion2}, minijuegoActivo={GameManager.instance.minijuegoActivo}");
     
                 if (cercaDePila)
