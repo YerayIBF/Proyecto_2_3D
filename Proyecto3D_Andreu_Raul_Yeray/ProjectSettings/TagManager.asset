@@ -19,6 +19,8 @@ TagManager:
   - Llave
   - Dialogo
   - Pila
+  - Mando
+  - LlaveFinal
   layers:
   - Default
   - TransparentFX
@@ -50,7 +52,7 @@ TagManager:
   - 
   - EnemyEyes
   - Enemy
-  - 
+  - Mando
   - 
   m_SortingLayers:
   - name: Default

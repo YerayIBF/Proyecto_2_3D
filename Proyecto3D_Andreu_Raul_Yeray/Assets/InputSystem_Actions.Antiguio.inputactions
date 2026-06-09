@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "name": "InputSystem_Actions",
+    "name": "InputSystem_Actions.Antiguio",
     "maps": [
         {
             "name": "Player",
@@ -127,24 +127,6 @@
                     "name": "MinigameGreen",
                     "type": "Button",
                     "id": "224c3549-b9c3-449d-ace6-ebe18f397369",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "ToggleFlashlight",
-                    "type": "Button",
-                    "id": "224c3549-b9c3-449d-ace6-ebe18f397370",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Reload",
-                    "type": "Button",
-                    "id": "224c3549-b9c3-449d-ace6-ebe18f397371",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -320,7 +302,7 @@
                 {
                     "name": "",
                     "id": "143bb1cd-cc10-4eca-a2f0-a3664166fe91",
-                    "path": "<Gamepad>/leftShoulder",
+                    "path": "<Gamepad>/buttonWest",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Gamepad",
@@ -419,7 +401,7 @@
                 {
                     "name": "",
                     "id": "8cbb2f4b-a784-49cc-8d5e-c010b8c7f4e6",
-                    "path": "<Gamepad>/leftTrigger",
+                    "path": "<Gamepad>/leftStickPress",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -507,7 +489,7 @@
                 {
                     "name": "",
                     "id": "b3f66d0b-7751-423f-908b-a11c5bd95930",
-                    "path": "<Gamepad>/buttonWest",
+                    "path": "<Gamepad>/buttonNorth",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -518,7 +500,7 @@
                 {
                     "name": "",
                     "id": "4f4649ac-64a8-4a73-af11-b3faef356a4d",
-                    "path": "<Gamepad>/leftStickPress",
+                    "path": "<Gamepad>/buttonEast",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -573,7 +555,7 @@
                 {
                     "name": "",
                     "id": "133fa38b-0d9d-425f-8b63-9064ca1ae89a",
-                    "path": "<Gamepad>/leftShoulder",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -600,50 +582,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "MinigameGreen",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f298e35c-6146-40f2-8855-f276f4c81415",
-                    "path": "<Gamepad>/buttonNorth",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "ToggleFlashlight",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f298e35c-6146-40f2-8855-f276f4c81416",
-                    "path": "<Keyboard>/f",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "ToggleFlashlight",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f298e35c-6146-40f2-8855-f276f4c81417",
-                    "path": "<Gamepad>/rightTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Gamepad",
-                    "action": "Reload",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f298e35c-6146-40f2-8855-f276f4c81418",
-                    "path": "<Keyboard>/r",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "Reload",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

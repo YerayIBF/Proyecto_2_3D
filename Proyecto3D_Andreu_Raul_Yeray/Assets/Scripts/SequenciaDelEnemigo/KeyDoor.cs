@@ -33,6 +33,7 @@ public class KeyDoor : MonoBehaviour
     private Transform _player;
     private Quaternion _closedRotation;
     private Quaternion _openRotation;
+    public bool esPuertaFinal;
 
     private void Start()
     {
@@ -60,8 +61,9 @@ public class KeyDoor : MonoBehaviour
     private void TryOpen()
     {
         bool hasKey = GameManager.instance != null && GameManager.instance.tieneLlave;
+        bool puedeAbrir = esPuertaFinal ? GameManager.instance.tieneLlaveFinal : GameManager.instance.tieneLlave;
 
-        if (hasKey)
+        if (puedeAbrir)
         {
             Open();
 

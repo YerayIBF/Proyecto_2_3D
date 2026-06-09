@@ -105,6 +105,13 @@ public class GameManager : MonoBehaviour
     private void OnTimelineFinished(PlayableDirector director)
     {
         scriptJugador.enabled = true;
+        //textoTimelineInicial.gameObject.SetActive(false);
+        StartCoroutine(QuitarTexto());
+    }
+
+    IEnumerator QuitarTexto()
+    {
+        yield return new WaitForSeconds(3f); 
         textoTimelineInicial.gameObject.SetActive(false);
     }
 

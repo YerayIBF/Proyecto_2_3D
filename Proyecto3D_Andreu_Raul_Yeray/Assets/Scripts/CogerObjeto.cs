@@ -343,7 +343,7 @@ public class CogerObjeto : MonoBehaviour
 
     private void ActualizarIconos()
     {
-        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave" };
+        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave", "LlaveFinal" };
         foreach (string tag in tags)
         {
             GameObject[] items = GameObject.FindGameObjectsWithTag(tag);
@@ -427,6 +427,11 @@ public class CogerObjeto : MonoBehaviour
         {
             GameManager.instance.RecogerLlaveFinal();
             
+            KeyEnd keyEnd = objeto.GetComponent<KeyEnd>();
+            if (keyEnd != null)
+            {
+                keyEnd.MostrarPuerta(2f);
+            }
             //Añadir funcion que se ejecutara cuando se recoja la llave (abrir puerta salida)
             objeto.SetActive(false);
         }
