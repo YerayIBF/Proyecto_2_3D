@@ -22,6 +22,7 @@ public class MinijuegoElectric : MonoBehaviour
     public Transform puertaDerecha;
     public float velocidadApertura = 2f;
     public InputActionReference MinigameAction;
+    public InputActionReference jumpAction;
     public bool conAnimator = false;
 
     [Header("Audio")]
@@ -141,6 +142,7 @@ public class MinijuegoElectric : MonoBehaviour
     Debug.Log("=== IniciarJuego LLAMADO ===");
     if (_puertasCompletado) { Debug.Log("Bloqueado: puertas completado"); return; }
     conAnimator = false;
+    jumpAction.action.Disable();
     
     float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
     zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
@@ -163,6 +165,7 @@ public class MinijuegoElectric : MonoBehaviour
     public void IniciarJuegoAnimator() {
         if (_garageCompletado) return;
         conAnimator = true;
+        jumpAction.action.Disable();
         //Cada vez que se abre el minijuego se cambia la posicion de la zona verde para que sea mas aleatorio
         float anchoZona = zonaSeguraFin - zonaSeguraInicio; 
         zonaSeguraInicio = Random.Range(0.1f, 0.85f);      
@@ -183,6 +186,7 @@ public class MinijuegoElectric : MonoBehaviour
     void TerminarJuego() {
         juegoActivo = false;
         panelMinijuego.SetActive(false);
+        jumpAction.action.Enable();
     }
 
     //Preparar zona verde para calcular correctamente la posicion de la zona segura al pulsar E
