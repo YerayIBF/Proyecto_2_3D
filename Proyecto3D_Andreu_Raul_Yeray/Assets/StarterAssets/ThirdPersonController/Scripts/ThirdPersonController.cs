@@ -180,8 +180,6 @@ namespace StarterAssets
         {
             _input.interact = false;
 
-            Debug.Log($"Interact pulsado. zonaActivacion={GameManager.instance.zonaActivacion}, zonaActivacion2={GameManager.instance.zonaActivacion2}, minijuegoActivo={GameManager.instance.minijuegoActivo}");
-
             if (cercaDePila)
             {
                 pilaCercana.GetComponent<PilaMegafono>().Recargar();
