@@ -2,10 +2,14 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// CogerObjeto — versión fusionada.
-/// - Mantiene toda la lógica anterior: dos manos, PlayerEquipmentManager, PickupIcon, bloqueos.
+/// CogerObjeto — versión limpia.
+/// - Mantiene la lógica de dos manos, PlayerEquipmentManager, PickupIcon, bloqueos.
 /// - Soporta InputActions para mando: Apuntar, Lanzar, Soltar, Interact.
-/// - También funcionan las teclas del teclado (Input.GetKey) como fallback.
+/// - También funcionan las teclas del teclado como fallback.
+///
+/// IMPORTANTE: La animación de "Coger" la dispara SÓLO el ThirdPersonController.
+/// Este script solo detecta objetos cercanos, muestra iconos y ejecuta
+/// AnimatorCogerObjeto() en el Animation Event.
 /// </summary>
 public class CogerObjeto : MonoBehaviour
 {
@@ -40,6 +44,8 @@ public class CogerObjeto : MonoBehaviour
 
     private Vector3 handPointRotation;
     private Vector3 handPointLeftRotation;
+
+    private float _savedThrowForce = 10f;
 
     private void OnEnable()
     {
@@ -83,9 +89,6 @@ public class CogerObjeto : MonoBehaviour
         bool inputSoltarDown = Input.GetKeyDown(KeyCode.R)
                             || (soltarAction != null && soltarAction.action.WasPressedThisFrame());
 
-        bool inputInteractDown = Input.GetKeyDown(KeyCode.E)
-                            || (interactAction != null && interactAction.action.WasPressedThisFrame());
-
         DetectarObjetoCercano();
         ActualizarIconos();
 
@@ -99,54 +102,32 @@ public class CogerObjeto : MonoBehaviour
         // Apuntar + lanzar (solo con lanzable en mano)
         if (objetoCogido != null && objetoCogido.CompareTag("objetoCogible"))
         {
-        HandleAimAndThrow(inputApuntar, inputLanzarDown);
+            HandleAimAndThrow(inputApuntar, inputLanzarDown);
 
-    // Si estaba apuntando con megáfono, cancelarlo
-    if (apuntando)
-    {
-        apuntando = false;
-        if (animator != null) animator.SetBool("isAiming", false);
-        if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
-        PlayerEquipmentManager.Instance?.SetAimingMegaphone(false);
-    }
-    }
-    // Apuntar megáfono (solo si NO tenemos lanzable en mano)
-    else if (PlayerEquipmentManager.Instance != null
-            && PlayerEquipmentManager.Instance.IsMegaphoneInHand)
-    {
-        HandleMegaphoneAim(inputApuntar);
-    }
-    else if (apuntando)
-    {
-        apuntando = false;
-        if (animator != null) animator.SetBool("isAiming", false);
-        if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
-    }
-
-        // Recoger (E / Interact)
-        if (inputInteractDown && objetoCogido == null)
+            // Si estaba apuntando con megáfono, cancelarlo
+            if (apuntando)
             {
-                if (objeto == null)
-                {
-                    Debug.Log("[CogerObjeto] No hay nada cerca para recoger.");
-                    return;
-                }
-
-                if (objeto.CompareTag("objetoCogible"))
-                {
-                    if (PlayerEquipmentManager.Instance != null
-                        && !PlayerEquipmentManager.Instance.CanPickupThrowable)
-                    {
-                        Debug.Log("[CogerObjeto] No puedes recoger lanzables ahora.");
-                        return;
-                    }
-                }
-
-                if (animator != null)
-                    animator.SetTrigger("Coger");
-                else
-                    AnimatorCogerObjeto();
+                apuntando = false;
+                if (animator != null) animator.SetBool("isAiming", false);
+                if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
+                PlayerEquipmentManager.Instance?.SetAimingMegaphone(false);
             }
+        }
+        // Apuntar megáfono (solo si NO tenemos lanzable en mano)
+        else if (PlayerEquipmentManager.Instance != null
+                && PlayerEquipmentManager.Instance.IsMegaphoneInHand)
+        {
+            HandleMegaphoneAim(inputApuntar);
+        }
+        else if (apuntando)
+        {
+            apuntando = false;
+            if (animator != null) animator.SetBool("isAiming", false);
+            if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
+        }
+
+        // NOTA: La animación "Coger" la dispara el ThirdPersonController, NO este script.
+        // Aquí solo detectamos el objeto cercano. El Animation Event llama a AnimatorCogerObjeto().
     }
 
     // ─── Detección por distancia ─────────────────────────────────────────────
@@ -162,7 +143,7 @@ public class CogerObjeto : MonoBehaviour
         GameObject masCercano = null;
         float minDist = pickupRange;
 
-        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave" };
+        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave", "LlaveFinal" };
         foreach (string tag in tags)
         {
             GameObject[] candidatos = GameObject.FindGameObjectsWithTag(tag);
@@ -237,8 +218,6 @@ public class CogerObjeto : MonoBehaviour
 
     // ─── Apuntar y lanzar lanzable ───────────────────────────────────────────
 
-    private float _savedThrowForce = 10f;
-
     private void HandleAimAndThrow(bool inputApuntar, bool inputLanzarDown)
     {
         if (inputApuntar)
@@ -257,7 +236,6 @@ public class CogerObjeto : MonoBehaviour
         // Disparar el trigger del Animator — el Animation Event llamará a LanzarObjeto()
         if (inputLanzarDown)
         {
-            // Guardar la fuerza ACTUAL antes de que se resetee durante la animación
             _savedThrowForce = throwForce;
             TriggerThrowAnimation();
         }
@@ -268,29 +246,30 @@ public class CogerObjeto : MonoBehaviour
     /// El Animation Event llamará a LanzarObjeto() en mitad de la animación.
     /// </summary>
     private void TriggerThrowAnimation()
-{
-    if (animator == null)
     {
-        LanzarObjeto();
-        return;
+        if (animator == null)
+        {
+            LanzarObjeto();
+            return;
+        }
+
+        bool isCrouched = PlayerStateMachine.Instance != null
+                       && PlayerStateMachine.Instance.IsCrouched;
+
+        if (isCrouched)
+        {
+            animator.SetTrigger("ThrowCrouched");
+            PlayerStateMachine.Instance?.EnterTemporaryState(
+                PlayerStateMachine.PlayerState.ThrowingCrouched, 1f);
+        }
+        else
+        {
+            animator.SetTrigger("Throw");
+            PlayerStateMachine.Instance?.EnterTemporaryState(
+                PlayerStateMachine.PlayerState.Throwing, 1f);
+        }
     }
 
-    bool isCrouched = PlayerStateMachine.Instance != null
-                   && PlayerStateMachine.Instance.IsCrouched;
-
-    if (isCrouched)
-    {
-        animator.SetTrigger("ThrowCrouched");
-        PlayerStateMachine.Instance?.EnterTemporaryState(
-            PlayerStateMachine.PlayerState.ThrowingCrouched, 1f);
-    }
-    else
-    {
-        animator.SetTrigger("Throw");
-        PlayerStateMachine.Instance?.EnterTemporaryState(
-            PlayerStateMachine.PlayerState.Throwing, 1f);
-    }
-}
     public void LanzarObjeto()
     {
         if (objetoCogido == null) return;
@@ -304,7 +283,6 @@ public class CogerObjeto : MonoBehaviour
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
 
         // Usar la fuerza guardada en el momento de pulsar lanzar
-        // (porque throwForce puede haberse reseteado mientras corría la animación)
         rb.AddForce(direction * _savedThrowForce, ForceMode.VelocityChange);
 
         ThrowObject throwable = objetoCogido.GetComponent<ThrowObject>();
@@ -412,27 +390,25 @@ public class CogerObjeto : MonoBehaviour
         }
         else if (objeto.CompareTag("Llave"))
         {
-            // Notificar al GameManager
             if (GameManager.instance != null)
                 GameManager.instance.RecogerLlave();
 
-            // Activar la secuencia del enemigo si el objeto la tiene
             KeyPickup keyPickup = objeto.GetComponent<KeyPickup>();
             if (keyPickup != null)
                 keyPickup.OnPickedUp();
 
-            // Hacer desaparecer la llave del mundo
             objeto.SetActive(false);
-        }else if (objeto.CompareTag("LlaveFinal"))
+        }
+        else if (objeto.CompareTag("LlaveFinal"))
         {
             GameManager.instance.RecogerLlaveFinal();
-            
+
             KeyEnd keyEnd = objeto.GetComponent<KeyEnd>();
             if (keyEnd != null)
             {
                 keyEnd.MostrarPuerta(2f);
             }
-            //Añadir funcion que se ejecutara cuando se recoja la llave (abrir puerta salida)
+
             objeto.SetActive(false);
         }
 

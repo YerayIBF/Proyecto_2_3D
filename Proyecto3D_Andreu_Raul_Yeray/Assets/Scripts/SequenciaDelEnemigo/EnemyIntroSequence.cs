@@ -114,6 +114,9 @@ public class EnemyIntroSequence : MonoBehaviour
         yield return new WaitForSeconds(stareDelay);
 
         _waitingForStun = true;
+
+        if (GameManager.instance != null)
+                GameManager.instance.ReproducirVoz("Sembla que és sensible a la llum, hauria d'apuntar-li amb la llanterna (RB)", 15f);
     }
 
     private IEnumerator SmoothLookAtPlayer()
@@ -264,6 +267,7 @@ public class EnemyIntroSequence : MonoBehaviour
     {
         if (block)
             StartCoroutine(KeepMovementBlocked());
+
     }
 
     private IEnumerator KeepMovementBlocked()
