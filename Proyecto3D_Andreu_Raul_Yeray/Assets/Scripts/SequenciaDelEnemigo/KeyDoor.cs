@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Puerta que requiere la llave para abrirse.
@@ -105,5 +106,10 @@ public class KeyDoor : MonoBehaviour
             yield return null;
         }
         transform.localRotation = _openRotation;
+
+        if (esPuertaFinal)
+        {
+            SceneManager.LoadScene("Creditos");
+        }
     }
 }
