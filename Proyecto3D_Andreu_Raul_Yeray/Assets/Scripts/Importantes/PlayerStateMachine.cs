@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using StarterAssets;
 
 /// <summary>
@@ -47,13 +48,20 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("Animator del personaje")]
     public Animator playerAnimator;
 
-    // ─── Inventario de baterías ───────────────────────────────────────────────
+    // ─── Inventario de baterías (linterna) ───────────────────────────────────
 
-    [Header("Inventario — Baterías")]
+    [Header("Inventario — Baterías (linterna)")]
     public int startingBatteries = 2;
     public int maxBatteries      = 5;
     [SerializeField] private int _batteryCount;
     public int BatteryCount => _batteryCount;
+
+    // ─── Inventario de pilas (megáfono) ──────────────────────────────────────
+
+    [Header("Pilas del megáfono")]
+    public int megafonoBatteryCount = 0;
+    public int maxMegafonoBatteries = 5;
+    public int MegafonoBatteryCount => megafonoBatteryCount;
 
     // ─── Vida ────────────────────────────────────────────────────────────────
 
@@ -88,6 +96,10 @@ public class PlayerStateMachine : MonoBehaviour
     public float   crouchCenterY  = 0.5f;
     public float   standCenterY   = 0.9f;
 
+    [Header("Crouch — Input System")]
+    [Tooltip("Action para agacharse (L3 mando)")]
+    public InputActionReference crouchAction;
+
     private bool _isCrouched = false;
     public bool IsCrouched => _isCrouched;
 
@@ -118,6 +130,16 @@ public class PlayerStateMachine : MonoBehaviour
     private float _originalRunSpeed;
 
     // ─── Init ─────────────────────────────────────────────────────────────────
+
+    private void OnEnable()
+    {
+        if (crouchAction != null) crouchAction.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (crouchAction != null) crouchAction.action.Disable();
+    }
 
     private void Awake()
     {
@@ -164,7 +186,10 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void HandleCrouchInput()
     {
-        if (Input.GetKeyDown(crouchKey))
+        bool crouchInput = Input.GetKeyDown(crouchKey)
+                        || (crouchAction != null && crouchAction.action.WasPressedThisFrame());
+
+        if (crouchInput)
             ToggleCrouch();
     }
 
@@ -418,14 +443,14 @@ public class PlayerStateMachine : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
     }
 
-    // ─── Baterías ────────────────────────────────────────────────────────────
+    // ─── Baterías (linterna) ─────────────────────────────────────────────────
 
     public bool AddBattery(int amount = 1)
     {
         if (_batteryCount >= maxBatteries) return false;
         _batteryCount = Mathf.Min(_batteryCount + amount, maxBatteries);
         OnBatteryCountChanged?.Invoke(_batteryCount);
-        Debug.Log($"[Inventory] +{amount} batería. Total: {_batteryCount}/{maxBatteries}");
+        Debug.Log($"[Inventory] +{amount} batería linterna. Total: {_batteryCount}/{maxBatteries}");
         return true;
     }
 
@@ -446,6 +471,31 @@ public class PlayerStateMachine : MonoBehaviour
     }
 
     public void PickupBattery() => AddBattery(1);
+
+    // ─── Pilas (megáfono) ────────────────────────────────────────────────────
+
+    public void AddMegafonoBattery(int amount = 1)
+    {
+        megafonoBatteryCount = Mathf.Min(megafonoBatteryCount + amount, maxMegafonoBatteries);
+        Debug.Log($"[Inventory] +{amount} pila megáfono. Total: {megafonoBatteryCount}/{maxMegafonoBatteries}");
+    }
+
+    public bool TryReloadMegafono()
+    {
+        if (megafonoBatteryCount <= 0)
+        {
+            Debug.Log("[Inventory] Sin pilas de megáfono.");
+            return false;
+        }
+
+        Megafono megafono = Object.FindFirstObjectByType<Megafono>();
+        if (megafono == null) return false;
+
+        megafono.RecargarEnergia(megafono.maxEnergia);
+        megafonoBatteryCount--;
+        Debug.Log($"[Inventory] Pila megáfono usada. Quedan: {megafonoBatteryCount}/{maxMegafonoBatteries}");
+        return true;
+    }
 
     // ─── Muerte ──────────────────────────────────────────────────────────────
 
