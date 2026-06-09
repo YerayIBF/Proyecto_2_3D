@@ -21,6 +21,7 @@ TagManager:
   - Pila
   - Mando
   - LlaveFinal
+  - PilaMegafonoNueva
   layers:
   - Default
   - TransparentFX

@@ -61,12 +61,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      propertyPath: m_Materials.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: d831830db20a7da468e4d69c32be6d66, type: 2}
+    - target: {fileID: -7511558181221131132, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 915cc955fbe4b1e42986703191f5df87, type: 2}
     - target: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: m_Name
       value: Pila9v
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      propertyPath: m_TagString
+      value: PilaMegafonoNueva
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -78,6 +90,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7579021745966236630}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4135172463905263088}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4798464229170503314}
   m_SourcePrefab: {fileID: 100100000, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
 --- !u!1 &4410788951196352433 stripped
 GameObject:
@@ -133,3 +151,35 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &4135172463905263088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4410788951196352433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 266befabb185c204dbc02eb8b458d900, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cantidad: 1
+  pickupIcon: {fileID: 0}
+--- !u!114 &4798464229170503314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4410788951196352433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dc718802d90ee34186968b6629f9ae4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  icono: {fileID: 0}
+  billboardToCamera: 1
+  usarOutline: 1
+  rangoDeteccion: 4
+  "tama\xF1oOutline": 1.1
+  propiedadSize: _OutlineSize
