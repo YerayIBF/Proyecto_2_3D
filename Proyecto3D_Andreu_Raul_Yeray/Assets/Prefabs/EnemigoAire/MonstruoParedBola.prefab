@@ -176,7 +176,7 @@ MonoBehaviour:
   disparosCiegos: 2
   prefabProyectil: {fileID: 6638208836457653635, guid: eb2e8f6c6b986974c9e889fc1a6f2d7d, type: 3}
   puntoDisparo: {fileID: 7414028087344581418}
-  fuerzaDisparo: 30
+  fuerzaDisparo: 40
   tiempoEntreAtaques: 3
   duracionDelStun: 10
   cooldownStun: 5
@@ -351,7 +351,7 @@ MonoBehaviour:
   volume: 0.559
   pitchMin: 0.85
   pitchMax: 1.15
-  maxAudioDistance: 15
+  maxAudioDistance: 22.5
   minAudioDistance: 2
 --- !u!1 &6545540938701554070
 GameObject:

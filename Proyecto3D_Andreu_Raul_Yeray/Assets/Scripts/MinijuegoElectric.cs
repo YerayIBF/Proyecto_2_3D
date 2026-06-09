@@ -36,6 +36,9 @@ public class MinijuegoElectric : MonoBehaviour
     public bool _puertasCompletado = false;
     public bool _garageCompletado  = false;
 
+    public GameObject dialogo;
+
+
 
     void OnEnable()
     {
@@ -108,6 +111,9 @@ public class MinijuegoElectric : MonoBehaviour
 
                 if (openSoundGarage != null) openSoundGarage.Play();
                 puertaAnim.SetTrigger("Abrir");
+
+                if (dialogo != null)
+                dialogo.SetActive(false);
 
                 if (camaraGarage != null) StartCoroutine(MostrarCamaraGarage());
             }
