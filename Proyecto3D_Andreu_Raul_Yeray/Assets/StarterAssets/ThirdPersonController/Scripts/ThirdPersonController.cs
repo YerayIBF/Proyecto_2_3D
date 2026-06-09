@@ -177,13 +177,12 @@ namespace StarterAssets
 
           
         if (_input.interact)
+        {
+            if (_input.interact)
             {
                 _input.interact = false;
-
-                if (!cercaDePila && !GameManager.instance.zonaActivacion && !GameManager.instance.zonaActivacion2)
-                {
-                    _animator.SetTrigger("Coger");
-                }else if (cercaDePila)
+                Debug.Log($"Interact pulsado. zonaActivacion={GameManager.instance.zonaActivacion}, zonaActivacion2={GameManager.instance.zonaActivacion2}, minijuegoActivo={GameManager.instance.minijuegoActivo}");
+    
                 if (cercaDePila)
                 {
                     pilaCercana.GetComponent<PilaMegafono>().Recargar();
@@ -192,17 +191,17 @@ namespace StarterAssets
                 }
                 else if (GameManager.instance.zonaActivacion)
                 {
-                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuego();
-                }else if (GameManager.instance.zonaActivacion2)
+                    GameManager.instance.minijuegoActivo.IniciarJuego();
+                }
+                else if (GameManager.instance.zonaActivacion2)
                 {
-                    GameManager.instance.GetComponent<MinijuegoElectric>().IniciarJuegoAnimator();
+                    GameManager.instance.minijuegoActivo.IniciarJuegoAnimator();
                 }
                 else if (cogerObjetoScript != null && cogerObjetoScript.objeto != null)
                 {
-                    // Bloquear spam: solo si no estamos ya cogiendo algo
                     bool yaEstaCogiendo = PlayerStateMachine.Instance != null
                                     && PlayerStateMachine.Instance.CurrentState == PlayerStateMachine.PlayerState.Picking;
-
+    
                     if (!yaEstaCogiendo)
                     {
                         _animator.SetTrigger("Coger");
@@ -210,7 +209,13 @@ namespace StarterAssets
                             PlayerStateMachine.PlayerState.Picking, 1.2f);
                     }
                 }
+                else
+                {
+                    // Nada cerca: animación de coger genérica
+                    _animator.SetTrigger("Coger");
+                }
             }
+        }
 
             //testear minijuego
             /*if (Input.GetKeyDown(KeyCode.K))

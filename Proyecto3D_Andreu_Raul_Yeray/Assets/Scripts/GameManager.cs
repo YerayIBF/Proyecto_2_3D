@@ -57,6 +57,8 @@ public class GameManager : MonoBehaviour
     [Header("Audio")]
     public AudioSource openSoundGarage;
 
+    public MinijuegoElectric minijuegoActivo; // el minijuego de la zona donde está el jugador
+
 
     private CinemachineSplineDolly splineDolly;
     private Coroutine cinematicaCoroutine;
