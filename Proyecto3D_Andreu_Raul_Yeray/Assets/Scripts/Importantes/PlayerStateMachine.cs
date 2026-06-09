@@ -10,30 +10,15 @@ public class PlayerStateMachine : MonoBehaviour
 {
     public static PlayerStateMachine Instance { get; private set; }
 
-    // ─── Estados ─────────────────────────────────────────────────────────────
-
     public enum PlayerState
     {
-        Idle,
-        Walking,
-        Running,
-        Crouched,
-        AimingFlashlight,
-        AimingMegaphone,
-        HoldingObject,
-        Picking,
-        Throwing,
-        ThrowingCrouched,
-        Reloading,
-        ReloadingCrouched,
-        TakingDamage,
-        Hiding,
-        Dead
+        Idle, Walking, Running, Crouched,
+        AimingFlashlight, AimingMegaphone, HoldingObject,
+        Picking, Throwing, ThrowingCrouched, Reloading, ReloadingCrouched,
+        TakingDamage, Hiding, Dead
     }
 
     public PlayerState CurrentState { get; private set; } = PlayerState.Idle;
-
-    // ─── Referencias ─────────────────────────────────────────────────────────
 
     [Header("Sistemas")]
     public FlashlightSystem       flashlightSystem;
@@ -48,22 +33,16 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("Animator del personaje")]
     public Animator playerAnimator;
 
-    // ─── Inventario de baterías (linterna) ───────────────────────────────────
-
     [Header("Inventario — Baterías (linterna)")]
     public int startingBatteries = 2;
     public int maxBatteries      = 5;
     [SerializeField] private int _batteryCount;
     public int BatteryCount => _batteryCount;
 
-    // ─── Inventario de pilas (megáfono) ──────────────────────────────────────
-
     [Header("Pilas del megáfono")]
     public int megafonoBatteryCount = 0;
     public int maxMegafonoBatteries = 5;
     public int MegafonoBatteryCount => megafonoBatteryCount;
-
-    // ─── Vida ────────────────────────────────────────────────────────────────
 
     [Header("Vida")]
     public float maxHealth     = 100f;
@@ -71,8 +50,6 @@ public class PlayerStateMachine : MonoBehaviour
     public float healthRegenRate  = 2f;
     public float healthRegenDelay = 5f;
     private float _lastDamageTime = -999f;
-
-    // ─── Stamina ─────────────────────────────────────────────────────────────
 
     [Header("Stamina")]
     public float maxStamina     = 100f;
@@ -82,34 +59,40 @@ public class PlayerStateMachine : MonoBehaviour
     public float staminaRunThreshold = 10f;
     private bool _staminaExhausted = false;
 
-    // ─── Agacharse ───────────────────────────────────────────────────────────
+    [Header("Audio — Agotamiento stamina")]
+    public AudioSource audioAgotamiento;
+    public AudioClip   sonidoAgotamiento;
+
+    [Header("Audio — Latidos de corazón")]
+    public AudioSource audioLatidos;
+    [Tooltip("Vida a la que empiezan a oírse los latidos")]
+    public float vidaInicioLatidos = 80f;
+    [Tooltip("Vida a la que los latidos van al máximo de velocidad")]
+    public float vidaLatidosMaximos = 30f;
+    [Tooltip("Pitch mínimo de los latidos al empezar")]
+    public float pitchLatidosMin = 0.7f;
+    [Tooltip("Pitch máximo de los latidos (no pasar de aquí)")]
+    public float pitchLatidosMax = 1f;
 
     [Header("Agacharse")]
     public KeyCode crouchKey       = KeyCode.C;
     public float   crouchMoveSpeed = 1.5f;
     public float   standMoveSpeed  = 2.0f;
     public float   standSprintSpeed = 5.335f;
-    [Tooltip("Altura del CharacterController al estar de pie")]
     public float   standHeight    = 1.8f;
-    [Tooltip("Altura del CharacterController al estar agachado")]
     public float   crouchHeight   = 1f;
     public float   crouchCenterY  = 0.5f;
     public float   standCenterY   = 0.9f;
 
     [Header("Crouch — Input System")]
-    [Tooltip("Action para agacharse (L3 mando)")]
     public InputActionReference crouchAction;
 
     private bool _isCrouched = false;
     public bool IsCrouched => _isCrouched;
 
-    // ─── Estados temporales (animaciones de duración fija) ───────────────────
-
     private PlayerState _temporaryState = PlayerState.Idle;
     private float _temporaryStateEndTime = -1f;
     private bool _inTemporaryState = false;
-
-    // ─── Eventos ─────────────────────────────────────────────────────────────
 
     public System.Action<PlayerState> OnStateChanged;
     public System.Action<int>         OnBatteryCountChanged;
@@ -118,18 +101,12 @@ public class PlayerStateMachine : MonoBehaviour
     public System.Action<bool>        OnCrouchChanged;
     public System.Action              OnPlayerDied;
 
-    // ─── Hashes del Animator ─────────────────────────────────────────────────
-
     private static readonly int HashIsCrouched  = Animator.StringToHash("IsCrouched");
     private static readonly int HashCrouchSpeed = Animator.StringToHash("CrouchSpeed");
     private static readonly int HashTakeDamage  = Animator.StringToHash("TakeDamage");
     private static readonly int HashIsDead      = Animator.StringToHash("IsDead");
 
-    // ─── Estado interno ───────────────────────────────────────────────────────
-
     private float _originalRunSpeed;
-
-    // ─── Init ─────────────────────────────────────────────────────────────────
 
     private void OnEnable()
     {
@@ -168,11 +145,9 @@ public class PlayerStateMachine : MonoBehaviour
         OnStaminaChanged?.Invoke(currentStamina / maxStamina);
     }
 
-    // ─── Update ──────────────────────────────────────────────────────────────
-
     private void Update()
     {
-        if (CurrentState == PlayerState.Dead) return;
+        if (CurrentState == PlayerState.Dead) { DetenerLatidos(); return; }
 
         HandleCrouchInput();
         EvaluateState();
@@ -180,9 +155,8 @@ public class PlayerStateMachine : MonoBehaviour
         UpdateStamina();
         UpdateHealthRegen();
         UpdateCrouchAnimation();
+        UpdateLatidos();
     }
-
-    // ─── Agacharse ───────────────────────────────────────────────────────────
 
     private void HandleCrouchInput()
     {
@@ -195,7 +169,6 @@ public class PlayerStateMachine : MonoBehaviour
 
     public void ToggleCrouch()
     {
-        // No se puede agachar si está apuntando, escondido o muerto
         if (IsAiming || IsHiding || CurrentState == PlayerState.Dead) return;
 
         _isCrouched = !_isCrouched;
@@ -258,17 +231,13 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
 
-    // ─── Evaluación de estado ─────────────────────────────────────────────────
-
     private void EvaluateState()
     {
-        // Si estamos en un estado temporal (animación de coger/lanzar/recargar/recibir golpe), mantenerlo hasta que termine
         if (_inTemporaryState)
         {
             if (Time.time >= _temporaryStateEndTime)
             {
                 _inTemporaryState = false;
-                // Continúa con la evaluación normal
             }
             else
             {
@@ -312,11 +281,6 @@ public class PlayerStateMachine : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Activa un estado temporal que durará 'duration' segundos.
-    /// Se usa para animaciones de coger, lanzar, recargar, recibir golpe.
-    /// Tras la duración, vuelve a la evaluación normal.
-    /// </summary>
     public void EnterTemporaryState(PlayerState state, float duration)
     {
         if (CurrentState == PlayerState.Dead) return;
@@ -327,7 +291,6 @@ public class PlayerStateMachine : MonoBehaviour
         ChangeState(state);
     }
 
-    /// <summary>Sale del estado temporal antes de tiempo si es necesario.</summary>
     public void ExitTemporaryState()
     {
         _inTemporaryState = false;
@@ -352,7 +315,6 @@ public class PlayerStateMachine : MonoBehaviour
                 break;
 
             case PlayerState.Crouched:
-                // Las reglas de velocidad ya están aplicadas en ApplyCrouchState
                 break;
 
             case PlayerState.Running:
@@ -374,8 +336,6 @@ public class PlayerStateMachine : MonoBehaviour
         if (tpController != null) tpController.SprintSpeed = _originalRunSpeed;
     }
 
-    // ─── Stamina ─────────────────────────────────────────────────────────────
-
     private void UpdateStamina()
     {
         if (CurrentState == PlayerState.Running)
@@ -385,6 +345,13 @@ public class PlayerStateMachine : MonoBehaviour
 
             if (currentStamina <= 0f)
             {
+                // Sonido de agotamiento solo en el momento de agotarse
+                if (!_staminaExhausted)
+                {
+                    if (audioAgotamiento != null && sonidoAgotamiento != null)
+                        audioAgotamiento.PlayOneShot(sonidoAgotamiento);
+                }
+
                 _staminaExhausted = true;
                 if (inputs != null) inputs.sprint = false;
             }
@@ -400,8 +367,6 @@ public class PlayerStateMachine : MonoBehaviour
 
         OnStaminaChanged?.Invoke(currentStamina / maxStamina);
     }
-
-    // ─── Vida ────────────────────────────────────────────────────────────────
 
     private void UpdateHealthRegen()
     {
@@ -424,11 +389,9 @@ public class PlayerStateMachine : MonoBehaviour
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
         Debug.Log($"[Health] -{amount}. Vida: {currentHealth:F0}/{maxHealth}");
 
-        // Animación de daño (solo si no muere)
         if (currentHealth > 0f && playerAnimator != null)
         {
             playerAnimator.SetTrigger(HashTakeDamage);
-            // Activar el estado TakingDamage durante la animación
             EnterTemporaryState(PlayerState.TakingDamage, 0.5f);
         }
 
@@ -442,8 +405,6 @@ public class PlayerStateMachine : MonoBehaviour
         currentHealth  = Mathf.Min(currentHealth, maxHealth);
         OnHealthChanged?.Invoke(currentHealth / maxHealth);
     }
-
-    // ─── Baterías (linterna) ─────────────────────────────────────────────────
 
     public bool AddBattery(int amount = 1)
     {
@@ -472,8 +433,6 @@ public class PlayerStateMachine : MonoBehaviour
 
     public void PickupBattery() => AddBattery(1);
 
-    // ─── Pilas (megáfono) ────────────────────────────────────────────────────
-
     public void AddMegafonoBattery(int amount = 1)
     {
         megafonoBatteryCount = Mathf.Min(megafonoBatteryCount + amount, maxMegafonoBatteries);
@@ -497,21 +456,15 @@ public class PlayerStateMachine : MonoBehaviour
         return true;
     }
 
-    // ─── Muerte ──────────────────────────────────────────────────────────────
-
     public void Die()
     {
         if (CurrentState == PlayerState.Dead) return;
 
         ChangeState(PlayerState.Dead);
 
-        // Si estaba escondido en una taquilla, sacarlo forzosamente
         if (lockerSystem != null && lockerSystem.IsHiding)
-        {
             lockerSystem.ForceExitOnDeath();
-        }
 
-        // Desactivar control del jugador
         if (tpController != null) tpController.enabled = false;
         if (inputs != null)
         {
@@ -521,7 +474,6 @@ public class PlayerStateMachine : MonoBehaviour
             inputs.jump   = false;
         }
 
-        // Si estaba agachado, restaurar la altura del CharacterController
         if (_isCrouched)
         {
             _isCrouched = false;
@@ -532,53 +484,40 @@ public class PlayerStateMachine : MonoBehaviour
             }
         }
 
-        // Disparar animación de muerte en el Animator (si existe)
         if (playerAnimator != null)
-        {
             playerAnimator.SetBool(HashIsDead, true);
-        }
 
-        // Apagar linterna si está encendida
         if (flashlightSystem != null && flashlightSystem.IsOn)
             flashlightSystem.ToggleFlashlight();
+
+        DetenerLatidos();
 
         OnPlayerDied?.Invoke();
         Debug.Log("[PlayerState] MUERTO");
     }
 
-    /// <summary>
-    /// Respawn del jugador en la posición/rotación dadas. Restaura vida, stamina,
-    /// estado, ragdoll, cámara y animator. NO toca el resto del nivel.
-    /// </summary>
     public void Respawn(Vector3 spawnPosition, Quaternion spawnRotation)
     {
         Debug.Log("[PlayerState] Respawn...");
 
-        // Restaurar vida y stamina
         currentHealth = maxHealth;
         currentStamina = maxStamina;
         _staminaExhausted = false;
         _lastDamageTime = -999f;
-
-        // Salir de estado temporal por si lo había
         _inTemporaryState = false;
 
-        // Quitar animación de muerte
         if (playerAnimator != null)
         {
             playerAnimator.SetBool(HashIsDead, false);
             playerAnimator.enabled = true;
         }
 
-        // Desactivar ragdoll si está activo
         PlayerRagdoll ragdoll = GetComponent<PlayerRagdoll>();
         if (ragdoll != null) ragdoll.DeactivateRagdoll();
 
-        // Reset de la cámara de muerte
         DeathCamera deathCam = FindFirstObjectByType<DeathCamera>();
         if (deathCam != null) deathCam.ResetCamera();
 
-        // Reposicionar al jugador
         if (characterController != null)
         {
             characterController.enabled = false;
@@ -592,18 +531,13 @@ public class PlayerStateMachine : MonoBehaviour
             transform.rotation = spawnRotation;
         }
 
-        // Reactivar control
         if (tpController != null) tpController.enabled = true;
 
-        // Volver al estado Idle
         ChangeState(PlayerState.Idle);
 
-        // Notificar al HUD
         OnHealthChanged?.Invoke(1f);
         OnStaminaChanged?.Invoke(1f);
     }
-
-    // ─── Cambio de estado ────────────────────────────────────────────────────
 
     private void ChangeState(PlayerState newState)
     {
@@ -612,7 +546,36 @@ public class PlayerStateMachine : MonoBehaviour
         OnStateChanged?.Invoke(newState);
     }
 
-    // ─── Propiedades ─────────────────────────────────────────────────────────
+    // ─── Latidos de corazón según la vida ──────────────────────────────────
+
+    private void UpdateLatidos()
+    {
+        if (audioLatidos == null) return;
+
+        // Por encima de la vida de inicio: sin latidos
+        if (currentHealth > vidaInicioLatidos)
+        {
+            if (audioLatidos.isPlaying) audioLatidos.Stop();
+            return;
+        }
+
+        // Dentro del rango: arrancar si no suena
+        if (!audioLatidos.isPlaying)
+        {
+            audioLatidos.loop = true;
+            audioLatidos.Play();
+        }
+
+        // t=0 en vidaInicioLatidos, t=1 en vidaLatidosMaximos (clamp para no pasar de pitchMax)
+        float t = Mathf.InverseLerp(vidaInicioLatidos, vidaLatidosMaximos, currentHealth);
+        audioLatidos.pitch = Mathf.Lerp(pitchLatidosMin, pitchLatidosMax, t);
+    }
+
+    private void DetenerLatidos()
+    {
+        if (audioLatidos != null && audioLatidos.isPlaying)
+            audioLatidos.Stop();
+    }
 
     public float HealthPercent  => currentHealth / maxHealth;
     public float StaminaPercent => currentStamina / maxStamina;

@@ -25,6 +25,10 @@ public class Cable : MonoBehaviour
     public float velocidadMando = 3f;
     public float tiempoAntesDeConectar = 0.4f;
 
+    [Header("Sonido")]
+    public AudioSource audioSource;
+    public AudioClip sonidoChispazo;
+
     void Awake()
     {
         colorOriginal = finalCable.color;
@@ -137,6 +141,10 @@ public class Cable : MonoBehaviour
             transform.position = col.transform.position;
             ActualizarRotacion();
             ActualizarTamaño();
+
+            // Sonido de chispazo al conectar
+            if (audioSource != null && sonidoChispazo != null)
+                audioSource.PlayOneShot(sonidoChispazo);
 
             Conectar();
             otroCable.Conectar();
