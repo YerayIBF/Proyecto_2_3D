@@ -68,6 +68,7 @@ GameObject:
   - component: {fileID: 3605409276926342650}
   - component: {fileID: 2637712756989550201}
   - component: {fileID: 1914547105125854733}
+  - component: {fileID: 691659544272015761}
   m_Layer: 8
   m_Name: MonstruoParedBola
   m_TagString: Untagged
@@ -328,6 +329,30 @@ MonoBehaviour:
   blinkCount: 4
   blinkOnDuration: 0.08
   blinkOffDuration: 0.06
+--- !u!114 &691659544272015761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5338570561020235044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6b424532f8529a4db5853b8dda60152, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grunidos:
+  - {fileID: 8300000, guid: e2a4ac6386641a243bcb5102c3c17d39, type: 3}
+  - {fileID: 8300000, guid: b9e9eb4a6dd81044db60f579326d20ca, type: 3}
+  - {fileID: 8300000, guid: 94665b5b9a11601469aac9ed822839ec, type: 3}
+  - {fileID: 8300000, guid: 5c971cc1e638a3e45854a082aef0fa0e, type: 3}
+  intervalMin: 5
+  intervalMax: 12
+  volume: 0.559
+  pitchMin: 0.85
+  pitchMax: 1.15
+  maxAudioDistance: 15
+  minAudioDistance: 2
 --- !u!1 &6545540938701554070
 GameObject:
   m_ObjectHideFlags: 0
@@ -355,7 +380,7 @@ Transform:
   m_GameObject: {fileID: 6545540938701554070}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00556, y: 0.01576, z: 0.02267}
+  m_LocalPosition: {x: 0.00508, y: 0.01576, z: 0.02351}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -507,7 +532,7 @@ Transform:
   m_GameObject: {fileID: 8689158376439248359}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.00506, y: 0.015585, z: 0.02284}
+  m_LocalPosition: {x: -0.00506, y: 0.015585, z: 0.0235}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -98,7 +98,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         _agent = GetComponent<NavMeshAgent>();
         if (ghostModel != null) _anim = ghostModel.GetComponent<Animator>();
 
-        // Audio: buscar en este GameObject, en hijos, o en el ghost
         _audio = GetComponent<EnemyAudio>();
         if (_audio == null) _audio = GetComponentInChildren<EnemyAudio>();
         if (_audio == null && ghostModel != null) _audio = ghostModel.GetComponent<EnemyAudio>();
@@ -187,14 +186,30 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         TrackPlayerHiding();
 
-        switch (_state)
+        // ─── Ejecutar comportamiento del estado actual con if/else ──────────
+        if (_state == State.Wander)
         {
-            case State.Wander:       UpdateWander();      break;
-            case State.Chase:        UpdateChase();       break;
-            case State.Attack:       UpdateAttack();      break;
-            case State.Stunned:      UpdateStunned();     break;
-            case State.Investigate:  UpdateInvestigate(); break;
-            case State.CheckLocker:  UpdateCheckLocker(); break;
+            UpdateWander();
+        }
+        else if (_state == State.Chase)
+        {
+            UpdateChase();
+        }
+        else if (_state == State.Attack)
+        {
+            UpdateAttack();
+        }
+        else if (_state == State.Stunned)
+        {
+            UpdateStunned();
+        }
+        else if (_state == State.Investigate)
+        {
+            UpdateInvestigate();
+        }
+        else if (_state == State.CheckLocker)
+        {
+            UpdateCheckLocker();
         }
 
         EvaluateTransitions();
@@ -255,7 +270,9 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         _agent.isStopped = false;
         _agent.speed = patrolSpeed;
+
         if (patrolPoints.Length == 0) return;
+
         if (!_agent.pathPending && _agent.remainingDistance < 0.5f)
         {
             _patrolIndex = (_patrolIndex + 1) % patrolPoints.Length;
@@ -279,9 +296,13 @@ public class EnemyBehaviourTree : MonoBehaviour
         float dist = Vector3.Distance(enemyFlat, playerFlat);
 
         if (dist <= attackRange && !_attackOnCooldown)
+        {
             ChangeState(State.Attack);
+        }
         else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f)
+        {
             ChangeState(State.Wander);
+        }
     }
 
     private void UpdateAttack()
@@ -293,7 +314,9 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         bool playerHiding = lockerSystem != null && lockerSystem.IsHiding;
         if (!playerHiding)
+        {
             DamagePlayer(attackDamage);
+        }
 
         _attackOnCooldown = true;
         Invoke(nameof(ResetAttack), attackCooldownTime);
@@ -547,6 +570,7 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         if (player == null) return false;
         if (lockerSystem != null && lockerSystem.IsHiding) return false;
+        if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive) return false;
         return CanSeePlayerRaw();
     }
 
@@ -607,7 +631,6 @@ public class EnemyBehaviourTree : MonoBehaviour
         _previousState = _state;
         _state = newState;
 
-        // Alerta al pasar a perseguir desde no perseguir
         if (newState == State.Chase
             && _previousState != State.Chase
             && _previousState != State.Attack)
@@ -661,19 +684,20 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         get
         {
-            switch (_state)
+            // Reescrito sin switch
+            if (_state == State.Wander)
             {
-                case State.Wander:
-                    return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length
-                        ? $"Punto {_patrolIndex}"
-                        : "Sin puntos";
-                case State.Chase:       return "Jugador";
-                case State.Attack:      return "Atacando";
-                case State.Stunned:     return "Aturdido";
-                case State.Investigate: return _reachedInvestigation ? "Esperando" : "Yendo a investigar";
-                case State.CheckLocker: return _targetLocker != null ? _targetLocker.name : "Ninguna";
-                default:                return "";
+                return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length
+                    ? $"Punto {_patrolIndex}"
+                    : "Sin puntos";
             }
+            else if (_state == State.Chase)       return "Jugador";
+            else if (_state == State.Attack)      return "Atacando";
+            else if (_state == State.Stunned)     return "Aturdido";
+            else if (_state == State.Investigate) return _reachedInvestigation ? "Esperando" : "Yendo a investigar";
+            else if (_state == State.CheckLocker) return _targetLocker != null ? _targetLocker.name : "Ninguna";
+
+            return "";
         }
     }
 }
