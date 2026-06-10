@@ -17303,7 +17303,7 @@ MonoBehaviour:
   puertaIzquierda: {fileID: 1559047428}
   puertaDerecha: {fileID: 1610189944}
   velocidadApertura: 2
-  MinigameAction: {fileID: -1262869469678752386, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  MinigameAction: {fileID: -1262869469678752386, guid: ad47186b81e1b134aba890ce2510a5c3, type: 3}
   jumpAction: {fileID: -1916377846673030204, guid: 4419d82f33d36e848b3ed5af4c8da37e, type: 3}
   conAnimator: 0
   openSound: {fileID: 452633032}
@@ -139587,7 +139587,7 @@ MonoBehaviour:
   puertaIzquierda: {fileID: 0}
   puertaDerecha: {fileID: 0}
   velocidadApertura: 2
-  MinigameAction: {fileID: -1262869469678752386, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  MinigameAction: {fileID: -1262869469678752386, guid: ad47186b81e1b134aba890ce2510a5c3, type: 3}
   jumpAction: {fileID: -1916377846673030204, guid: 4419d82f33d36e848b3ed5af4c8da37e, type: 3}
   conAnimator: 0
   openSound: {fileID: 0}
