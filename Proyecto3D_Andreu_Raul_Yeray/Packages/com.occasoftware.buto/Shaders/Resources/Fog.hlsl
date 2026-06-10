@@ -99,7 +99,7 @@ float InverseLerp(float start, float stop, float value)
 	return (value - start) / (stop - start);
 }
 
-float Remap(float inStart, float inStop, float outStart, float outStop, float v)
+float ButoRemap(float inStart, float inStop, float outStart, float outStop, float v)
 {
 	float t = InverseLerp(inStart, inStop, v); 
 	return lerp(outStart, outStop, saturate(t));
@@ -272,7 +272,7 @@ float GetFogDensityByNoise(Texture3D NoiseTexture, SamplerState Sampler, float3 
 	value /= c;
 	
 	float v = value.r * 0.53 + value.g * 0.27 + value.b * 0.13 + value.a * 0.07;
-	v = Remap(NoiseMin, NoiseMax, 0.0, 1.0, v);
+	v = ButoRemap(NoiseMin, NoiseMax, 0.0, 1.0, v);
 
 	return v;
 }
