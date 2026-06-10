@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Papel : MonoBehaviour
 {
@@ -6,26 +7,48 @@ public class Papel : MonoBehaviour
     public GameObject canvasLeer;
     public bool jugadorCerca = false;
     private bool estaLeyendo = false;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    private Camera _cam;
+
     void Start()
     {
-        
+        _cam = Camera.main;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (jugadorCerca && Input.GetKeyDown(KeyCode.E))
+        if (jugadorCerca && BotonLeerPulsado())
         {
             if (!estaLeyendo)
-            {
                 LeerPapel();
-            }
             else
-            {
                 DejarDeLeerPapel();
-            }
         }
+
+        // Orientar el canvas hacia la cámara (efecto billboard)
+        if (canvasLeer != null && canvasLeer.activeSelf)
+            OrientarCanvasACamara();
+    }
+
+    private void OrientarCanvasACamara()
+    {
+        if (_cam == null) _cam = Camera.main;
+        if (_cam == null) return;
+
+        // El canvas mira hacia la cámara
+        Vector3 direccion = canvasLeer.transform.position - _cam.transform.position;
+        canvasLeer.transform.rotation = Quaternion.LookRotation(direccion);
+    }
+
+    private bool BotonLeerPulsado()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+            return true;
+
+        if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)
+            return true;
+
+        return false;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -34,9 +57,7 @@ public class Papel : MonoBehaviour
         {
             jugadorCerca = true;
             if (canvasLeer != null)
-            {
                 canvasLeer.SetActive(true);
-            }
         }
     }
 
@@ -46,9 +67,7 @@ public class Papel : MonoBehaviour
         {
             jugadorCerca = false;
             if (canvasLeer != null)
-            {
                 canvasLeer.SetActive(false);
-            }
         }
     }
 
@@ -56,21 +75,17 @@ public class Papel : MonoBehaviour
     {
         estaLeyendo = true;
         GameManager.instance.MostrarPapel(texto);
-        
+
         if (canvasLeer != null)
-        {
-            canvasLeer.SetActive(false); 
-        }
+            canvasLeer.SetActive(false);
     }
 
     void DejarDeLeerPapel()
     {
         estaLeyendo = false;
         GameManager.instance.CerrarPapel();
-        
+
         if (canvasLeer != null && jugadorCerca)
-        {
-            canvasLeer.SetActive(true); 
-        }
+            canvasLeer.SetActive(true);
     }
 }

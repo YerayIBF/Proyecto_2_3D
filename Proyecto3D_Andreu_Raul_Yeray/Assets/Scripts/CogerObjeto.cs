@@ -172,7 +172,6 @@ public class CogerObjeto : MonoBehaviour
         }
         catch (UnityException)
         {
-            // Tag no existe en el proyecto, simplemente lo ignoramos
             return null;
         }
     }
@@ -197,10 +196,9 @@ public class CogerObjeto : MonoBehaviour
                 return true;
         }
 
-        if (item.CompareTag("Llave")
-            && GameManager.instance != null
-            && GameManager.instance.tieneLlave)
-            return true;
+        // Las llaves NO se bloquean por la booleana genérica tieneLlave.
+        // Cada llave se desactiva al cogerla (SetActive false), así que deja
+        // de aparecer en la detección por sí sola. Cada llave es independiente.
 
         return false;
     }
@@ -396,12 +394,12 @@ public class CogerObjeto : MonoBehaviour
         }
         else if (objeto.CompareTag("Llave"))
         {
-            if (GameManager.instance != null)
-                GameManager.instance.RecogerLlave();
-
+            // Usa el keyID de la propia llave (sistema con ID), no un ID fijo
             KeyPickup keyPickup = objeto.GetComponent<KeyPickup>();
             if (keyPickup != null)
                 keyPickup.OnPickedUp();
+            else if (GameManager.instance != null)
+                GameManager.instance.RecogerLlave(); // fallback si no tiene KeyPickup
 
             objeto.SetActive(false);
         }
@@ -412,7 +410,7 @@ public class CogerObjeto : MonoBehaviour
             KeyEnd keyEnd = objeto.GetComponent<KeyEnd>();
             if (keyEnd != null)
             {
-                keyEnd.MostrarPuerta(2f);
+                keyEnd.MostrarPuerta(5f);
             }
 
             objeto.SetActive(false);
