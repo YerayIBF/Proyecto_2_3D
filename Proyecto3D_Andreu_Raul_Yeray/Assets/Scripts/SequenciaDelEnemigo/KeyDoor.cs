@@ -4,25 +4,33 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Puerta que requiere la llave para abrirse.
-/// Al pulsar E cerca:
-/// - Si tienes la llave (según GameManager) → se abre
+/// Puerta que requiere una llave con ID específico.
+/// Al pulsar E/X cerca:
+/// - Si tienes la llave con el ID correcto → se abre
 /// - Si no → mensaje "necesitas una llave"
 /// </summary>
 public class KeyDoor : MonoBehaviour
 {
+    [Header("Identificador")]
+    [Tooltip("ID de la llave necesaria para abrir esta puerta. Debe coincidir con el de KeyPickup.")]
+    public string requiredKeyID = "default";
+
     [Header("Pickup")]
     public float interactRange = 2f;
     public KeyCode interactKey = KeyCode.E;
 
     [Header("Animación de apertura")]
-    [Tooltip("Rotación local en Y al abrir la puerta")]
     public float openAngleY = 90f;
     public float openDuration = 1.5f;
 
     [Header("Comportamiento")]
     [Tooltip("Si está marcado, la llave se gasta al abrir esta puerta")]
     public bool consumirLlave = true;
+
+    [Header("Final del juego")]
+    [Tooltip("Si está marcado, carga la escena de créditos al abrirse")]
+    public bool esPuertaFinal = false;
+    public string sceneToLoadOnFinal = "Creditos";
 
     [Header("Audio opcional")]
     public AudioSource openSound;
@@ -31,11 +39,13 @@ public class KeyDoor : MonoBehaviour
     [Header("Icono flotante (opcional)")]
     public PickupIcon pickupIcon;
 
+    [Header("Mensajes")]
+    public string mensajeSinLlave = "Sembla que necesito una clau";
+
     [SerializeField] private bool _opened = false;
     private Transform _player;
     private Quaternion _closedRotation;
     private Quaternion _openRotation;
-    public bool esPuertaFinal;
 
     private void Start()
     {
@@ -62,11 +72,9 @@ public class KeyDoor : MonoBehaviour
 
     private bool BotonAbrirPulsado()
     {
-        // Teclado (E)
         if (Input.GetKeyDown(interactKey))
             return true;
 
-        // Mando: cuadrado PS / X Xbox (buttonWest)
         if (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)
             return true;
 
@@ -75,24 +83,22 @@ public class KeyDoor : MonoBehaviour
 
     private void TryOpen()
     {
-        bool hasKey = GameManager.instance != null && GameManager.instance.tieneLlave;
-        bool puedeAbrir = esPuertaFinal ? GameManager.instance.tieneLlaveFinal : GameManager.instance.tieneLlave;
+        bool puedeAbrir = GameManager.instance != null && GameManager.instance.HasKey(requiredKeyID);
 
         if (puedeAbrir)
         {
             Open();
 
             if (consumirLlave && GameManager.instance != null)
-                GameManager.instance.UsarLlave();
+                GameManager.instance.UseKey(requiredKeyID);
         }
         else
         {
-            Debug.Log("[Door] La puerta está cerrada. Necesitas una llave.");
+            Debug.Log($"[Door] La puerta '{requiredKeyID}' está cerrada. Necesitas la llave.");
             if (lockedSound != null) lockedSound.Play();
 
-            // Mostrar mensaje en el HUD
-            if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("Sembla que necesito una clau", 2f);
+            if (GameManager.instance != null && !string.IsNullOrEmpty(mensajeSinLlave))
+                GameManager.instance.ReproducirVoz(mensajeSinLlave, 2f);
         }
     }
 
@@ -107,7 +113,7 @@ public class KeyDoor : MonoBehaviour
 
         StartCoroutine(AnimateOpen());
 
-        Debug.Log("[Door] Puerta abierta.");
+        Debug.Log($"[Door] Puerta '{requiredKeyID}' abierta.");
     }
 
     private IEnumerator AnimateOpen()
@@ -123,7 +129,7 @@ public class KeyDoor : MonoBehaviour
 
         if (esPuertaFinal)
         {
-            SceneManager.LoadScene("Creditos");
+            SceneManager.LoadScene(sceneToLoadOnFinal);
         }
     }
 }

@@ -3,10 +3,11 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.Playables;
 using StarterAssets;
-using TMPro;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.InputSystem;
-using Unity.Cinemachine; 
+using Unity.Cinemachine;
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
@@ -23,7 +24,7 @@ public class GameManager : MonoBehaviour
     public Sprite iconoBateria;
     public Sprite iconoSinBateria;
     public bool zonaActivacion = false;
-    
+
     public bool zonaActivacion2 = false;
     public ThirdPersonController scriptJugador;
 
@@ -43,9 +44,19 @@ public class GameManager : MonoBehaviour
     public GameObject iconoLlaveHUD;
     [Tooltip("Texto que aparece al recoger la llave (opcional)")]
     public string mensajeLlaveRecogida = "He agafat una clau";
+
+    [Header("Llaves recogidas (sistema con ID)")]
+    private HashSet<string> _keysCollected = new HashSet<string>();
+
+    [Header("HUD — Contador de pilas del megáfono")]
+    [Tooltip("Texto que muestra el número de pilas del megáfono (ej: 'x2')")]
+    public TextMeshProUGUI textoPilasMegafono;
+    [Tooltip("Formato del texto. {0} se sustituye por el número")]
+    public string formatoPilasMegafono = "x{0}";
+
     public Transform playerCameraRoot;
-    public CinemachineCamera camaraVirtualSpline; 
-    public float duracionCinematica = 5f; 
+    public CinemachineCamera camaraVirtualSpline;
+    public float duracionCinematica = 5f;
 
     [Header("Paneles")]
     public int totalPaneles = 5;
@@ -58,14 +69,12 @@ public class GameManager : MonoBehaviour
     [Header("Audio")]
     public AudioSource openSoundGarage;
 
-    public MinijuegoElectric minijuegoActivo; // el minijuego de la zona donde está el jugador
-
+    public MinijuegoElectric minijuegoActivo;
 
     private CinemachineSplineDolly splineDolly;
     private Coroutine cinematicaCoroutine;
-    //public GameObject camaraVirtualJugador; 
 
-    //public InputActionReference interactAction;
+    private int _lastPilaCount = -1;
 
     void Awake()
     {
@@ -73,9 +82,6 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-
-            //InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
-
         }
         else
         {
@@ -85,7 +91,7 @@ public class GameManager : MonoBehaviour
         if (camaraVirtualSpline != null)
         {
             splineDolly = camaraVirtualSpline.GetComponent<CinemachineSplineDolly>();
-            camaraVirtualSpline.Priority = 0; 
+            camaraVirtualSpline.Priority = 0;
         }
     }
 
@@ -97,27 +103,45 @@ public class GameManager : MonoBehaviour
         megafono = GameObject.FindGameObjectWithTag("Megafono");
         megafonoImg.sprite = iconoBateria;
 
-        // Asegurarse de que el icono de la llave está oculto al inicio
         if (iconoLlaveHUD != null)
             iconoLlaveHUD.SetActive(false);
+
+        // Inicializar contador de pilas
+        ActualizarContadorPilasMegafono();
     }
 
     private void OnTimelineFinished(PlayableDirector director)
     {
         scriptJugador.enabled = true;
-        //textoTimelineInicial.gameObject.SetActive(false);
         StartCoroutine(QuitarTexto());
     }
 
     IEnumerator QuitarTexto()
     {
-        yield return new WaitForSeconds(3f); 
+        yield return new WaitForSeconds(3f);
         textoTimelineInicial.gameObject.SetActive(false);
     }
 
     void Update()
     {
+        // Actualizar el contador de pilas del megáfono si cambió
+        ActualizarContadorPilasMegafono();
+    }
 
+    // ─── HUD pilas megáfono ──────────────────────────────────────────────────
+
+    private void ActualizarContadorPilasMegafono()
+    {
+        if (textoPilasMegafono == null) return;
+        if (PlayerStateMachine.Instance == null) return;
+
+        int currentCount = PlayerStateMachine.Instance.MegafonoBatteryCount;
+
+        if (currentCount != _lastPilaCount)
+        {
+            _lastPilaCount = currentCount;
+            textoPilasMegafono.text = string.Format(formatoPilasMegafono, currentCount);
+        }
     }
 
     // ─── Megáfono ────────────────────────────────────────────────────────────
@@ -178,45 +202,62 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ─── Llave ───────────────────────────────────────────────────────────────
+    // ─── Llaves (sistema viejo, mantenido por compatibilidad) ────────────────
 
-    /// <summary>
-    /// Llamado por KeyPickup cuando el jugador recoge la llave.
-    /// </summary>
     public void RecogerLlave()
     {
-        tieneLlave = true;
-
-        // Mostrar icono en el HUD
-        if (iconoLlaveHUD != null)
-            iconoLlaveHUD.SetActive(true);
-
-        // Mostrar subtítulo o mensaje
-        if (!string.IsNullOrEmpty(mensajeLlaveRecogida))
-            ReproducirVoz(mensajeLlaveRecogida, 3f);
-
-        Debug.Log("[GameManager] Llave recogida.");
+        AddKey("principal");
     }
 
     public void RecogerLlaveFinal()
     {
         tieneLlaveFinal = true;
-
         ReproducirVoz("He trobat la clau de la sortida, he de trobar la sortida ràpid", 3f);
     }
 
-    /// <summary>
-    /// Llamado por KeyDoor (o cualquier puerta) para gastar la llave al usarla.
-    /// Si quieres que la llave sea reutilizable, NO llames a este método.
-    /// </summary>
     public void UsarLlave()
     {
-        tieneLlave = false;
+        UseKey("principal");
+    }
+
+    // ─── Sistema de llaves con ID (nuevo) ────────────────────────────────────
+
+    public void AddKey(string keyID)
+    {
+        if (string.IsNullOrEmpty(keyID)) return;
+
+        _keysCollected.Add(keyID);
+        tieneLlave = true;
 
         if (iconoLlaveHUD != null)
-            iconoLlaveHUD.SetActive(false);
+            iconoLlaveHUD.SetActive(true);
 
-        Debug.Log("[GameManager] Llave usada.");
+        if (!string.IsNullOrEmpty(mensajeLlaveRecogida))
+            ReproducirVoz(mensajeLlaveRecogida, 3f);
+
+        Debug.Log($"[GameManager] Llave '{keyID}' añadida.");
+    }
+
+    public bool HasKey(string keyID)
+    {
+        if (string.IsNullOrEmpty(keyID)) return false;
+        return _keysCollected.Contains(keyID);
+    }
+
+    public void UseKey(string keyID)
+    {
+        if (string.IsNullOrEmpty(keyID)) return;
+
+        _keysCollected.Remove(keyID);
+
+        if (_keysCollected.Count == 0)
+        {
+            tieneLlave = false;
+            if (iconoLlaveHUD != null)
+                iconoLlaveHUD.SetActive(false);
+        }
+
+        Debug.Log($"[GameManager] Llave '{keyID}' usada.");
     }
 
     // ─── Otros ───────────────────────────────────────────────────────────────
@@ -252,7 +293,6 @@ public class GameManager : MonoBehaviour
 
     public void ReproducirVoz(string subtitulo, float duracion)
     {
-
         if (subtitulo != "")
         {
             StartCoroutine(MostrarSubtituloCoroutine(subtitulo, duracion));
@@ -268,18 +308,12 @@ public class GameManager : MonoBehaviour
 
     public void ActivarTimelineLlave()
     {
-        //camaraVirtualJugador.SetActive(false);
         camaraVirtualSpline.Priority = 100;
 
         scriptJugador.enabled = false;
-       if (cinematicaCoroutine != null) StopCoroutine(cinematicaCoroutine);
+        if (cinematicaCoroutine != null) StopCoroutine(cinematicaCoroutine);
         cinematicaCoroutine = StartCoroutine(RecorrerSpline());
     }
-
-    /*private void OnTimelineFinalizado(PlayableDirector director)
-    {
-        scriptJugador.enabled = true;
-    }*/
 
     private IEnumerator RecorrerSpline()
     {
@@ -288,25 +322,19 @@ public class GameManager : MonoBehaviour
         while (tiempoPasado < duracionCinematica)
         {
             tiempoPasado += Time.deltaTime;
-            
             float progreso = tiempoPasado / duracionCinematica;
-            
             splineDolly.CameraPosition = progreso;
-
-            yield return null; 
+            yield return null;
         }
 
         splineDolly.CameraPosition = 1f;
-
         FinalizarCinematica();
     }
 
     private void FinalizarCinematica()
     {
         camaraVirtualSpline.Priority = 0;
-
         splineDolly.CameraPosition = 0f;
-
         scriptJugador.enabled = true;
     }
 
@@ -320,13 +348,13 @@ public class GameManager : MonoBehaviour
             if (openSoundGarage != null) openSoundGarage.Play();
             puertaAnim.SetTrigger("Abrir");
             StartCoroutine(MostrarCamaraEvento());
-            
+
             if (dialogo != null)
-            dialogo.SetActive(false);
+                dialogo.SetActive(false);
         }
     }
 
-    private System.Collections.IEnumerator MostrarCamaraEvento()
+    private IEnumerator MostrarCamaraEvento()
     {
         if (camaraEvento != null)
         {
@@ -335,5 +363,4 @@ public class GameManager : MonoBehaviour
             camaraEvento.Priority = 0;
         }
     }
-
 }

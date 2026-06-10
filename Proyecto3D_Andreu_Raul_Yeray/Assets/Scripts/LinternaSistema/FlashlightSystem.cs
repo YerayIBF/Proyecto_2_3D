@@ -49,9 +49,14 @@ public class FlashlightSystem : MonoBehaviour
 
     [Header("Detección de ojos (por TAG)")]
     public string eyesTag = "EnemyEyes";
-    public int      coneRayCount    = 8;
-    public float    coneAngle       = 15f;
-    public float    stunDetectRange = 10f;
+    [Tooltip("Radio del SphereCast principal para detectar ojos (más permisivo)")]
+    public float    stunSphereRadius = 1f;
+    [Tooltip("Número de rayos en cono para detección periférica")]
+    public int      coneRayCount    = 16;
+    [Tooltip("Ángulo del cono de detección de ojos en grados")]
+    public float    coneAngle       = 25f;
+    [Tooltip("Distancia máxima del stun")]
+    public float    stunDetectRange = 12f;
 
     [Header("Input Actions (opcional, para mando)")]
     public InputActionReference toggleFlashlightAction;
@@ -95,8 +100,6 @@ public class FlashlightSystem : MonoBehaviour
         if (apuntarAction != null)          apuntarAction.action.Disable();
     }
 
-    // ─── Init ────────────────────────────────────────────────────────────────
-
     private void Awake()
     {
         if (flashlightLight == null) flashlightLight = GetComponentInChildren<Light>();
@@ -126,10 +129,7 @@ public class FlashlightSystem : MonoBehaviour
         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
             return;
 
-        if (!_hasFlashlight)
-        {
-            return;
-        }
+        if (!_hasFlashlight) return;
 
         HandleInput();
 
@@ -143,47 +143,26 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    // ─── PICKUP ──────────────────────────────────────────────────────────────
-
-    private void Pickup()
-    {
-        _hasFlashlight = true;
-        if (pickupIcon != null) pickupIcon.SetActive(false);
-
-        if (PlayerEquipmentManager.Instance != null)
-            PlayerEquipmentManager.Instance.PickupFlashlight(gameObject);
-
-        if (GameManager.instance != null)
-            GameManager.instance.tieneLinterna = true;
-
-        Debug.Log("[Flashlight] Linterna recogida.");
-    }
-
     public void PickupFlashlight()
     {
         _hasFlashlight = true;
         if (pickupIcon != null) pickupIcon.SetActive(false);
     }
 
-    // ─── Input ───────────────────────────────────────────────────────────────
-
     private void HandleInput()
     {
-        // Si está escondido en taquilla, apagar y bloquear la linterna
         if (PlayerStateMachine.Instance != null && PlayerStateMachine.Instance.IsHiding)
         {
             if (_isOn) SetLight(false);
             return;
         }
 
-        // ── ENCENDER / APAGAR LINTERNA (F / Y mando) ──
         bool toggleInput = Input.GetKeyDown(KeyCode.F)
                         || (toggleFlashlightAction != null && toggleFlashlightAction.action.WasPressedThisFrame());
 
         if (toggleInput && currentBattery > 0f)
             ToggleFlashlight();
 
-        // ── RECARGAR (R / RT mando) ──
         bool reloadInput = Input.GetKeyDown(KeyCode.R)
                         || (reloadAction != null && reloadAction.action.WasPressedThisFrame());
 
@@ -192,7 +171,6 @@ public class FlashlightSystem : MonoBehaviour
             TriggerReloadAnimation();
         }
 
-        // ── APUNTAR (click derecho / RB mando) ──
         bool canAim = _isOn;
         if (PlayerEquipmentManager.Instance != null)
             canAim = canAim && PlayerEquipmentManager.Instance.CanAimFlashlight;
@@ -205,12 +183,11 @@ public class FlashlightSystem : MonoBehaviour
         if (aimInput != _isAiming)
         {
             _isAiming = aimInput;
+            _stunDetected = false; // Reset al cambiar de aim
             OnAimingChanged?.Invoke(_isAiming);
             PlayerEquipmentManager.Instance?.SetAimingFlashlight(_isAiming);
         }
     }
-
-    // ─── Parpadeo ─────────────────────────────────────────────────────────────
 
     private void UpdateFlickerState()
     {
@@ -242,8 +219,6 @@ public class FlashlightSystem : MonoBehaviour
             _flickerMultiplier = 1f;
         }
     }
-
-    // ─── Luz ─────────────────────────────────────────────────────────────────
 
     private void UpdateLightParameters()
     {
@@ -298,7 +273,7 @@ public class FlashlightSystem : MonoBehaviour
         OnBatteryChanged?.Invoke(currentBattery / maxBattery);
     }
 
-    // ─── DETECCIÓN OJOS POR TAG ──────────────────────────────────────────────
+    // ─── DETECCIÓN DE OJOS MEJORADA (SphereCast + cono) ──────────────────────
 
     private void DetectEyesStun()
     {
@@ -306,23 +281,31 @@ public class FlashlightSystem : MonoBehaviour
 
         Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        EnemyBehaviourTree hitEnemy = TryRaycastEyes(ray.origin, ray.direction);
-        enemigoaire hitAire = TryRaycastEyesAire(ray.origin, ray.direction);
+        // 1) Probar primero con SphereCast central (más permisivo que Raycast)
+        EnemyBehaviourTree hitEnemy = TrySphereCastEyes(ray.origin, ray.direction);
+        enemigoaire hitAire = TrySphereCastEyesAire(ray.origin, ray.direction);
 
+        // 2) Si no detecta nada, probar rayos en cono para visión periférica
         if (hitEnemy == null && hitAire == null)
         {
             for (int i = 0; i < coneRayCount; i++)
             {
                 float angle = (360f / coneRayCount) * i;
-                Vector3 dir = Quaternion.AngleAxis(angle, ray.direction)
-                            * (Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction);
+                Quaternion rot = Quaternion.AngleAxis(angle, ray.direction);
+                Vector3 offsetDir = Quaternion.AngleAxis(coneAngle * 0.5f, mainCamera.transform.right) * ray.direction;
+                Vector3 dir = rot * offsetDir;
 
-                if (hitEnemy == null) hitEnemy = TryRaycastEyes(ray.origin, dir);
-                if (hitAire  == null) hitAire  = TryRaycastEyesAire(ray.origin, dir);
+                if (hitEnemy == null) hitEnemy = TrySphereCastEyes(ray.origin, dir);
+                if (hitAire  == null) hitAire  = TrySphereCastEyesAire(ray.origin, dir);
 
                 if (hitEnemy != null && hitAire != null) break;
             }
         }
+
+        // Si los enemigos no pueden ser stuneados (cooldown o ya stuneados), ignorarlos
+        // Así el flag _stunDetected se resetea y queda listo para el siguiente stun
+        if (hitEnemy != null && !hitEnemy.CanBeStunned) hitEnemy = null;
+        if (hitAire != null && !hitAire.CanBeStunned) hitAire = null;
 
         bool anyHit = hitEnemy != null || hitAire != null;
 
@@ -348,60 +331,68 @@ public class FlashlightSystem : MonoBehaviour
         }
     }
 
-    private EnemyBehaviourTree TryRaycastEyes(Vector3 origin, Vector3 direction)
+    private EnemyBehaviourTree TrySphereCastEyes(Vector3 origin, Vector3 direction)
     {
-        if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
-            ~0, QueryTriggerInteraction.Collide))
-            return null;
+        // SphereCast es como un Raycast pero con un radio (más permisivo)
+        RaycastHit[] hits = Physics.SphereCastAll(origin, stunSphereRadius, direction,
+            stunDetectRange, ~0, QueryTriggerInteraction.Collide);
 
-        if (!hit.collider.CompareTag(eyesTag))
-            return null;
-
-        EnemyBehaviourTree bt = hit.collider.GetComponentInParent<EnemyBehaviourTree>();
-        if (bt != null) return bt;
-
-        EnemyBehaviourTree[] allEnemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
-        EnemyBehaviourTree nearest = null;
-        float minDist = float.MaxValue;
-        foreach (var enemy in allEnemies)
+        foreach (var hit in hits)
         {
-            float d = Vector3.Distance(enemy.transform.position, hit.point);
-            if (d < minDist)
+            if (!hit.collider.CompareTag(eyesTag)) continue;
+
+            EnemyBehaviourTree bt = hit.collider.GetComponentInParent<EnemyBehaviourTree>();
+            if (bt != null) return bt;
+
+            // Si los ojos están en un GameObject separado del Logic, buscar el más cercano
+            EnemyBehaviourTree[] allEnemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
+            EnemyBehaviourTree nearest = null;
+            float minDist = float.MaxValue;
+            foreach (var enemy in allEnemies)
             {
-                minDist = d;
-                nearest = enemy;
+                float d = Vector3.Distance(enemy.transform.position, hit.point);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    nearest = enemy;
+                }
             }
+            if (nearest != null) return nearest;
         }
-        return nearest;
+
+        return null;
     }
 
-    private enemigoaire TryRaycastEyesAire(Vector3 origin, Vector3 direction)
+    private enemigoaire TrySphereCastEyesAire(Vector3 origin, Vector3 direction)
     {
         int layerMask = ~LayerMask.GetMask("EnemyRange");
 
-        if (!Physics.Raycast(origin, direction, out RaycastHit hit, stunDetectRange,
-            layerMask, QueryTriggerInteraction.Collide))
-            return null;
+        RaycastHit[] hits = Physics.SphereCastAll(origin, stunSphereRadius, direction,
+            stunDetectRange, layerMask, QueryTriggerInteraction.Collide);
 
-        if (!hit.collider.CompareTag(eyesTag))
-            return null;
-
-        enemigoaire bt = hit.collider.GetComponentInParent<enemigoaire>();
-        if (bt != null) return bt;
-
-        enemigoaire[] allEnemies = Object.FindObjectsByType<enemigoaire>(FindObjectsSortMode.None);
-        enemigoaire nearest = null;
-        float minDist = float.MaxValue;
-        foreach (var enemy in allEnemies)
+        foreach (var hit in hits)
         {
-            float d = Vector3.Distance(enemy.transform.position, hit.point);
-            if (d < minDist)
+            if (!hit.collider.CompareTag(eyesTag)) continue;
+
+            enemigoaire bt = hit.collider.GetComponentInParent<enemigoaire>();
+            if (bt != null) return bt;
+
+            enemigoaire[] allEnemies = Object.FindObjectsByType<enemigoaire>(FindObjectsSortMode.None);
+            enemigoaire nearest = null;
+            float minDist = float.MaxValue;
+            foreach (var enemy in allEnemies)
             {
-                minDist = d;
-                nearest = enemy;
+                float d = Vector3.Distance(enemy.transform.position, hit.point);
+                if (d < minDist)
+                {
+                    minDist = d;
+                    nearest = enemy;
+                }
             }
+            if (nearest != null) return nearest;
         }
-        return nearest;
+
+        return null;
     }
 
     public void Reload()
@@ -449,8 +440,6 @@ public class FlashlightSystem : MonoBehaviour
             Gizmos.DrawWireSphere(transform.position, pickupRange);
         }
     }
-
-    // ─── Animación de recarga ────────────────────────────────────────────────
 
     public void TriggerReloadAnimation()
     {

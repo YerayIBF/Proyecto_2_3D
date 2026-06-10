@@ -21,13 +21,24 @@ public class EnemyBehaviourTree : MonoBehaviour
     [Header("Detección visual")]
     public float     detectionRange = 12f;
     public float     detectionAngle = 90f;
+    [Tooltip("Ángulo extra de visión cuando ya está persiguiendo (visión periférica)")]
+    public float     chaseDetectionAngle = 160f;
+    [Tooltip("Rango extra de visión cuando ya está persiguiendo")]
+    public float     chaseDetectionRange = 20f;
     public LayerMask visionBlockMask;
-    public float visionMemoryDuration = 2f;
+    [Tooltip("Cuánto tiempo recuerda haber visto al jugador (segundos)")]
+    public float visionMemoryDuration = 5f;
     private float _visionMemoryTimer = 0f;
 
+    [Header("Última posición conocida")]
+    [Tooltip("Si pierde de vista, se dirige a la última posición conocida")]
+    public bool useLastKnownPosition = true;
+    private Vector3 _lastKnownPlayerPos;
+    private bool _hasLastKnownPos = false;
+
     [Header("Combate")]
-    public float attackRange        = 1.5f;
-    public float chaseRange         = 15f;
+    public float attackRange        = 2.5f;
+    public float chaseRange         = 20f;
     public float attackCooldownTime = 1.5f;
     public float attackDamage       = 30f;
     public float lockerKillDelay    = 0.8f;
@@ -173,14 +184,14 @@ public class EnemyBehaviourTree : MonoBehaviour
 
     private void Update()
     {
-        
-         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
+        if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
         {
             if (_state != State.Wander)
             {
                 _knownLockerWithPlayer = null;
                 _targetLocker = null;
                 _frozenAtLocker = false;
+                _hasLastKnownPos = false;
                 ChangeState(State.Wander);
             }
             UpdateWander();
@@ -200,31 +211,19 @@ public class EnemyBehaviourTree : MonoBehaviour
 
         TrackPlayerHiding();
 
-        // ─── Ejecutar comportamiento del estado actual con if/else ──────────
-        if (_state == State.Wander)
+        // Actualizar última posición conocida si está viendo al jugador
+        if (CanSeePlayer())
         {
-            UpdateWander();
+            _lastKnownPlayerPos = player.position;
+            _hasLastKnownPos = true;
         }
-        else if (_state == State.Chase)
-        {
-            UpdateChase();
-        }
-        else if (_state == State.Attack)
-        {
-            UpdateAttack();
-        }
-        else if (_state == State.Stunned)
-        {
-            UpdateStunned();
-        }
-        else if (_state == State.Investigate)
-        {
-            UpdateInvestigate();
-        }
-        else if (_state == State.CheckLocker)
-        {
-            UpdateCheckLocker();
-        }
+
+        if (_state == State.Wander)         UpdateWander();
+        else if (_state == State.Chase)     UpdateChase();
+        else if (_state == State.Attack)    UpdateAttack();
+        else if (_state == State.Stunned)   UpdateStunned();
+        else if (_state == State.Investigate) UpdateInvestigate();
+        else if (_state == State.CheckLocker) UpdateCheckLocker();
 
         EvaluateTransitions();
     }
@@ -266,8 +265,21 @@ public class EnemyBehaviourTree : MonoBehaviour
             return;
         }
 
+        // Si está en Chase, mantenerse hasta que se acabe la memoria visual
         if (_state == State.Chase && _visionMemoryTimer > 0f)
             return;
+
+        // Si está en Chase, sin memoria visual, pero tiene una última posición conocida → seguir a esa pos
+        if (_state == State.Chase && _hasLastKnownPos)
+        {
+            // Mantener Chase para llegar a la última posición conocida
+            float distToLastKnown = Vector3.Distance(transform.position, _lastKnownPlayerPos);
+            if (distToLastKnown > 1.5f)
+                return;
+
+            // Ya llegó a la última posición conocida sin encontrarlo, olvidar
+            _hasLastKnownPos = false;
+        }
 
         if (_hasPendingNoise && _state != State.Investigate)
         {
@@ -299,8 +311,23 @@ public class EnemyBehaviourTree : MonoBehaviour
         _agent.isStopped = false;
         _agent.speed = chaseSpeed;
 
-        Vector3 targetPos = player.position;
-        if (NavMesh.SamplePosition(player.position, out NavMeshHit navHit, 5f, NavMesh.AllAreas))
+        // Decidir target: si lo ve, usar pos actual del jugador, si no, usar última posición conocida
+        Vector3 targetPos;
+        if (CanSeePlayer())
+        {
+            targetPos = player.position;
+        }
+        else if (_hasLastKnownPos)
+        {
+            targetPos = _lastKnownPlayerPos;
+        }
+        else
+        {
+            targetPos = player.position;
+        }
+
+        // Sample en NavMesh con radio amplio para encontrar punto válido
+        if (NavMesh.SamplePosition(targetPos, out NavMeshHit navHit, 10f, NavMesh.AllAreas))
             targetPos = navHit.position;
 
         _agent.SetDestination(targetPos);
@@ -313,7 +340,7 @@ public class EnemyBehaviourTree : MonoBehaviour
         {
             ChangeState(State.Attack);
         }
-        else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f)
+        else if (dist > chaseRange && !CanSeePlayer() && _visionMemoryTimer <= 0f && !_hasLastKnownPos)
         {
             ChangeState(State.Wander);
         }
@@ -593,6 +620,11 @@ public class EnemyBehaviourTree : MonoBehaviour
         if (player == null) return false;
         if (eyes == null) return false;
 
+        // Si está en Chase usa visión periférica más amplia
+        bool isChasing = _state == State.Chase;
+        float effectiveAngle = isChasing ? chaseDetectionAngle : detectionAngle;
+        float effectiveRange = isChasing ? chaseDetectionRange : detectionRange;
+
         Vector3[] testPoints = new Vector3[]
         {
             player.position + Vector3.up * 0.3f,
@@ -603,10 +635,10 @@ public class EnemyBehaviourTree : MonoBehaviour
         foreach (Vector3 targetPoint in testPoints)
         {
             float dist = Vector3.Distance(eyes.position, targetPoint);
-            if (dist > detectionRange) continue;
+            if (dist > effectiveRange) continue;
 
             Vector3 dir = (targetPoint - eyes.position).normalized;
-            if (Vector3.Angle(eyes.forward, dir) > detectionAngle * 0.5f) continue;
+            if (Vector3.Angle(eyes.forward, dir) > effectiveAngle * 0.5f) continue;
 
             if (Physics.Raycast(eyes.position, dir, out RaycastHit hit, dist, visionBlockMask))
             {
@@ -664,6 +696,8 @@ public class EnemyBehaviourTree : MonoBehaviour
         {
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(eyes.position, detectionRange);
+            Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
+            Gizmos.DrawWireSphere(eyes.position, chaseDetectionRange);
         }
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
@@ -675,6 +709,12 @@ public class EnemyBehaviourTree : MonoBehaviour
             Gizmos.color = Color.cyan;
             Gizmos.DrawSphere(_investigateTarget, 0.3f);
             Gizmos.DrawLine(transform.position, _investigateTarget);
+        }
+
+        if (_hasLastKnownPos)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawSphere(_lastKnownPlayerPos, 0.3f);
         }
 
         if (_targetLocker != null)
@@ -698,7 +738,6 @@ public class EnemyBehaviourTree : MonoBehaviour
     {
         get
         {
-            // Reescrito sin switch
             if (_state == State.Wander)
             {
                 return patrolPoints.Length > 0 && _patrolIndex < patrolPoints.Length
