@@ -47,6 +47,11 @@ public class CogerObjeto : MonoBehaviour
 
     private float _savedThrowForce = 10f;
 
+    // Tags de objetos detectables (centralizado para facilidad)
+    private static readonly string[] _detectableTags = {
+        "objetoCogible", "Megafono", "Linterna", "Llave", "LlaveFinal", "PilaMegafonoNueva", "PilaLinterna"
+    };
+
     private void OnEnable()
     {
         if (apuntarAction != null)  apuntarAction.action.Enable();
@@ -75,11 +80,9 @@ public class CogerObjeto : MonoBehaviour
 
     void Update()
     {
-        // Si el jugador está muerto, no procesar nada
         if (PlayerStateMachine.Instance != null && !PlayerStateMachine.Instance.IsAlive)
             return;
 
-        // ── Inputs (mando + teclado) ──
         bool inputApuntar    = (Input.GetMouseButton(1))
                             || (apuntarAction != null && apuntarAction.action.IsPressed());
 
@@ -92,19 +95,16 @@ public class CogerObjeto : MonoBehaviour
         DetectarObjetoCercano();
         ActualizarIconos();
 
-        // Soltar lanzable (R / botón soltar)
         if (objetoCogido != null && inputSoltarDown)
         {
             if (objetoCogido.CompareTag("objetoCogible"))
                 SoltarLanzable();
         }
 
-        // Apuntar + lanzar (solo con lanzable en mano)
         if (objetoCogido != null && objetoCogido.CompareTag("objetoCogible"))
         {
             HandleAimAndThrow(inputApuntar, inputLanzarDown);
 
-            // Si estaba apuntando con megáfono, cancelarlo
             if (apuntando)
             {
                 apuntando = false;
@@ -113,7 +113,6 @@ public class CogerObjeto : MonoBehaviour
                 PlayerEquipmentManager.Instance?.SetAimingMegaphone(false);
             }
         }
-        // Apuntar megáfono (solo si NO tenemos lanzable en mano)
         else if (PlayerEquipmentManager.Instance != null
                 && PlayerEquipmentManager.Instance.IsMegaphoneInHand)
         {
@@ -125,9 +124,6 @@ public class CogerObjeto : MonoBehaviour
             if (animator != null) animator.SetBool("isAiming", false);
             if (GameManager.instance != null) GameManager.instance.MostrarCanvasMegafono(false);
         }
-
-        // NOTA: La animación "Coger" la dispara el ThirdPersonController, NO este script.
-        // Aquí solo detectamos el objeto cercano. El Animation Event llama a AnimatorCogerObjeto().
     }
 
     // ─── Detección por distancia ─────────────────────────────────────────────
@@ -143,10 +139,11 @@ public class CogerObjeto : MonoBehaviour
         GameObject masCercano = null;
         float minDist = pickupRange;
 
-        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave", "LlaveFinal" };
-        foreach (string tag in tags)
+        foreach (string tag in _detectableTags)
         {
-            GameObject[] candidatos = GameObject.FindGameObjectsWithTag(tag);
+            GameObject[] candidatos = FindGameObjectsWithTagSafe(tag);
+            if (candidatos == null) continue;
+
             foreach (var go in candidatos)
             {
                 if (go == null) continue;
@@ -162,6 +159,22 @@ public class CogerObjeto : MonoBehaviour
         }
 
         objeto = masCercano;
+    }
+
+    /// <summary>
+    /// Wrapper de FindGameObjectsWithTag que no tira excepción si el tag no existe.
+    /// </summary>
+    private GameObject[] FindGameObjectsWithTagSafe(string tag)
+    {
+        try
+        {
+            return GameObject.FindGameObjectsWithTag(tag);
+        }
+        catch (UnityException)
+        {
+            // Tag no existe en el proyecto, simplemente lo ignoramos
+            return null;
+        }
     }
 
     private bool EstaRecogido(GameObject item)
@@ -184,7 +197,6 @@ public class CogerObjeto : MonoBehaviour
                 return true;
         }
 
-        // Llave: si ya la tenemos según el GameManager, ignorarla
         if (item.CompareTag("Llave")
             && GameManager.instance != null
             && GameManager.instance.tieneLlave)
@@ -233,7 +245,6 @@ public class CogerObjeto : MonoBehaviour
             throwForce = 10f;
         }
 
-        // Disparar el trigger del Animator — el Animation Event llamará a LanzarObjeto()
         if (inputLanzarDown)
         {
             _savedThrowForce = throwForce;
@@ -241,10 +252,6 @@ public class CogerObjeto : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Dispara la animación de lanzar correcta según si está agachado o de pie.
-    /// El Animation Event llamará a LanzarObjeto() en mitad de la animación.
-    /// </summary>
     private void TriggerThrowAnimation()
     {
         if (animator == null)
@@ -281,8 +288,6 @@ public class CogerObjeto : MonoBehaviour
         rb.useGravity = true;
 
         Vector3 direction = (cam.transform.forward + Vector3.up * 0.4f).normalized;
-
-        // Usar la fuerza guardada en el momento de pulsar lanzar
         rb.AddForce(direction * _savedThrowForce, ForceMode.VelocityChange);
 
         ThrowObject throwable = objetoCogido.GetComponent<ThrowObject>();
@@ -321,10 +326,11 @@ public class CogerObjeto : MonoBehaviour
 
     private void ActualizarIconos()
     {
-        string[] tags = { "objetoCogible", "Megafono", "Linterna", "Llave", "LlaveFinal" };
-        foreach (string tag in tags)
+        foreach (string tag in _detectableTags)
         {
-            GameObject[] items = GameObject.FindGameObjectsWithTag(tag);
+            GameObject[] items = FindGameObjectsWithTagSafe(tag);
+            if (items == null) continue;
+
             foreach (var item in items)
             {
                 bool mostrar = (item == objeto);
@@ -410,6 +416,22 @@ public class CogerObjeto : MonoBehaviour
             }
 
             objeto.SetActive(false);
+        }
+        else if (objeto.CompareTag("PilaMegafonoNueva"))
+        {
+            PilaMegafonoNueva pila = objeto.GetComponent<PilaMegafonoNueva>();
+            if (pila != null)
+            {
+                pila.Recoger();
+            }
+        }
+        else if (objeto.CompareTag("PilaLinterna"))
+        {
+            PilaLinterna pila = objeto.GetComponent<PilaLinterna>();
+            if (pila != null)
+            {
+                pila.Recoger();
+            }
         }
 
         objeto = null;

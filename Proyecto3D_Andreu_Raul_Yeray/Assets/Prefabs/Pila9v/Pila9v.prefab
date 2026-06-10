@@ -22,15 +22,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 12.349731
+      value: 21.31
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.106325
+      value: -1.9937
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 13.610047
+      value: 58.0834
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       propertyPath: m_LocalRotation.w
@@ -96,6 +96,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4798464229170503314}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3829675524294781437}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4859626426796815208}
   m_SourcePrefab: {fileID: 100100000, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
 --- !u!1 &4410788951196352433 stripped
 GameObject:
@@ -121,7 +127,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4068373912626513877, guid: 4c747322cfc69ef42a0d10ff7c433276, type: 3}
 --- !u!54 &7579021745966236630
@@ -164,7 +170,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cantidad: 1
-  pickupIcon: {fileID: 0}
 --- !u!114 &4798464229170503314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,7 +184,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   icono: {fileID: 0}
   billboardToCamera: 1
+  showDebugLogs: 0
   usarOutline: 1
   rangoDeteccion: 4
   "tama\xF1oOutline": 1.1
   propiedadSize: _OutlineSize
+--- !u!135 &3829675524294781437
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4410788951196352433}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.1
+  m_Center: {x: 0.004052088, y: 0.0027587118, z: 0}
+--- !u!135 &4859626426796815208
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4410788951196352433}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.0025707025
+  m_Center: {x: 0.004052088, y: 0.0027587118, z: 0}

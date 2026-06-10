@@ -18,10 +18,11 @@ TagManager:
   - Proyectil
   - Llave
   - Dialogo
-  - Pila
   - Mando
   - LlaveFinal
   - PilaMegafonoNueva
+  - llave
+  - 'PilaLinterna '
   layers:
   - Default
   - TransparentFX
