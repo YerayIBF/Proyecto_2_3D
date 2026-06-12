@@ -44,6 +44,7 @@ public class CiegoBehaviour : MonoBehaviour
     public GameObject canvasAlerta;
     private float cooldownDeteccion = 0f;
     public float tiempoEntreDetecciones = 1f;
+    public GhostCiego ghostCiego;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -153,10 +154,7 @@ public class CiegoBehaviour : MonoBehaviour
     //Funcion para detectar el sonido que sera llamada desde el script de emitir sonido para informar al enemigo
     public void DetectarSonido(Vector3 posicionSonido)
     {
-        if (Time.time < cooldownDeteccion)
-        {
-            return;
-        }
+        if (Time.time < cooldownDeteccion) return;
         cooldownDeteccion = Time.time + tiempoEntreDetecciones;
         /*if (sonidos.Count >= 3)
         {
@@ -169,6 +167,11 @@ public class CiegoBehaviour : MonoBehaviour
             StartCoroutine(MostrarExclamacion());
         }
 
+        if (atacando)
+        {
+            return;
+        }
+        
         sonidos.Clear();
 
         sonidos.Add(posicionSonido);
@@ -200,8 +203,7 @@ public class CiegoBehaviour : MonoBehaviour
             return;
         }
 
-        if (!perseguir)
-        {
+       
             perseguir = true;
 
             Vector3 sonidoCercano = sonidos[0];
@@ -220,7 +222,7 @@ public class CiegoBehaviour : MonoBehaviour
             //agent.SetDestination(sonidoCercano);
             patrullajeScript.ActivarPersecución(sonidoCercano);
             animator.SetInteger("state", 2);
-        }
+        
         if (agent.velocity.magnitude > 0.1f)
         {
             Vector3 direccionMovimiento = agent.velocity.normalized;
@@ -306,6 +308,8 @@ public class CiegoBehaviour : MonoBehaviour
         perseguir = false;
         agent.isStopped = false;
 
+        ghostCiego.ContinuarPatrullaje();
+
         Patrullar();
     }
 
@@ -317,6 +321,7 @@ public class CiegoBehaviour : MonoBehaviour
             animator.SetTrigger("atacar");
             ataqueActivado = true;
             AudioManager.Instance.PlaySFX("AtaqueCiego");
+            ghostCiego.PausarPatrullaje();
         }
 
         /*Collider[] rango = Physics.OverlapSphere(transform.position, areaAtaque);

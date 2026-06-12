@@ -75,4 +75,15 @@ public class GhostCiego : MonoBehaviour
         estaPersiguiendo = false;
         GoToNextPoint();
     }
+
+    public void PausarPatrullaje()
+    {
+        agent.isStopped = true;
+    }
+
+    public void ContinuarPatrullaje()
+    {
+        agent.isStopped = false;
+        GoToNextPoint();
+    }
 }
