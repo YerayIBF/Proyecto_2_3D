@@ -2,39 +2,68 @@ using UnityEngine;
 
 public class LightEffect : MonoBehaviour
 {
-    private Light light;
-    public float maxWaitTime = 1f;
-    public float maxFlickerTime = 0.2f;
+    private Light _light;
 
-    float timer;
-    float interval;
+    [Header("Tiempo encendida (estable)")]
+    [Tooltip("Tiempo mínimo que la luz se mantiene fija antes de parpadear")]
+    public float minTiempoEstable = 3f;
+    [Tooltip("Tiempo máximo que la luz se mantiene fija antes de parpadear")]
+    public float maxTiempoEstable = 15f;
 
-    public float minIntensity = 1f;
+    [Header("Parpadeo")]
+    [Tooltip("Cuánto dura el parpadeo cada vez")]
+    public float duracionParpadeo = 1f;
+    public float minIntensity = 0.1f;
     public float maxIntensity = 2f;
-    public float speed = 5f;
-    float targetIntensity;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [Tooltip("Velocidad del cambio de intensidad durante el parpadeo")]
+    public float velocidadParpadeo = 25f;
+
+    private float _timer;
+    private bool  _parpadeando = false;
+    private float _targetIntensity;
+
     void Start()
     {
-        light = GetComponent<Light>();
-        targetIntensity = maxIntensity;
+        _light = GetComponent<Light>();
+        _light.intensity = maxIntensity;
+        ProgramarSiguienteParpadeo();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        light.intensity = Mathf.Lerp(light.intensity, targetIntensity, Time.deltaTime * speed);
-        if (Mathf.Abs(light.intensity - targetIntensity) < 0.05f)
+        _timer -= Time.deltaTime;
+
+        if (_parpadeando)
         {
-            if (targetIntensity == maxIntensity)
+            // Durante el parpadeo: saltar entre intensidades aleatorias muy rápido
+            _light.intensity = Mathf.Lerp(_light.intensity, _targetIntensity, Time.deltaTime * velocidadParpadeo);
+
+            if (Mathf.Abs(_light.intensity - _targetIntensity) < 0.1f)
+                _targetIntensity = Random.Range(minIntensity, maxIntensity);
+
+            // Fin del parpadeo: volver a luz estable y programar el siguiente
+            if (_timer <= 0f)
             {
-                targetIntensity = minIntensity;
+                _parpadeando = false;
+                _light.intensity = maxIntensity;
+                ProgramarSiguienteParpadeo();
             }
-            else
+        }
+        else
+        {
+            // Estable: la luz se queda fija hasta que toque parpadear
+            if (_timer <= 0f)
             {
-                targetIntensity = maxIntensity;
+                _parpadeando = true;
+                _timer = duracionParpadeo;
+                _targetIntensity = minIntensity;
             }
         }
     }
-}
 
+    // Cada "tick" elige un tiempo aleatorio distinto entre min y max
+    void ProgramarSiguienteParpadeo()
+    {
+        _timer = Random.Range(minTiempoEstable, maxTiempoEstable);
+    }
+}
