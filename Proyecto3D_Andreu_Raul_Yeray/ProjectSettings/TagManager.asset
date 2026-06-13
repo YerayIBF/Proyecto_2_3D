@@ -33,11 +33,11 @@ TagManager:
   - Player
   - ghost
   - EnemyRange
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Techo
+  - Decoraciones
+  - luces
+  - MinimapFondo
+  - IconoPlayer
   - BlindEnemy
   - Throwable
   - Casilla
