@@ -60,7 +60,6 @@ public class LockerInteractable : MonoBehaviour
         if (doorTransparency == null)
             doorTransparency = GetComponent<LockerDoorTransparency>();
 
-        // Si no se asignó AudioSource en el Inspector, buscarlo en este GO
         if (audioSource == null)
             audioSource = GetComponent<AudioSource>();
     }
@@ -69,7 +68,6 @@ public class LockerInteractable : MonoBehaviour
 
     private void Update()
     {
-        // Animar puerta
         if (!Mathf.Approximately(_currentAngle, _targetAngle))
         {
             _currentAngle = Mathf.MoveTowards(_currentAngle, _targetAngle, doorSpeed * Time.deltaTime);
@@ -232,5 +230,39 @@ public class LockerInteractable : MonoBehaviour
             Gizmos.DrawWireSphere(exitPoint.position, 0.15f);
             Gizmos.DrawLine(transform.position, exitPoint.position);
         }
+    }
+
+    /// <summary>
+    /// Resetea completamente la taquilla a estado inicial.
+    /// Llamado cuando el jugador muere dentro y respawnea.
+    /// </summary>
+    public void ForceReset()
+    {
+        // 1. Detener todas las coroutines en marcha
+        StopAllCoroutines();
+
+        // 2. Resetear todos los flags
+        IsOccupied         = false;
+        _inputBlocked      = false;
+        _isRunningSequence = false;
+
+        // 3. Forzar puerta cerrada INMEDIATAMENTE (sin animación)
+        _targetAngle  = 0f;
+        _currentAngle = 0f;
+        if (door != null)
+            door.localEulerAngles = new Vector3(0f, 0f, 0f);
+
+        // 4. Resetear transparencia de la puerta
+        if (doorTransparency != null)
+            doorTransparency.SetOpaque();
+
+        // 5. Si era la taquilla "nearest", limpiar la referencia estática
+        if (_nearestLocker == this)
+            _nearestLocker = null;
+
+        // 6. Ocultar prompt si estaba visible
+        UIPromptManager.Instance?.Hide();
+
+        Debug.Log($"[Locker] {gameObject.name} reseteada completamente.");
     }
 }

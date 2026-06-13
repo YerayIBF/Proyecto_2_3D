@@ -65,8 +65,6 @@ public class LockerSystem : MonoBehaviour
     {
         if (IsHiding) return;
 
-        // ── ANTES de teletransportar al jugador, comprobar quién lo está viendo ──
-        // Si lo notificamos DESPUÉS, ya está dentro y el enemigo no ve nada
         NotifyEnemiesOfHidingBeforeTeleport(locker);
 
         IsHiding      = true;
@@ -82,12 +80,6 @@ public class LockerSystem : MonoBehaviour
         SwitchToFirstPerson();
     }
 
-    /// <summary>
-    /// Notifica a los enemigos ANTES de que el jugador se teletransporte a la taquilla.
-    /// SOLO lo saben los enemigos que están VIENDO DIRECTAMENTE al jugador en ese momento
-    /// (raycast sin obstáculos). Si has roto la línea de visión (esquina, pared, columna),
-    /// aunque te esté persiguiendo, NO sabe en qué taquilla te metiste.
-    /// </summary>
     private void NotifyEnemiesOfHidingBeforeTeleport(LockerInteractable locker)
     {
         EnemyBehaviourTree[] enemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
@@ -96,7 +88,6 @@ public class LockerSystem : MonoBehaviour
         {
             if (enemy == null) continue;
 
-            // ÚNICA condición: el enemigo te ve LITERALMENTE en este momento
             if (enemy.IsSeeingPlayer)
             {
                 enemy._knownLockerWithPlayer = locker;
@@ -137,12 +128,25 @@ public class LockerSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// Salida forzada por muerte. No comprueba bloqueos, no restaura el movimiento.
-    /// Solo saca al jugador visualmente para que el ragdoll/death screen funcione.
+    /// Salida forzada por muerte. Cierra la taquilla y saca al jugador.
     /// </summary>
     public void ForceExitOnDeath()
     {
         if (!IsHiding) return;
+
+        // Cerrar la puerta de la taquilla para que vuelva a funcionar al respawnear
+        if (CurrentLocker != null)
+        {
+            CurrentLocker.CloseDoor();
+            CurrentLocker.ForceReset();
+        }
+
+        // Limpiar el "conocimiento" de los enemigos sobre esta taquilla
+        EnemyBehaviourTree[] enemies = Object.FindObjectsByType<EnemyBehaviourTree>(FindObjectsSortMode.None);
+        foreach (var enemy in enemies)
+        {
+            if (enemy != null) enemy._knownLockerWithPlayer = null;
+        }
 
         IsHiding      = false;
         CurrentLocker = null;
@@ -150,8 +154,7 @@ public class LockerSystem : MonoBehaviour
         SetMeshVisible(true);
         SwitchToThirdPerson();
 
-        // NO restauramos el movimiento — está muerto
-        Debug.Log("[Locker] Salida forzada por muerte.");
+        Debug.Log("[Locker] Salida forzada por muerte. Taquilla cerrada y reseteada.");
     }
 
     private bool IsBlockedByEnemy()

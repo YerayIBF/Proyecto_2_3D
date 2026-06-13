@@ -3,11 +3,6 @@ using System.Collections;
 
 /// <summary>
 /// Efecto visual de los ojos del enemigo.
-///
-/// Estados:
-/// - Normal (puede stunear): ojos apagados
-/// - Aturdido: parpadeo + ojos blancos
-/// - En cooldown: ojos rojos intensos (aviso)
 /// </summary>
 public class EnemyEyeFlash : MonoBehaviour
 {
@@ -28,6 +23,10 @@ public class EnemyEyeFlash : MonoBehaviour
     public float blinkOnDuration = 0.08f;
     public float blinkOffDuration = 0.06f;
 
+    [Header("Debug")]
+    [Tooltip("Si está activo, muestra logs en consola")]
+    public bool showDebugLogs = true;
+
     private Coroutine _stunRoutine;
     private bool _stunRoutineActive = false;
 
@@ -35,9 +34,34 @@ public class EnemyEyeFlash : MonoBehaviour
     {
         if (behaviourTree == null)
             behaviourTree = GetComponent<EnemyBehaviourTree>();
+        if (behaviourTree == null)
+            behaviourTree = GetComponentInParent<EnemyBehaviourTree>();
 
-        // Apagar al inicio
+        if (showDebugLogs)
+        {
+            Debug.Log($"[EyeFlash] Awake — {gameObject.name} | BT: {(behaviourTree != null ? "OK" : "NULL")} | Lights: {(eyeLights != null ? eyeLights.Length : 0)}");
+        }
+
+        // Inicializar luces con color stun y APAGADAS
+        SetLightsColor(stunColor, stunIntensity);
         SetLightsActive(false);
+    }
+
+    private void Start()
+    {
+        // PREWARM URP: encender brevemente las luces para que URP las registre
+        // Sin esto, la primera vez puede no encenderse en URP
+        StartCoroutine(PrewarmLights());
+    }
+
+    private IEnumerator PrewarmLights()
+    {
+        SetLightsActive(true);
+        yield return null; // esperar 1 frame
+        SetLightsActive(false);
+
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlash] Prewarm completado — {gameObject.name}");
     }
 
     private void Update()
@@ -50,18 +74,15 @@ public class EnemyEyeFlash : MonoBehaviour
 
         if (isStunned)
         {
-            // Si la coroutine de stun no se ha lanzado todavía, lánzala
             if (!_stunRoutineActive)
             {
-                _stunRoutineActive = true;
-                if (_stunRoutine != null) StopCoroutine(_stunRoutine);
-                _stunRoutine = StartCoroutine(StunFlashRoutine());
+                if (showDebugLogs)
+                    Debug.Log($"[EyeFlash] Detectado stun en Update — disparando coroutine");
+                TriggerStunVisual();
             }
-            // Durante el stun, la coroutine gestiona los lights
             return;
         }
 
-        // Ya no está stuneado → parar coroutine si seguía activa
         if (_stunRoutineActive)
         {
             _stunRoutineActive = false;
@@ -72,59 +93,73 @@ public class EnemyEyeFlash : MonoBehaviour
             }
         }
 
-        // Aplicar el estado correcto cada frame
         if (inCooldown)
         {
-            // Cooldown: ojos rojos intensos
             SetLightsColor(cooldownColor, cooldownIntensity);
             SetLightsActive(true);
         }
         else
         {
-            // Normal: apagados
             SetLightsActive(false);
         }
     }
 
-    // ─── Coroutine de parpadeo durante stun ─────────────────────────────────
+    /// <summary>
+    /// Disparar el efecto visual del stun directamente.
+    /// </summary>
+    public void TriggerStunVisual()
+    {
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlash] TriggerStunVisual() — {gameObject.name}");
+
+        _stunRoutineActive = true;
+        if (_stunRoutine != null) StopCoroutine(_stunRoutine);
+        _stunRoutine = StartCoroutine(StunFlashRoutine());
+    }
 
     private IEnumerator StunFlashRoutine()
     {
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlash] Iniciando StunFlashRoutine — {gameObject.name}");
+
         SetLightsColor(stunColor, stunIntensity);
 
-        // Parpadeo rápido
         for (int i = 0; i < blinkCount; i++)
         {
             SetLightsActive(true);
+            SetLightsColor(stunColor, stunIntensity);
             yield return new WaitForSeconds(blinkOnDuration);
+
             SetLightsActive(false);
             yield return new WaitForSeconds(blinkOffDuration);
         }
 
-        // Encendidas el resto del stun
+        SetLightsColor(stunColor, stunIntensity);
         SetLightsActive(true);
-    }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlash] Stun visual finalizado — {gameObject.name}");
+    }
 
     private void SetLightsActive(bool active)
     {
         if (eyeLights == null) return;
-        foreach (var light in eyeLights)
+        for (int i = 0; i < eyeLights.Length; i++)
         {
-            if (light != null) light.enabled = active;
+            if (eyeLights[i] != null)
+                eyeLights[i].enabled = active;
         }
     }
 
     private void SetLightsColor(Color color, float intensity)
     {
         if (eyeLights == null) return;
-        foreach (var light in eyeLights)
+        for (int i = 0; i < eyeLights.Length; i++)
         {
-            if (light != null)
+            if (eyeLights[i] != null)
             {
-                light.color = color;
-                light.intensity = intensity;
+                eyeLights[i].color = color;
+                eyeLights[i].intensity = intensity;
             }
         }
     }

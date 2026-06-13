@@ -251,6 +251,14 @@ public class DeathScreen : MonoBehaviour
             }
 
             PlayerStateMachine.Instance.Respawn(pos, rot);
+
+            // Recargar batería de la linterna al 100%
+            if (PlayerStateMachine.Instance.flashlightSystem != null)
+            {
+                PlayerStateMachine.Instance.flashlightSystem.Reload();
+                Debug.Log("[DeathScreen] Batería de linterna recargada al 100%.");
+            }
+
             StartCoroutine(HideDeathScreen());
         }
         else

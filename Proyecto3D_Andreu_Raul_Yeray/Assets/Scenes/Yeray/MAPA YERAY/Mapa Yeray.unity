@@ -5877,7 +5877,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   handScript: {fileID: 2111777984}
-  flashlightSystem: {fileID: 0}
 --- !u!114 &57086327
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6189,6 +6188,8 @@ MonoBehaviour:
   megafonoBackRot: {x: 0, y: 0, z: 0}
   startWithFlashlight: 0
   swapKey: 113
+  nextAction: {fileID: 0}
+  previousAction: {fileID: 0}
 --- !u!114 &57086336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6247,6 +6248,8 @@ MonoBehaviour:
   startingBatteries: 2
   maxBatteries: 5
   _batteryCount: 0
+  megafonoBatteryCount: 0
+  maxMegafonoBatteries: 5
   maxHealth: 100
   currentHealth: 100
   healthRegenRate: 2
@@ -6256,6 +6259,13 @@ MonoBehaviour:
   staminaDrainRate: 15
   staminaRegenRate: 10
   staminaRunThreshold: 10
+  audioAgotamiento: {fileID: 0}
+  sonidoAgotamiento: {fileID: 0}
+  audioLatidos: {fileID: 0}
+  vidaInicioLatidos: 80
+  vidaLatidosMaximos: 30
+  pitchLatidosMin: 0.7
+  pitchLatidosMax: 1
   crouchKey: 99
   crouchMoveSpeed: 1.5
   standMoveSpeed: 2
@@ -6264,6 +6274,7 @@ MonoBehaviour:
   crouchHeight: 1
   crouchCenterY: 0.5
   standCenterY: 0.9
+  crouchAction: {fileID: 0}
 --- !u!1001 &58202454
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6718,6 +6729,8 @@ MonoBehaviour:
   maxEnergia: 100
   coste: 25
   cogerObjetoScript: {fileID: 2111777984}
+  attackAction: {fileID: 0}
+  reloadAction: {fileID: 0}
 --- !u!135 &60848478
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -15144,7 +15157,15 @@ MonoBehaviour:
   puertaDerecha: {fileID: 0}
   velocidadApertura: 2
   MinigameAction: {fileID: 0}
+  jumpAction: {fileID: 0}
   conAnimator: 0
+  openSound: {fileID: 0}
+  openSoundGarage: {fileID: 0}
+  camaraGarage: {fileID: 0}
+  duracionCamaraGarage: 3
+  _puertasCompletado: 0
+  _garageCompletado: 0
+  dialogo: {fileID: 0}
 --- !u!4 &159925454 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 599758391018583926, guid: 727f4eaf23c322e4791914b86951e959, type: 3}
@@ -20663,6 +20684,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   icono: {fileID: 409762525}
   billboardToCamera: 1
+  showDebugLogs: 0
   usarOutline: 1
   rangoDeteccion: 4
   "tama\xF1oOutline": 1.1
@@ -39163,11 +39185,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dab16991c4da394eb4062d2e169eef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxWaitTime: 1
-  maxFlickerTime: 0.2
+  minTiempoEstable: 3
+  maxTiempoEstable: 15
+  duracionParpadeo: 1
   minIntensity: 0
   maxIntensity: 2
-  speed: 10
+  velocidadParpadeo: 25
 --- !u!95 &412640515
 Animator:
   serializedVersion: 7
@@ -79465,11 +79488,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dab16991c4da394eb4062d2e169eef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxWaitTime: 1
-  maxFlickerTime: 0.2
+  minTiempoEstable: 3
+  maxTiempoEstable: 15
+  duracionParpadeo: 1
   minIntensity: 0
   maxIntensity: 2
-  speed: 10
+  velocidadParpadeo: 25
 --- !u!1001 &828405966
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -81175,127 +81199,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 847283946}
   m_Mesh: {fileID: 3544045999051010755, guid: 9846d4d548aafa941bd4a01263574fe0, type: 3}
---- !u!1 &847483699
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 847483700}
-  - component: {fileID: 847483702}
-  - component: {fileID: 847483701}
-  m_Layer: 0
-  m_Name: EyeLeft
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &847483700
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 847483699}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.000000047497444, y: 7.3741e-12, z: 1.6489982e-13, w: 1}
-  m_LocalPosition: {x: -0.131, y: 0.074, z: 0.197}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1847997879}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &847483701
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 847483699}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Version: 3
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_LightLayerMask: 1
-  m_RenderingLayers: 1
-  m_CustomShadowLayers: 0
-  m_ShadowLayerMask: 1
-  m_ShadowRenderingLayers: 1
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
---- !u!108 &847483702
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 847483699}
-  m_Enabled: 1
-  serializedVersion: 11
-  m_Type: 2
-  m_Color: {r: 0.9843137, g: 0.7490196, b: 0.7490196, a: 1}
-  m_Intensity: 3
-  m_Range: 0.3
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 4
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ForceVisible: 0
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
-  m_LightUnit: 1
-  m_LuxAtDistance: 1
-  m_EnableSpotReflector: 1
 --- !u!1001 &848103055
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -96317,11 +96220,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dab16991c4da394eb4062d2e169eef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxWaitTime: 1
-  maxFlickerTime: 0.2
+  minTiempoEstable: 3
+  maxTiempoEstable: 15
+  duracionParpadeo: 1
   minIntensity: 0
   maxIntensity: 2
-  speed: 10
+  velocidadParpadeo: 25
 --- !u!95 &991132738
 Animator:
   serializedVersion: 7
@@ -97444,11 +97348,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dab16991c4da394eb4062d2e169eef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxWaitTime: 1
-  maxFlickerTime: 0.2
+  minTiempoEstable: 3
+  maxTiempoEstable: 15
+  duracionParpadeo: 1
   minIntensity: 0
   maxIntensity: 2
-  speed: 10
+  velocidadParpadeo: 25
 --- !u!95 &1001556999
 Animator:
   serializedVersion: 7
@@ -101971,6 +101876,7 @@ MonoBehaviour:
   tieneLinterna: 0
   tieneMegafono: 0
   tieneLlave: 0
+  tieneLlaveFinal: 0
   canvasMegafono: {fileID: 927254741}
   textoEnergia: {fileID: 180825339}
   bateriaRayas:
@@ -101995,6 +101901,8 @@ MonoBehaviour:
   canvasSubtitulo: {fileID: 515092906}
   iconoLlaveHUD: {fileID: 0}
   mensajeLlaveRecogida: Has recogido la llave
+  textoPilasMegafono: {fileID: 0}
+  formatoPilasMegafono: x{0}
   playerCameraRoot: {fileID: 0}
   camaraVirtualSpline: {fileID: 0}
   duracionCinematica: 5
@@ -102003,6 +101911,8 @@ MonoBehaviour:
   camaraEvento: {fileID: 0}
   duracionCamara: 3
   dialogo: {fileID: 0}
+  openSoundGarage: {fileID: 0}
+  minijuegoActivo: {fileID: 0}
 --- !u!114 &1056157511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102055,7 +101965,15 @@ MonoBehaviour:
   puertaDerecha: {fileID: 0}
   velocidadApertura: 2
   MinigameAction: {fileID: 0}
+  jumpAction: {fileID: 0}
   conAnimator: 0
+  openSound: {fileID: 0}
+  openSoundGarage: {fileID: 0}
+  camaraGarage: {fileID: 0}
+  duracionCamaraGarage: 3
+  _puertasCompletado: 0
+  _garageCompletado: 0
+  dialogo: {fileID: 0}
 --- !u!114 &1056157514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108797,6 +108715,7 @@ MonoBehaviour:
   electricidadCollider: {fileID: 1118457490}
   canvasElectricidad: {fileID: 700280300}
   puertaAnim: {fileID: 1881202550}
+  minijuego: {fileID: 0}
 --- !u!4 &1118600895 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2807056271499772748, guid: 728952ca14c2ece4eb2d302a93ecec02, type: 3}
@@ -125833,6 +125752,10 @@ MonoBehaviour:
   exitDelay: 0.45
   exitCooldown: 1.2
   interactRange: 1.5
+  audioSource: {fileID: 0}
+  doorOpenClip: {fileID: 0}
+  doorCloseClip: {fileID: 0}
+  doorVolume: 0.8
   doorTransparency: {fileID: 1306264986}
 --- !u!1001 &1307062459
 PrefabInstance:
@@ -138885,6 +138808,10 @@ MonoBehaviour:
   exitDelay: 0.45
   exitCooldown: 1.2
   interactRange: 1.5
+  audioSource: {fileID: 0}
+  doorOpenClip: {fileID: 0}
+  doorCloseClip: {fileID: 0}
+  doorVolume: 0.8
   doorTransparency: {fileID: 0}
 --- !u!1001 &1435390355
 PrefabInstance:
@@ -145894,7 +145821,7 @@ GameObject:
   - component: {fileID: 1504652529}
   - component: {fileID: 1504652528}
   m_Layer: 0
-  m_Name: EyeRight
+  m_Name: EyesLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -145909,7 +145836,7 @@ Transform:
   m_GameObject: {fileID: 1504652526}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000047497444, y: 7.3741e-12, z: 1.6489982e-13, w: 1}
-  m_LocalPosition: {x: 0.133, y: 0.074, z: 0.213}
+  m_LocalPosition: {x: 0.0256, y: 0.074, z: 0.2285}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -145945,7 +145872,7 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1504652526}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 0.9811321, g: 0.745105, b: 0.745105, a: 1}
@@ -153427,6 +153354,10 @@ MonoBehaviour:
   exitDelay: 0.45
   exitCooldown: 1.2
   interactRange: 1.5
+  audioSource: {fileID: 0}
+  doorOpenClip: {fileID: 0}
+  doorCloseClip: {fileID: 0}
+  doorVolume: 0.8
   doorTransparency: {fileID: 0}
 --- !u!1001 &1573899914
 PrefabInstance:
@@ -178061,9 +177992,6 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 8528994735943341642, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
       insertIndex: 0
-      addedObject: {fileID: 847483700}
-    - targetCorrespondingSourceObject: {fileID: 8528994735943341642, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
-      insertIndex: 1
       addedObject: {fileID: 1504652527}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8165614154535196367, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
@@ -178124,7 +178052,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   eyeLights:
-  - {fileID: 847483702}
   - {fileID: 1504652529}
   behaviourTree: {fileID: 1847997881}
   stunColor: {r: 1, g: 1, b: 1, a: 1}
@@ -178134,6 +178061,7 @@ MonoBehaviour:
   blinkCount: 4
   blinkOnDuration: 0.08
   blinkOffDuration: 0.06
+  showDebugLogs: 1
 --- !u!114 &1847997881 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 733723934606157372, guid: 183213ce3ba68b34e95ebda750d808d3, type: 3}
@@ -181573,11 +181501,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dab16991c4da394eb4062d2e169eef1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxWaitTime: 1
-  maxFlickerTime: 0.2
+  minTiempoEstable: 3
+  maxTiempoEstable: 15
+  duracionParpadeo: 1
   minIntensity: 0
   maxIntensity: 2
-  speed: 10
+  velocidadParpadeo: 25
 --- !u!95 &1884628717
 Animator:
   serializedVersion: 7
