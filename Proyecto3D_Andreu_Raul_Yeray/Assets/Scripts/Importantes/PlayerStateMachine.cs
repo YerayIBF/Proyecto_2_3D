@@ -345,7 +345,6 @@ public class PlayerStateMachine : MonoBehaviour
 
             if (currentStamina <= 0f)
             {
-                // Sonido de agotamiento solo en el momento de agotarse
                 if (!_staminaExhausted)
                 {
                     if (audioAgotamiento != null && sonidoAgotamiento != null)
@@ -456,6 +455,8 @@ public class PlayerStateMachine : MonoBehaviour
         return true;
     }
 
+    // ─── Muerte y Respawn ────────────────────────────────────────────────────
+
     public void Die()
     {
         if (CurrentState == PlayerState.Dead) return;
@@ -465,7 +466,7 @@ public class PlayerStateMachine : MonoBehaviour
         if (lockerSystem != null && lockerSystem.IsHiding)
             lockerSystem.ForceExitOnDeath();
 
-        if (tpController != null) tpController.enabled = false;
+        // Vaciar inputs antes de desactivar
         if (inputs != null)
         {
             inputs.move   = Vector2.zero;
@@ -473,6 +474,9 @@ public class PlayerStateMachine : MonoBehaviour
             inputs.sprint = false;
             inputs.jump   = false;
         }
+
+        // Desactivar TODOS los componentes que leen input (mando + teclado)
+        SetInputComponentsEnabled(false);
 
         if (_isCrouched)
         {
@@ -531,12 +535,42 @@ public class PlayerStateMachine : MonoBehaviour
             transform.rotation = spawnRotation;
         }
 
-        if (tpController != null) tpController.enabled = true;
+        // Reactivar TODOS los componentes que leen input
+        SetInputComponentsEnabled(true);
 
         ChangeState(PlayerState.Idle);
 
         OnHealthChanged?.Invoke(1f);
         OnStaminaChanged?.Invoke(1f);
+    }
+
+    /// <summary>
+    /// Activa/desactiva todos los componentes del jugador que leen input.
+    /// Llamado al morir y al respawnear.
+    /// </summary>
+    private void SetInputComponentsEnabled(bool enabled)
+    {
+        // PlayerInput component (bloquea todas las Input Actions del mando + teclado nuevo)
+        PlayerInput playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null) playerInput.enabled = enabled;
+
+        // ThirdPersonController (movimiento)
+        if (tpController != null) tpController.enabled = enabled;
+
+        // FlashlightSystem (linterna)
+        if (flashlightSystem != null) flashlightSystem.enabled = enabled;
+
+        // CogerObjeto (puede estar en un hijo)
+        CogerObjeto cogerObjeto = GetComponentInChildren<CogerObjeto>();
+        if (cogerObjeto != null) cogerObjeto.enabled = enabled;
+
+        // PlayerEquipmentManager (cambio de arma)
+        if (equipmentManager != null) equipmentManager.enabled = enabled;
+
+        // LockerSystem (interacción con taquillas)
+        if (lockerSystem != null) lockerSystem.enabled = enabled;
+
+        Debug.Log($"[PlayerState] Input components → {(enabled ? "ACTIVADOS" : "DESACTIVADOS")}");
     }
 
     private void ChangeState(PlayerState newState)
@@ -552,21 +586,18 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (audioLatidos == null) return;
 
-        // Por encima de la vida de inicio: sin latidos
         if (currentHealth > vidaInicioLatidos)
         {
             if (audioLatidos.isPlaying) audioLatidos.Stop();
             return;
         }
 
-        // Dentro del rango: arrancar si no suena
         if (!audioLatidos.isPlaying)
         {
             audioLatidos.loop = true;
             audioLatidos.Play();
         }
 
-        // t=0 en vidaInicioLatidos, t=1 en vidaLatidosMaximos (clamp para no pasar de pitchMax)
         float t = Mathf.InverseLerp(vidaInicioLatidos, vidaLatidosMaximos, currentHealth);
         audioLatidos.pitch = Mathf.Lerp(pitchLatidosMin, pitchLatidosMax, t);
     }

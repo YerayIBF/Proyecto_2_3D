@@ -5,11 +5,7 @@ using TMPro;
 /// <summary>
 /// HUD de la linterna.
 /// - Usa CanvasGroup para ocultarse/mostrarse (no SetActive)
-/// - Esto permite que el script siga corriendo aunque el HUD esté "invisible"
-///
-/// LAYOUT (esquina inferior izquierda):
-///   [icono linterna] [════ barra ════] 87%
-///                    [icono pila] x2
+/// - Cambia el sprite del icono según si la linterna está encendida o apagada
 /// </summary>
 public class FlashlightHUD : MonoBehaviour
 {
@@ -18,11 +14,15 @@ public class FlashlightHUD : MonoBehaviour
     public CanvasGroup canvasGroup;
 
     [Header("Icono de la linterna")]
-    [Tooltip("Image del icono de la linterna (se atenúa cuando la linterna está apagada)")]
+    [Tooltip("Image del icono de la linterna")]
     public Image flashlightIcon;
-    [Tooltip("Alpha del icono cuando la linterna está apagada (0-1). Por defecto 200/255 ≈ 0.78")]
+
+    [Tooltip("Image de la X que aparece cuando la linterna está APAGADA (se oculta cuando está encendida)")]
+    public Image xImage;
+
+    [Tooltip("Alpha del icono cuando la linterna está apagada (0-1)")]
     [Range(0f, 1f)]
-    public float iconAlphaOff = 0.4f;
+    public float iconAlphaOff = 0.6f;
 
     [Header("Barra de batería")]
     public Slider batterySlider;
@@ -77,7 +77,6 @@ public class FlashlightHUD : MonoBehaviour
             UpdateBatteryCount(PlayerStateMachine.Instance.BatteryCount);
         }
 
-        // Estado inicial
         if (hideAtStart)
         {
             SetVisible(false);
@@ -88,7 +87,6 @@ public class FlashlightHUD : MonoBehaviour
         {
             _initialHideFinished = true;
 
-            // Mostrar o no según si tiene linterna
             if (hideUntilFlashlightPickup)
             {
                 bool hasFlashlight = _flashlight != null && _flashlight.HasFlashlight;
@@ -105,7 +103,6 @@ public class FlashlightHUD : MonoBehaviour
     {
         _initialHideFinished = true;
 
-        // Decidir si se muestra según condiciones normales
         if (hideUntilFlashlightPickup)
         {
             bool hasFlashlight = _flashlight != null && _flashlight.HasFlashlight;
@@ -119,7 +116,6 @@ public class FlashlightHUD : MonoBehaviour
         Debug.Log("[FlashlightHUD] Cinemática terminada.");
     }
 
-    /// <summary>Para llamar desde fuera cuando termine la cinemática.</summary>
     public void ShowHUDNow()
     {
         CancelInvoke(nameof(EndInitialHide));
@@ -130,7 +126,6 @@ public class FlashlightHUD : MonoBehaviour
     {
         if (!_initialHideFinished) return;
 
-        // Mostrar el HUD cuando se recoge la linterna
         if (hideUntilFlashlightPickup
             && _flashlight != null
             && _flashlight.HasFlashlight
@@ -210,14 +205,22 @@ public class FlashlightHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Cambia el alpha del icono de la linterna según si está encendida o no.
+    /// Muestra u oculta la X sobre el icono de la linterna según si está encendida.
     /// </summary>
     private void UpdateFlashlightIcon(bool isOn)
     {
-        if (flashlightIcon == null) return;
+        // Mostrar X cuando está apagada, ocultarla cuando está encendida
+        if (xImage != null)
+        {
+            xImage.gameObject.SetActive(!isOn);
+        }
 
-        Color c = flashlightIcon.color;
-        c.a = isOn ? 1f : iconAlphaOff;
-        flashlightIcon.color = c;
+        // Atenuar el icono cuando está apagada (efecto secundario)
+        if (flashlightIcon != null)
+        {
+            Color c = flashlightIcon.color;
+            c.a = isOn ? 1f : iconAlphaOff;
+            flashlightIcon.color = c;
+        }
     }
 }
