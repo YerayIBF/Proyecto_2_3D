@@ -3,7 +3,6 @@ using System.Collections;
 
 /// <summary>
 /// Efecto visual de los ojos del enemigoaire (ciego).
-/// Mismo comportamiento que EnemyEyeFlash pero adaptado a enemigoaire.
 ///
 /// Estados:
 /// - Normal (puede stunear): ojos apagados
@@ -29,6 +28,9 @@ public class EnemyEyeFlashAire : MonoBehaviour
     public float blinkOnDuration = 0.08f;
     public float blinkOffDuration = 0.06f;
 
+    [Header("Debug")]
+    public bool showDebugLogs = false;
+
     private Coroutine _stunRoutine;
     private bool _stunRoutineActive = false;
 
@@ -36,9 +38,29 @@ public class EnemyEyeFlashAire : MonoBehaviour
     {
         if (enemy == null)
             enemy = GetComponent<enemigoaire>();
+        if (enemy == null)
+            enemy = GetComponentInParent<enemigoaire>();
 
-        // Apagar al inicio
+        // Inicializar luces con color stun y APAGADAS
+        SetLightsColor(stunColor, stunIntensity);
         SetLightsActive(false);
+    }
+
+    private void Start()
+    {
+        // PREWARM URP: encender brevemente las luces para que URP las registre
+        // Sin esto, la primera vez no se encienden en URP
+        StartCoroutine(PrewarmLights());
+    }
+
+    private IEnumerator PrewarmLights()
+    {
+        SetLightsActive(true);
+        yield return null; // esperar 1 frame
+        SetLightsActive(false);
+
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlashAire] Prewarm completado — {gameObject.name}");
     }
 
     private void Update()
@@ -51,18 +73,15 @@ public class EnemyEyeFlashAire : MonoBehaviour
 
         if (isStunned)
         {
-            // Si la coroutine de stun no se ha lanzado todavía, lánzala
             if (!_stunRoutineActive)
             {
-                _stunRoutineActive = true;
-                if (_stunRoutine != null) StopCoroutine(_stunRoutine);
-                _stunRoutine = StartCoroutine(StunFlashRoutine());
+                TriggerStunVisual();
             }
-            // Durante el stun, la coroutine gestiona los lights
+            // Durante el stun la coroutine controla TODO, el Update no toca nada
             return;
         }
 
-        // Ya no está stuneado → parar coroutine si seguía activa
+        // Si la coroutine seguía activa pero ya no está stuneado, pararla
         if (_stunRoutineActive)
         {
             _stunRoutineActive = false;
@@ -73,59 +92,83 @@ public class EnemyEyeFlashAire : MonoBehaviour
             }
         }
 
-        // Aplicar el estado correcto cada frame
         if (inCooldown)
         {
-            // Cooldown: ojos rojos intensos
             SetLightsColor(cooldownColor, cooldownIntensity);
             SetLightsActive(true);
         }
         else
         {
-            // Normal: apagados
             SetLightsActive(false);
         }
     }
 
-    // ─── Coroutine de parpadeo durante stun ─────────────────────────────────
+    /// <summary>
+    /// Disparar el efecto visual del stun directamente (sin esperar al Update).
+    /// </summary>
+    public void TriggerStunVisual()
+    {
+        if (showDebugLogs)
+            Debug.Log($"[EyeFlashAire] TriggerStunVisual() — {gameObject.name}");
+
+        _stunRoutineActive = true;
+        if (_stunRoutine != null) StopCoroutine(_stunRoutine);
+        _stunRoutine = StartCoroutine(StunFlashRoutine());
+    }
 
     private IEnumerator StunFlashRoutine()
     {
+        // Asegurar color correcto desde el inicio
         SetLightsColor(stunColor, stunIntensity);
 
-        // Parpadeo rápido
+        // Fase de parpadeo
         for (int i = 0; i < blinkCount; i++)
         {
             SetLightsActive(true);
+            SetLightsColor(stunColor, stunIntensity);
             yield return new WaitForSeconds(blinkOnDuration);
+
             SetLightsActive(false);
             yield return new WaitForSeconds(blinkOffDuration);
         }
 
-        // Encendidas el resto del stun
+        // Tras el parpadeo, dejar encendido fijo el resto del stun
+        SetLightsColor(stunColor, stunIntensity);
         SetLightsActive(true);
-    }
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────
+        // Mantener encendido mientras siga stuneado
+        while (enemy != null && enemy.IsCurrentlyStunned)
+        {
+            // Re-asegurar el estado cada cierto tiempo (no cada frame)
+            SetLightsColor(stunColor, stunIntensity);
+            SetLightsActive(true);
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        // El stun terminó: liberar el control
+        _stunRoutineActive = false;
+        _stunRoutine = null;
+    }
 
     private void SetLightsActive(bool active)
     {
-        if (eyeLights == null || eyeLights.Length == 0) return;
-        foreach (var light in eyeLights)
+        if (eyeLights == null) return;
+        for (int i = 0; i < eyeLights.Length; i++)
         {
-            if (light != null) light.enabled = active;
+            if (eyeLights[i] != null)
+                eyeLights[i].enabled = active;
         }
     }
 
     private void SetLightsColor(Color color, float intensity)
     {
         if (eyeLights == null) return;
-        foreach (var light in eyeLights)
+        for (int i = 0; i < eyeLights.Length; i++)
         {
-            if (light != null)
+            if (eyeLights[i] != null)
             {
-                light.color = color;
-                light.intensity = intensity;
+                eyeLights[i].color = color;
+                eyeLights[i].intensity = intensity;
             }
         }
     }

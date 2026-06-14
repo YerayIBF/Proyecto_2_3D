@@ -19,6 +19,12 @@ public class LockerInteractable : MonoBehaviour
     [Header("Detección")]
     public float interactRange = 1.8f;
 
+    [Header("Mensajes (catalán)")]
+    [Tooltip("Mensaje al acercarte cuando la taquilla está libre")]
+    public string mensajeEntrar = "Prem [X] per amagar-te";
+    [Tooltip("Mensaje cuando estás dentro y puedes salir")]
+    public string mensajeSalir = "Prem [X] per sortir";
+
     [Header("Audio")]
     public AudioSource audioSource;
     public AudioClip   doorOpenClip;
@@ -74,10 +80,18 @@ public class LockerInteractable : MonoBehaviour
             door.localEulerAngles = new Vector3(0f, _currentAngle, 0f);
         }
 
-        if (_playerTransform == null) return;
+        if (_playerTransform == null)
+        {
+            Debug.LogWarning($"[Locker {name}] _playerTransform es NULL");
+            return;
+        }
 
         float dist   = Vector3.Distance(transform.position, _playerTransform.position);
         bool inRange = dist <= interactRange;
+
+        // DEBUG temporal
+        if (inRange)
+            Debug.Log($"[Locker {name}] EN RANGO (dist={dist:F2}) | Nearest={(_nearestLocker == this)} | Occupied={IsOccupied} | PromptMgr={(UIPromptManager.Instance != null)}");
 
         UpdateNearestLocker(inRange, dist);
 
@@ -85,17 +99,18 @@ public class LockerInteractable : MonoBehaviour
 
         if (!inRange || !isNearest)
         {
-            if (_nearestLocker != this)
-                UIPromptManager.Instance?.Hide();
+            // Solo se oculta el prompt desde UpdateNearestLocker cuando ESTA
+            // taquilla deja de ser la nearest. Así evitamos que otras taquillas
+            // apaguen el prompt de la cercana en el mismo frame.
             return;
         }
 
         if (_inputBlocked || _isRunningSequence) return;
 
         if (!IsOccupied)
-            UIPromptManager.Instance?.Show("Pulsa [E] para esconderte");
+            UIPromptManager.Instance?.Show(mensajeEntrar);
         else if (IsOccupied && _lockerSystem?.CurrentLocker == this)
-            UIPromptManager.Instance?.Show("Pulsa [E] para salir");
+            UIPromptManager.Instance?.Show(mensajeSalir);
 
         if (Input.GetKeyDown(KeyCode.E))
         {

@@ -35,6 +35,19 @@ public class EnemyIntroSequence : MonoBehaviour
     [Tooltip("Ángulo (en grados) dentro del cual la linterna cuenta como apuntando al enemigo")]
     public float stunDetectAngle = 20f;
 
+    [Header("Mensajes del tutorial (catalán)")]
+    [Tooltip("Mensaje al apuntar al enemigo por primera vez (antes del stun)")]
+    [TextArea]
+    public string mensajeApuntar = "Sembla que és sensible a la llum, hauria d'apuntar-li amb la llanterna (RB)";
+    public float duracionMensajeApuntar = 15f;
+
+    [Tooltip("Mensaje tras stunearlo, sugiriendo esconderse")]
+    [TextArea]
+    public string mensajeEsconderse = "Hauria d'amagar-me... Potser en una taquilla. Prem [X] per amagar-te.";
+    public float duracionMensajeEsconderse = 6f;
+    [Tooltip("Retardo antes de mostrar el mensaje de esconderse tras stunear")]
+    public float retardoMensajeEsconderse = 0.5f;
+
     // ─── Estado interno ──────────────────────────────────────────────────────
 
     private NavMeshAgent _agent;
@@ -55,11 +68,9 @@ public class EnemyIntroSequence : MonoBehaviour
         if (behaviourTree == null) behaviourTree = GetComponent<EnemyBehaviourTree>();
         if (ghostModel != null) _anim = ghostModel.GetComponent<Animator>();
 
-        // BehaviourTree, ghost y audio desactivados al inicio
         if (behaviourTree != null) behaviourTree.enabled = false;
         if (ghostModel != null) ghostModel.gameObject.SetActive(false);
 
-        // Desactivar audio durante la cinemática
         EnemyAudio audio = GetComponent<EnemyAudio>();
         if (audio == null) audio = GetComponentInChildren<EnemyAudio>();
         if (audio != null) audio.enabled = false;
@@ -67,7 +78,6 @@ public class EnemyIntroSequence : MonoBehaviour
 
     // ─── API pública ─────────────────────────────────────────────────────────
 
-    /// <summary>Inicia la cinemática. Llamado al recoger la llave.</summary>
     public void StartSequence()
     {
         if (_sequenceActive) return;
@@ -87,7 +97,6 @@ public class EnemyIntroSequence : MonoBehaviour
 
         _agent.isStopped = false;
 
-        // Recorrer el path
         for (int i = 0; i < pathPoints.Length; i++)
         {
             if (pathPoints[i] == null) continue;
@@ -100,12 +109,11 @@ public class EnemyIntroSequence : MonoBehaviour
             while (_agent.pathPending || _agent.remainingDistance > 0.5f)
             {
                 timer += Time.deltaTime;
-                if (timer > 10f) break; // timeout de seguridad
+                if (timer > 10f) break;
                 yield return null;
             }
         }
 
-        // Al final del path: parar y girarse hacia el jugador suavemente
         _agent.ResetPath();
         _agent.isStopped = true;
 
@@ -116,7 +124,7 @@ public class EnemyIntroSequence : MonoBehaviour
         _waitingForStun = true;
 
         if (GameManager.instance != null)
-                GameManager.instance.ReproducirVoz("Sembla que és sensible a la llum, hauria d'apuntar-li amb la llanterna (RB)", 15f);
+            GameManager.instance.ReproducirVoz(mensajeApuntar, duracionMensajeApuntar);
     }
 
     private IEnumerator SmoothLookAtPlayer()
@@ -159,7 +167,6 @@ public class EnemyIntroSequence : MonoBehaviour
         }
     }
 
-    /// <summary>Mueve el ghost hacia el agent y gestiona las animaciones manualmente.</summary>
     private void UpdateGhostAndAnimations()
     {
         if (ghostModel == null) return;
@@ -228,17 +235,16 @@ public class EnemyIntroSequence : MonoBehaviour
 
         BlockPlayerMovement(false);
 
-        // Sincronizar ghost con agent antes de pasar el control
         if (ghostModel != null)
         {
             ghostModel.position = transform.position;
             ghostModel.rotation = transform.rotation;
         }
-        
+
         EnemyAudio audio = GetComponent<EnemyAudio>();
         if (audio == null) audio = GetComponentInChildren<EnemyAudio>();
         if (audio != null) audio.enabled = true;
-        // Activar el BehaviourTree con stun extra largo
+
         if (behaviourTree != null)
         {
             behaviourTree.enabled = true;
@@ -250,8 +256,19 @@ public class EnemyIntroSequence : MonoBehaviour
             StartCoroutine(RestoreStunDuration(originalStun));
         }
 
+        // ─── Mensaje de tutorial: sugerir esconderse ───
+        StartCoroutine(MostrarMensajeEsconderse());
+
         _sequenceActive = false;
         _agent.isStopped = false;
+    }
+
+    private IEnumerator MostrarMensajeEsconderse()
+    {
+        yield return new WaitForSeconds(retardoMensajeEsconderse);
+
+        if (GameManager.instance != null)
+            GameManager.instance.ReproducirVoz(mensajeEsconderse, duracionMensajeEsconderse);
     }
 
     private IEnumerator RestoreStunDuration(float originalDuration)
@@ -267,7 +284,6 @@ public class EnemyIntroSequence : MonoBehaviour
     {
         if (block)
             StartCoroutine(KeepMovementBlocked());
-
     }
 
     private IEnumerator KeepMovementBlocked()
@@ -279,7 +295,6 @@ public class EnemyIntroSequence : MonoBehaviour
                 PlayerStateMachine.Instance.inputs.move = Vector2.zero;
                 PlayerStateMachine.Instance.inputs.sprint = false;
                 PlayerStateMachine.Instance.inputs.jump = false;
-                // La cámara queda libre (inputs.look no se toca)
             }
             yield return null;
         }
