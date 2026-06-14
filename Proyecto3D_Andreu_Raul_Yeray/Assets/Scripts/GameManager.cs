@@ -60,7 +60,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Paneles")]
     public int totalPaneles = 5;
-    private int _panelesCompletados = 0;
+    public int _panelesCompletados = 0;
     public Animator puertaAnim;
     public CinemachineCamera camaraEvento;
     public float duracionCamara = 3f;
