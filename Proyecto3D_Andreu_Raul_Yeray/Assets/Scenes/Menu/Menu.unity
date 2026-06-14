@@ -21169,7 +21169,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Cancel\xB7lar/Deixar anar objecte"
+  m_text: "Cancel\xB7lar/Deixar objecte"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_sharedMaterial: {fileID: 4063241645000216325, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
@@ -28452,7 +28452,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "LB: Llan\xE7ar objecte / Atordir meg\xE0fon"
+  m_text: "LB: Llan\xE7ar / Atordir meg\xE0fon"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
   m_sharedMaterial: {fileID: 4063241645000216325, guid: ca3297ec2abd6414a814168fd7fa99c8, type: 2}
