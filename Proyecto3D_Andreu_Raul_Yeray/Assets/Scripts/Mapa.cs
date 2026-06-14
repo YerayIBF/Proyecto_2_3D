@@ -5,6 +5,9 @@ public class Mapa : MonoBehaviour
 {
     public GameObject panelMapa;
     public InputActionReference accionAlternarMapa;
+    public GameObject panelPausa;
+
+    private bool abiertoDesdePausa = false;
 
     private void OnEnable()
     {
@@ -26,11 +29,43 @@ public class Mapa : MonoBehaviour
 
     private void AlPulsarMapa(InputAction.CallbackContext context)
     {
+        EstadoMapa();
+    }
+
+    public void EstadoMapa()
+    {
         if (panelMapa != null)
         {
-            // Invierte el estado actual del panel, si esta cerrado se abre, y si esta abierto se cierra
-            bool estadoActual = panelMapa.activeSelf;
-            panelMapa.SetActive(!estadoActual);
+            bool mapaEstabaActivo = panelMapa.activeSelf;
+
+            if (!mapaEstabaActivo)
+            {
+                if (panelPausa != null && panelPausa.activeSelf)
+                {
+                    abiertoDesdePausa = true;  
+                    panelPausa.SetActive(false); 
+                }
+                else
+                {
+                    abiertoDesdePausa = false; 
+                }
+
+                panelMapa.SetActive(true);
+                Time.timeScale = 1f; 
+            }
+            else
+            {
+                panelMapa.SetActive(false); 
+
+                if (panelPausa != null && abiertoDesdePausa)
+                {
+                    panelPausa.SetActive(true);
+
+                    Time.timeScale = 0f; 
+                }
+                
+                abiertoDesdePausa = false;
+            }
         }
     }
 }
